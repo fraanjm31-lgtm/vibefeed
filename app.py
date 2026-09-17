@@ -194,7 +194,7 @@ with st.sidebar:
         xp_val = c.fetchone()[0]
         badge_name, badge_class = get_badge(xp_val)
         st.metric("Tus Puntos XP", xp_val)
-        st.markdown(f"Rango: <span class='{badge_class}'>{badge_name}</span>", unsafe_allow_html=True)
+        st.markdown("Rango: <span class='" + badge_class + "'>" + badge_name + "</span>", unsafe_allow_html=True)
         
         if st.button("Cerrar Sesión"):
             st.session_state['logged_in'] = False
@@ -250,8 +250,8 @@ if menu_option == "📱 Feed":
         
         if secret_pin and secret_pin.strip() != "":
             with st.container():
-                st.markdown(f"### **{user}** <span class='{b_class}'>{b_name}</span> 🔒 *[Cápsula]*", unsafe_allow_html=True)
-                entered_pin = st.text_input(f"PIN para post #{post_id}", type="password", key=f"pin_{post_id}")
+                st.markdown("### **" + user + "** <span class='" + b_class + "'>" + b_name + "</span> 🔒 *[Cápsula]*", unsafe_allow_html=True)
+                entered_pin = st.text_input("PIN para post #" + str(post_id), type="password", key="pin_" + str(post_id))
                 if entered_pin == secret_pin:
                     st.success(caption)
                     if file_path and os.path.exists(file_path):
@@ -261,34 +261,34 @@ if menu_option == "📱 Feed":
             continue
 
         with st.container():
-            st.markdown(f"### **{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
+            st.markdown("### **" + user + "** <span class='" + b_class + "'>" + b_name + "</span>  `" + vibe_tag + "`", unsafe_allow_html=True)
             st.write(caption)
             if file_path and os.path.exists(file_path):
                 if "video" in file_type: st.video(file_path)
                 elif "image" in file_type: st.image(file_path, use_container_width=True)
             
-            st.caption(f"❤️ {likes} likes | 👁️ {(views or 0) + 1} vistas {f'| {gifts_received}' if gifts_received else ''}")
+            st.caption("❤️ " + str(likes) + " likes | 👁️ " + str((views or 0) + 1) + " vistas" + (" | " + gifts_received if gifts_received else ""))
             
             col_l, col_g = st.columns(2)
             with col_l:
-                if st.button("❤️ Like", key=f"l_{post_id}"):
+                if st.button("❤️ Like", key="l_" + str(post_id)):
                     c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
                     conn.commit()
                     st.rerun()
             with col_g:
                 if st.session_state['logged_in']:
-                    gift_choice = st.selectbox("🎁 Regalo (-10 XP):", ["Selecciona...", "🌟 Estrellas", "💎 Gema", "☕ Café"], key=f"g_sel_{post_id}")
-                    if st.button("Enviar", key=f"g_btn_{post_id}"):
+                    gift_choice = st.selectbox("🎁 Regalo (-10 XP):", ["Selecciona...", "🌟 Estrellas", "💎 Gema", "☕ Café"], key="g_sel_" + str(post_id))
+                    if st.button("Enviar", key="g_btn_" + str(post_id)):
                         cur = st.session_state['username']
                         c.execute("SELECT xp FROM users WHERE username = ?", (cur,))
                         my_xp = c.fetchone()[0]
                         if my_xp >= 10:
                             c.execute("UPDATE users SET xp = xp - 10 WHERE username = ?", (cur,))
                             c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (user,))
-                            new_gift_str = f"{gifts_received} {gift_choice}" if gifts_received else gift_choice
+                            new_gift_str = (gifts_received + " " + gift_choice) if gifts_received else gift_choice
                             c.execute("UPDATE posts SET gifts_received = ? WHERE id = ?", (new_gift_str, post_id))
                             conn.commit()
-                            st.success(f"¡Regalo enviado a @{user}!")
+                            st.success("¡Regalo enviado a @" + user + "!")
                             st.rerun()
                         else:
                             st.error("No tienes suficiente XP.")
@@ -340,10 +340,10 @@ elif menu_option == "🏆 Leaderboard":
     
     for idx, (l_user, l_xp, l_bio) in enumerate(leaders):
         b_name, b_class = get_badge(l_xp)
-        medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
-        st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
-        st.write(f"💬 *{l_bio}*")
-        st.caption(f"⚡ Puntos XP totales: **{l_xp}**")
+        medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else "#" + str(idx+1)))
+        st.markdown("### " + medal + " @" + l_user + " <span class='" + b_class + "'>" + b_name + "</span>", unsafe_allow_html=True)
+        st.write("💬 *" + l_bio + "*")
+        st.caption("⚡ Puntos XP totales: **" + str(l_xp) + "**")
         st.markdown("---")
 
 # 4. AlgoDemocracia
@@ -367,18 +367,18 @@ elif menu_option == "⚔️ VibeDuels":
         d_id, d_user, d_cap, d_file, d_type, d_opp = d
         col1, col2 = st.columns(2)
         with col1:
-            st.markdown(f"**@{d_user}**")
+            st.markdown("**@" + d_user + "**")
             st.write(d_cap)
             if d_file and os.path.exists(d_file): st.image(d_file, use_container_width=True)
-            if st.button(f"Votar @{d_user}", key=f"va_{d_id}"):
+            if st.button("Votar @" + d_user, key="va_" + str(d_id)):
                 c.execute("UPDATE posts SET duel_votes_a = duel_votes_a + 1 WHERE id = ?", (d_id,))
                 c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (d_user,))
                 conn.commit()
                 st.rerun()
         with col2:
-            st.markdown(f"**@{d_opp}**")
+            st.markdown("**@" + d_opp + "**")
             st.write("¡En combate!")
-            if st.button(f"Votar @{d_opp}", key=f"vb_{d_id}"):
+            if st.button("Votar @" + d_opp, key="vb_" + str(d_id)):
                 c.execute("UPDATE posts SET duel_votes_b = duel_votes_b + 1 WHERE id = ?", (d_id,))
                 c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (d_opp,))
                 conn.commit()
@@ -397,7 +397,7 @@ elif menu_option == "🌌 Ágora IA":
                 st.rerun()
     c.execute("SELECT thought, constellation, timestamp FROM agora ORDER BY id DESC")
     for ag in c.fetchall():
-        st.markdown(f"> *\"{ag[0]}\"* \n\n 🏷️ `{ag[1]}`")
+        st.markdown("> *\"" + ag[0] + "\"* \n\n 🏷️ `" + ag[1] + "`")
         st.markdown("---")
 
 # 7. Cápsulas PIN
@@ -407,7 +407,7 @@ elif menu_option == "🔐 Cápsulas PIN":
     if pin_s:
         c.execute("SELECT user, caption, file FROM posts WHERE secret_pin = ?", (pin_s,))
         for rp in c.fetchall():
-            st.success(f"@{rp[0]}: {rp[1]}")
+            st.success("@" + rp[0] + ": " + rp[1])
             if rp[2] and os.path.exists(rp[2]): st.image(rp[2], use_container_width=True)
 
 # 8. Historias
@@ -415,7 +415,7 @@ elif menu_option == "⏳ Historias":
     st.subheader("⏳ Historias (24h)")
     c.execute("SELECT user, caption, file FROM posts WHERE is_story = 1 ORDER BY id DESC")
     for st_item in c.fetchall():
-        st.markdown(f"**@{st_item[0]}**")
+        st.markdown("**@" + st_item[0] + "**")
         st.write(st_item[1])
         if st_item[2] and os.path.exists(st_item[2]): st.image(st_item[2], use_container_width=True)
         st.markdown("---")
@@ -434,17 +434,17 @@ elif menu_option == "🎯 Desafíos":
     st.subheader("🎯 Desafíos")
     c.execute("SELECT title, description FROM challenges")
     chal = c.fetchone()
-    if chal: st.info(f"### {chal[0]}\n{chal[1]}")
+    if chal: st.info("### " + chal[0] + "\n" + chal[1])
 
 # 11. Buscar
 elif menu_option == "🔍 Buscar":
     st.subheader("🔍 Buscar Creadores")
     sq = st.text_input("Usuario...")
     if sq:
-        c.execute("SELECT username, bio, xp FROM users WHERE username LIKE ?", (f"%{sq}%",))
+        c.execute("SELECT username, bio, xp FROM users WHERE username LIKE ?", ("%" + sq + "%",))
         for r in c.fetchall():
             b_n, b_c = get_badge(r[2])
-            st.markdown(f"### @{r[0]} <span class='{b_c}'>{b_n}</span> (XP: {r[2]})\n*{r[1]}*", unsafe_allow_html=True)
+            st.markdown("### @" + r[0] + " <span class='" + b_c + "'>" + b_n + "</span> (XP: " + str(r[2]) + ")\n*" + r[1] + "*", unsafe_allow_html=True)
 
 # 12. Tags
 elif menu_option == "# Tags":
@@ -452,8 +452,8 @@ elif menu_option == "# Tags":
     tq = st.text_input("Etiqueta...")
     if tq:
         if not tq.startswith("#"): tq = "#" + tq
-        c.execute("SELECT user, caption FROM posts WHERE caption LIKE ?", (f"%{tq}%",))
-        for tp in c.fetchall(): st.write(f"**@{tp[0]}**: {tp[1]}")
+        c.execute("SELECT user, caption FROM posts WHERE caption LIKE ?", ("%" + tq + "%",))
+        for tp in c.fetchall(): st.write("**@" + tp[0] + "**: " + tp[1])
 
 # 13. Chats
 elif menu_option == "💬 Chats":
@@ -465,7 +465,7 @@ elif menu_option == "💬 Chats":
         if others:
             dest = st.selectbox("Hablar con:", others)
             c.execute("SELECT sender, message FROM messages WHERE (sender=? AND receiver=?) OR (sender=? AND receiver=?)", (cur, dest, dest, cur))
-            for msg in c.fetchall(): st.text(f"@{msg[0]}: {msg[1]}")
+            for msg in c.fetchall(): st.text("@" + msg[0] + ": " + msg[1])
             with st.form("dm", clear_on_submit=True):
                 txt = st.text_input("Mensaje...")
                 if st.form_submit_button("Enviar") and txt:
@@ -483,9 +483,4 @@ elif menu_option == "🔔 Avisos":
 elif menu_option == "👤 Perfil":
     st.subheader("👤 Perfil y Premios")
     if st.session_state['logged_in']:
-        cur = st.session_state['username']
-        c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (cur,))
-        u_info = c.fetchone()
-        b_n, b_c = get_badge(u_info[2])
-        st.metric("Puntos XP", u_info[2])
-        st.markdown(f"**Tu Insig
+        cur 
