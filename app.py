@@ -33,7 +33,8 @@ def check_hashes(password, hashed_text):
     return make_hashes(password) == hashed_text
 
 def init_db():
-    conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
+    # Cambiamos a v2 para forzar una base de datos nueva y limpia
+    conn = sqlite3.connect('vibefeed_v2.db', check_same_thread=False)
     c = conn.cursor()
     c.execute('CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, bio TEXT DEFAULT "Creador NoxVibe ⚡", city TEXT DEFAULT "Madrid", lat REAL DEFAULT 40.4168, lon REAL DEFAULT -3.7038, xp INTEGER DEFAULT 100, notif_enabled INTEGER DEFAULT 1)')
     c.execute('CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, views INTEGER DEFAULT 0, vibe_tag TEXT DEFAULT "General 🌍", is_story INTEGER DEFAULT 0, secret_pin TEXT DEFAULT "", is_duel INTEGER DEFAULT 0, duel_votes_a INTEGER DEFAULT 0, duel_votes_b INTEGER DEFAULT 0, duel_opponent TEXT DEFAULT "", gifts_received TEXT DEFAULT "")')
@@ -42,19 +43,7 @@ def init_db():
     c.execute('CREATE TABLE IF NOT EXISTS agora (id INTEGER PRIMARY KEY AUTOINCREMENT, thought TEXT, constellation TEXT DEFAULT "Filosofía 🌌", timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)')
     c.execute('CREATE TABLE IF NOT EXISTS algo_votes (user TEXT PRIMARY KEY, preference TEXT)')
     
-    cols = [
-        ("posts", "secret_pin", "TEXT DEFAULT ''"), ("posts", "is_duel", "INTEGER DEFAULT 0"),
-        ("posts", "duel_votes_a", "INTEGER DEFAULT 0"), ("posts", "duel_votes_b", "INTEGER DEFAULT 0"),
-        ("posts", "duel_opponent", "TEXT DEFAULT ''"), ("posts", "gifts_received", "TEXT DEFAULT ''"),
-        ("users", "xp", "INTEGER DEFAULT 100"), ("users", "notif_enabled", "INTEGER DEFAULT 1")
-    ]
-    for table, col, defn in cols:
-        try:
-            c.execute(f"SELECT {col} FROM {table} LIMIT 1")
-        except sqlite3.OperationalError:
-            c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {defn}")
-            
-    # Insertar datos de prueba si está vacío para que no aparezca en blanco
+    # Datos iniciales limpios (sin arroba en el username para evitar duplicados)
     c.execute("SELECT COUNT(*) FROM users")
     if c.fetchone()[0] == 0:
         c.execute("INSERT INTO users (username, password, bio, xp) VALUES (?, ?, ?, ?)", 
@@ -94,26 +83,26 @@ with st.sidebar:
     st.subheader("🔐 Acceso NoxVibe")
     if not st.session_state['logged_in']:
         auth_mode = st.radio("Modo:", ["Iniciar Sesión", "Registrarse"])
-        u_in = st.text_input("Usuario (@...)")
+        u_in = st.text_input("Usuario (ej: tu_nombre)")
         p_in = st.text_input("Contraseña", type="password")
         if auth_mode == "Registrarse":
             if st.button("Crear Cuenta") and u_in and p_in:
                 try:
-                    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (u_in, make_hashes(p_in)))
+                    c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (u_in.replace("@", ""), make_hashes(p_in)))
                     conn.commit()
                     st.success("¡Registrado con éxito!")
                 except: st.error("El usuario ya existe.")
         else:
             if st.button("Entrar"):
-                c.execute("SELECT password FROM users WHERE username = ?", (u_in,))
+                c.execute("SELECT password FROM users WHERE username = ?", (u_in.replace("@", ""),))
                 res = c.fetchone()
                 if res and check_hashes(p_in, res[0]):
                     st.session_state['logged_in'] = True
-                    st.session_state['username'] = u_in
+                    st.session_state['username'] = u_in.replace("@", "")
                     st.rerun()
                 else: st.error("Datos incorrectos.")
     else:
-        st.success(f"Sesión: **{st.session_state['username']}**")
+        st.success(f"Sesión: **@{st.session_state['username']}**")
         c.execute("SELECT xp FROM users WHERE username = ?", (st.session_state['username'],))
         xp_val = c.fetchone()[0]
         b_n, b_c = get_badge(xp_val)
@@ -144,6 +133,7 @@ if menu_option == "📱 Feed":
         b_n, b_c = get_badge(p_xp)
         
         with st.container():
+            # Aquí corregimos para que solo salga una arroba limpia
             st.markdown(f"### **@{user}** <span class='{b_c}'>{b_n}</span>  `{vibe_tag}`", unsafe_allow_html=True)
             st.write(caption)
             if file_path and os.path.exists(file_path):
