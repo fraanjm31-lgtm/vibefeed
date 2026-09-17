@@ -224,7 +224,7 @@ with st.sidebar:
             st.session_state['viewing_user'] = selected_search
             st.success(f"Canal de @{selected_search} seleccionado. ¡Ve a la pestaña 'Canal'!")
 
-# --- PESTAÑAS SUPERIORES HORIZONTALES (Con el cohete peculiar para subir) ---
+# --- PESTAÑAS SUPERIORES HORIZONTALES ---
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
     "📱 Feed", 
     "🚀 Lanzar", 
@@ -308,7 +308,7 @@ with tab1:
                             st.error("No tienes suficiente XP.")
             st.markdown("---")
 
-# 2. Lanzar Contenido (Antes Subir)
+# 2. Lanzar Contenido
 with tab2:
     st.subheader("🚀 Lanzar Contenido a NoxVibe")
     if st.session_state['logged_in']:
@@ -449,7 +449,7 @@ with tab7:
     else:
         st.warning("Inicia sesión en el menú lateral para ver tu perfil.")
 
-# 8. Mis Siguiendo (Nueva pestaña para ver creadores seguidos)
+# 8. Mis Siguiendo (Corregido)
 with tab8:
     st.subheader("👥 Creadores a los que Sigues")
     if st.session_state['logged_in']:
@@ -480,7 +480,7 @@ with tab8:
     else:
         st.warning("Inicia sesión para ver a tus creadores seguidos.")
 
-# 9. Canal Personal del Creador seleccionado (con botón Seguir / Dejar de seguir)
+# 9. Canal Personal del Creador seleccionado
 with tab9:
     st.subheader("📺 Canal de Creador")
     target_user = st.session_state['viewing_user']
@@ -491,4 +491,7 @@ with tab9:
         c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (target_user,))
         u_data = c.fetchone()
         if u_data:
-            u_bio, u_ci
+            u_bio, u_city, u_xp = u_data
+            b_name, b_class = get_badge(u_xp)
+            
+            col_h1, col_h2 = st.columns([3
