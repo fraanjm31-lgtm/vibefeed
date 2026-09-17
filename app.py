@@ -52,7 +52,14 @@ def init_db():
     c.execute('''CREATE TABLE IF NOT EXISTS users (
                 username TEXT PRIMARY KEY, password TEXT, 
                 bio TEXT DEFAULT "Creador NoxVibe ⚡", 
-                city TEXT DEFAULT "Madrid", xp INTEGER DEFAULT 100)''')
+                city TEXT DEFAULT "Madrid", xp INTEGER DEFAULT 100,
+                profile_pic TEXT DEFAULT "")''')
+    
+    # Por si la base de datos ya existía y no tiene la columna profile_pic
+    try:
+        c.execute("ALTER TABLE users ADD COLUMN profile_pic TEXT DEFAULT ''")
+    except sqlite3.OperationalError:
+        pass # La columna ya existe
     
     c.execute('''CREATE TABLE IF NOT EXISTS follows (
                 follower TEXT, followed TEXT, 
@@ -128,8 +135,14 @@ with st.sidebar:
                     st.error("Datos incorrectos.")
     else:
         st.success(f"Sesión: **@{st.session_state['username']}**")
-        c.execute("SELECT xp FROM users WHERE username = ?", (st.session_state['username'],))
-        xp_val = c.fetchone()[0]
+        c.execute("SELECT xp, profile_pic FROM users WHERE username = ?", (st.session_state['username'],))
+        u_side = c.fetchone()
+        xp_val = u_side[0]
+        u_pic = u_side[1]
+        
+        if u_pic and os.path.exists(u_pic):
+            st.image(u_pic, width=80)
+            
         badge_name, badge_class = get_badge(xp_val)
         st.metric("Tus Puntos XP", xp_val)
         st.markdown(f"Rango: <span class='{badge_class}'>{badge_name}</span>", unsafe_allow_html=True)
@@ -173,12 +186,20 @@ with tabs[0]:
     
     for post in posts:
         post_id, user, caption, file_path, file_type, likes, views, vibe_tag, gifts_received = post
-        c.execute("SELECT xp FROM users WHERE username = ?", (user,))
-        u_xp_res = c.fetchone()
-        p_xp = u_xp_res[0] if u_xp_res else 100
+        
+        # Obtenemos XP y foto de perfil del autor del post
+        c.execute("SELECT xp, profile_pic FROM users WHERE username = ?", (user,))
+        u_data = c.fetchone()
+        p_xp = u_data[0] if u_data else 100
+        p_pic = u_data[1] if u_data else ""
         b_name, b_class = get_badge(p_xp)
 
-        col_u1, col_u2 = st.columns([3, 1])
+        col_av, col_u1, col_u2 = st.columns([1, 4, 1.5])
+        with col_av:
+            if p_pic and os.path.exists(p_pic):
+                st.image(p_pic, width=45)
+            else:
+                st.markdown("👤")
         with col_u1:
             st.markdown(f"### **@{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
         with col_u2:
@@ -233,12 +254,17 @@ with tabs[1]:
 # 3. Top
 with tabs[2]:
     st.subheader("🏆 Salón de la Fama")
-    c.execute("SELECT username, xp, bio FROM users ORDER BY xp DESC LIMIT 10")
-    for idx, (l_user, l_xp, l_bio) in enumerate(c.fetchall()):
+    c.execute("SELECT username, xp, bio, profile_pic FROM users ORDER BY xp DESC LIMIT 10")
+    for idx, (l_user, l_xp, l_bio, l_pic) in enumerate(c.fetchall()):
         b_name, b_class = get_badge(l_xp)
         medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
         
-        col_t1, col_t2 = st.columns([3, 1])
+        col_img, col_t1, col_t2 = st.columns([1, 3, 1])
+        with col_img:
+            if l_pic and os.path.exists(l_pic):
+                st.image(l_pic, width=50)
+            else:
+                st.markdown("👤")
         with col_t1:
             st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
             st.write(f"💬 *{l_bio}* | ⚡ XP: **{l_xp}**")
@@ -284,15 +310,31 @@ with tabs[6]:
     st.subheader("👤 Tu Perfil Personal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
-        u_info = c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (cur,)).fetchone()
+        u_info = c.execute("SELECT bio, city, xp, profile_pic FROM users WHERE username = ?", (cur,)).fetchone()
         b_n, b_c = get_badge(u_info[2])
-        st.metric("Puntos XP", u_info[2])
-        st.markdown(f"**Insignia:** <span class='{b_c}'>{b_n}</span>", unsafe_allow_html=True)
         
+        col_mp1, col_mp2 = st.columns([1, 2])
+        with col_mp1:
+            if u_info[3] and os.path.exists(u_info[3]):
+                st.image(u_info[3], width=120)
+            else:
+                st.info("Sin foto de perfil")
+        with col_mp2:
+            st.metric("Puntos XP", u_info[2])
+            st.markdown(f"**Insignia:** <span class='{b_c}'>{b_n}</span>", unsafe_allow_html=True)
+        
+        new_pic = st.file_uploader("Cambiar Foto de Perfil", type=["jpg", "jpeg", "png"])
         nb = st.text_area("Edita tu Bio", value=u_info[0])
         nc = st.text_input("Edita tu Ciudad", value=u_info[1])
+        
         if st.button("Guardar Cambios de Perfil"):
-            c.execute("UPDATE users SET bio = ?, city = ? WHERE username = ?", (nb, nc, cur))
+            pic_path = u_info[3]
+            if new_pic is not None:
+                os.makedirs("uploads", exist_ok=True)
+                pic_path = os.path.join("uploads", f"profile_{cur}_{new_pic.name}")
+                with open(pic_path, "wb") as f: f.write(new_pic.getbuffer())
+                
+            c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ? WHERE username = ?", (nb, nc, pic_path, cur))
             conn.commit()
             st.success("¡Perfil actualizado con éxito!")
             st.rerun()
@@ -310,9 +352,18 @@ with tabs[7]:
         else:
             for f_user in following_list:
                 fname = f_user[0]
-                col_f1, col_f2 = st.columns([3, 1])
+                c.execute("SELECT profile_pic FROM users WHERE username = ?", (fname,))
+                f_data = c.fetchone()
+                f_pic = f_data[0] if f_data else ""
+                
+                col_fimg, col_f1, col_f2 = st.columns([1, 3, 1])
+                with col_fimg:
+                    if f_pic and os.path.exists(f_pic):
+                        st.image(f_pic, width=45)
+                    else:
+                        st.markdown("👤")
                 with col_f1:
-                    st.markdown(f"### 👤 @{fname}")
+                    st.markdown(f"### @{fname}")
                 with col_f2:
                     if st.button("Ver Canal", key=f"btn_f_{fname}"):
                         st.session_state['viewing_user'] = fname
@@ -328,14 +379,20 @@ with tabs[8]:
     target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
     
     if target_user:
-        u_data = c.execute("SELECT username, bio, city, xp FROM users WHERE username = ?", (target_user,)).fetchone()
+        u_data = c.execute("SELECT username, bio, city, xp, profile_pic FROM users WHERE username = ?", (target_user,)).fetchone()
         if u_data:
-            real_username, u_bio, u_city, u_xp = u_data
+            real_username, u_bio, u_city, u_xp, u_pic = u_data
             b_name, b_class = get_badge(u_xp)
             
-            # Insignia colocada limpia y elegante al lado del nombre
-            st.markdown(f"## **@{real_username}** &nbsp; <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
-            st.info(f"💬 **Biografía:** {u_bio} \n\n 📍 **Ciudad:** {u_city} \n\n ⚡ **Puntos XP:** {u_xp}")
+            col_pimg, col_ptxt = st.columns([1, 3])
+            with col_pimg:
+                if u_pic and os.path.exists(u_pic):
+                    st.image(u_pic, width=120)
+                else:
+                    st.markdown("### 👤")
+            with col_ptxt:
+                st.markdown(f"## **@{real_username}** &nbsp; <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+                st.info(f"💬 **Biografía:** {u_bio} \n\n 📍 **Ciudad:** {u_city} \n\n ⚡ **Puntos XP:** {u_xp}")
             
             if st.session_state['logged_in'] and st.session_state['username'] != real_username:
                 check_f = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username)).fetchone()
