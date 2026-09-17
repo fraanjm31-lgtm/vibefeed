@@ -147,7 +147,7 @@ with st.sidebar:
         selected_search = st.selectbox("🔍 Ver perfil de:", ["Selecciona..."] + all_users, key="sidebar_channel_select")
         if selected_search != "Selecciona...":
             st.session_state['viewing_user'] = selected_search
-            st.session_state['active_tab'] = 8  # Cambia automáticamente a la pestaña de Canal/Perfil
+            st.session_state['active_tab'] = 8 
             st.rerun()
 
 tab_titles = [
@@ -274,7 +274,7 @@ with tabs[5]:
         st.markdown(f"> *\"{ag[0]}\"* \n\n 🏷️ `{ag[1]}`")
         st.markdown("---")
 
-# 7. Mi Perfil (Edición propia)
+# 7. Mi Perfil
 with tabs[6]:
     st.subheader("👤 Tu Perfil Personal")
     if st.session_state['logged_in']:
@@ -296,12 +296,26 @@ with tabs[6]:
 
 # 8. Siguiendo
 with tabs[7]:
-    st.subheader("👥 Siguiendo")
+    st.subheader("👥 Usuarios que Sigues")
     if st.session_state['logged_in']:
-        for f in c.execute("SELECT followed FROM follows WHERE follower = ?", (st.session_state['username'],)).fetchall():
-            st.write(f"- @{f[0]}")
+        following_list = c.execute("SELECT followed FROM follows WHERE follower = ?", (st.session_state['username'],)).fetchall()
+        
+        if not following_list:
+            st.info("Aún no sigues a ningún creador. ¡Explora perfiles y comienza a seguirlos!")
+        else:
+            for f_user in following_list:
+                fname = f_user[0]
+                col_f1, col_f2 = st.columns([3, 1])
+                with col_f1:
+                    st.markdown(f"### 👤 @{fname}")
+                with col_f2:
+                    if st.button("Ver Canal", key=f"btn_f_{fname}"):
+                        st.session_state['viewing_user'] = fname
+                        st.session_state['active_tab'] = 8
+                        st.rerun()
+                st.markdown("---")
     else:
-        st.warning("Inicia sesión.")
+        st.warning("Inicia sesión para ver tu lista de seguidos.")
 
 # 9. Canal / Perfil Externo
 with tabs[8]:
@@ -317,20 +331,22 @@ with tabs[8]:
             st.markdown(f"## Perfil de **@{real_username}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
             st.info(f"💬 **Biografía:** {u_bio} \n\n 📍 **Ciudad:** {u_city} \n\n ⚡ **Puntos XP:** {u_xp}")
             
-            # Botón para seguir / dejar de seguir
+            # Botón de Seguir / Dejar de seguir corregido
             if st.session_state['logged_in'] and st.session_state['username'] != real_username:
-                is_following = c.execute("SELECT 1 FROM follows WHERE follower = ? AND masked = ?", (st.session_state['username'], real_username)).fetchone()
-                # Botón simplificado de seguimiento
-                if st.button(f"🤝 Seguir / Dejar de seguir a @{real_username}"):
-                    check_f = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username)).fetchone()
-                    if check_f:
+                check_f = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username)).fetchone()
+                
+                if check_f:
+                    if st.button(f"❌ Dejar de seguir a @{real_username}", key=f"unfollow_btn_{real_username}"):
                         c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username))
+                        conn.commit()
                         st.success(f"Has dejado de seguir a @{real_username}")
-                    else:
+                        st.rerun()
+                else:
+                    if st.button(f"➕ Seguir a @{real_username}", key=f"follow_btn_{real_username}"):
                         c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], real_username))
+                        conn.commit()
                         st.success(f"¡Ahora sigues a @{real_username}!")
-                    conn.commit()
-                    st.rerun()
+                        st.rerun()
 
             st.markdown("### 📱 Publicaciones del Creador")
             user_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE user = ? ORDER BY id DESC", (real_username,)).fetchall()
