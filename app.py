@@ -7,103 +7,79 @@ st.set_page_config(
     layout="centered"
 )
 
-st.markdown("""
-    <style>
-    .main {
-        background-color: #0e1117;
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 st.title("🔥 VibeFeed Pro")
-st.write("Tu red social vertical mejorada.")
+st.write("Tu red social vertical.")
 
-# --- SECCIÓN 1: SUBIR NUEVO CONTENIDO ---
+# SECCIÓN 1: SUBIR CONTENIDO
 with st.expander("➕ Subir nuevo vídeo o foto"):
-    with st.form("upload_form", clear_on_submit=True):
-        username = st.text_input("Tu usuario", value="@creador")
-        caption = st.text_area("Descripción del vídeo")
-        uploaded_file = st.file_uploader("Sube tu archivo (MP4, MOV, JPG, PNG)", type=["mp4", "mov", "jpg", "png"])
+    with st.form("up_form", clear_on_submit=True):
+        user = st.text_input("Usuario", value="@creador")
+        desc = st.text_area("Descripción")
+        file = st.file_uploader("Archivo", type=["mp4", "mov", "jpg", "png"])
         
-        submit_button = st.form_submit_button(label="¡Publicar en el Feed!")
+        btn = st.form_submit_button("Publicar")
         
-        if submit_button:
-            if uploaded_file is not None:
+        if btn:
+            if file is not None:
                 os.makedirs("uploads", exist_ok=True)
-                file_path = os.path.join("uploads", uploaded_file.name)
-                with open(file_path, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
+                path = os.path.join("uploads", file.name)
+                with open(path, "wb") as f:
+                    f.write(file.getbuffer())
                 
                 if "posts" not in st.session_state:
                     st.session_state.posts = []
                 
                 st.session_state.posts.insert(0, {
-                    "user": username,
-                    "caption": caption,
-                    "file": file_path,
-                    "type": uploaded_file.type,
+                    "user": user,
+                    "caption": desc,
+                    "file": path,
+                    "type": file.type,
                     "likes": 0,
                     "comments": []
                 })
-                st.success("¡Publicado con éxito!")
+                st.success("¡Publicado!")
             else:
-                st.warning("Por favor, sube un archivo multimedia.")
+                st.warning("Sube un archivo.")
 
-# --- SECCIÓN 2: INICIALIZAR POSTS ---
+# SECCIÓN 2: INICIALIZAR
 if "posts" not in st.session_state:
     st.session_state.posts = [
         {
             "user": "@creator_pro",
-            "caption": "¡Lanzando mi nueva app web al mundo! 🚀✨",
+            "caption": "¡Lanzando app web! 🚀",
             "file": None,
             "type": "default",
             "likes": 24,
-            "comments": ["¡Qué pasada de app!", "Mucho éxito amigo."]
-        },
-        {
-            "user": "@code_ninja",
-            "caption": "Programando desde el móvil con Python 📱🐍",
-            "file": None,
-            "type": "default",
-            "likes": 15,
-            "comments": ["Increíble que se pueda hacer esto desde el teléfono."]
+            "comments": ["¡Qué pasada!"]
         }
     ]
 
-# --- SECCIÓN 3: RENDERIZAR EL FEED ---
+# SECCIÓN 3: FEED
 st.markdown("---")
-st.subheader("📱 Feed en Directo")
+st.subheader("📱 Feed")
 
-for idx, post in enumerate(st.session_state.posts):
-    st.markdown(f"### **{post['user']}**")
-    st.write(post['caption'])
+for idx, p in enumerate(st.session_state.posts):
+    st.markdown(f"### **{p['user']}**")
+    st.write(p['caption'])
     
-    if post['file'] and os.path.exists(post['file']):
-        if "video" in post['type']:
-            st.video(post['file'])
-        elif "image" in post['type']:
-            st.image(post['file'], use_container_width=True)
+    if p['file'] and os.path.exists(p['file']):
+        if "video" in p['type']:
+            st.video(p['file'])
+        elif "image" in p['type']:
+            st.image(p['file'], use_container_width=True)
     else:
-        st.info("🎬 [ Contenido multimedia interactivo VibeFeed ]")
+        st.info("🎬 [ Clip multimedia ]")
     
-    col1, col2 = st.columns([1, 3])
-    with col1:
-        if st.button(f"❤️ {post['likes']}", key=f"like_{idx}"):
-            st.session_state.posts[idx]['likes'] += 1
-            st.rerun()
+    if st.button(f"❤️ {p['likes']}", key=f"l_{idx}"):
+        st.session_state.posts[idx]['likes'] += 1
+        st.rerun()
             
-    with st.expander(f"💬 Comentarios ({len(post['comments'])})"):
-        for comment in post['comments']:
-            st.text(f"• {comment}")
-            
-        new_comment = st.text_input("Añade un comentario...", key=f"comment_input_{idx}")
-        if st.button("Enviar", key=f"send_comment_{idx}"):
-            if new_comment:
-                st.session_state.posts[idx]['comments'].append(new_comment)
+    with st.expander(f"💬 Comentarios ({len(p['comments'])})"):
+        for c in p['comments']:
+            st.text(f"• {c}")
+        nc = st.text_input("Comentar...", key=f"nc_{idx}")
+        if st.button("Enviar", key=f"sc_{idx}"):
+            if nc:
+                st.session_state.posts[idx]['comments'].append(nc)
                 st.rerun()
-
-    st.markdown("---"
+    st.markdown("---")
