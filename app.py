@@ -138,16 +138,19 @@ with st.sidebar:
 
     st.markdown("---")
     st.subheader("📺 Explorar Perfiles")
-    c.execute("SELECT username FROM users")
-    all_users = [u[0] for u in c.fetchall()]
-    if all_users:
-        selected_search = st.selectbox("🔍 Buscar perfil:", ["Selecciona..."] + all_users, key="search_user_box")
-        if st.button("🔍 Ver Perfil"):
-            if selected_search != "Selecciona...":
-                st.session_state['viewing_user'] = selected_search
+    # Usamos un campo de texto limpio para evitar bloqueos del selectbox en móviles
+    search_query = st.text_input("🔍 Escribe el apodo:", placeholder="Ej: Labachito")
+    if st.button("🔍 Buscar Usuario"):
+        if search_query:
+            clean_q = search_query.strip().replace("@", "")
+            exists = c.execute("SELECT 1 FROM users WHERE username = ?", (clean_q,)).fetchone()
+            if exists:
+                st.session_state['viewing_user'] = clean_q
                 st.rerun()
             else:
-                st.warning("Selecciona un usuario.")
+                st.error("Usuario no encontrado.")
+        else:
+            st.warning("Escribe un nombre.")
 
 tab_titles = [
     "📱 Feed", "🚀 Lanzar", "🏆 Top", "🗳️ Algo", "⚔️ Duels", 
@@ -359,7 +362,7 @@ with tabs[8]:
                 st.caption(f"❤️ {u_likes} likes")
                 st.markdown("---")
     else:
-        st.info("Selecciona un creador en el menú lateral o desde el feed para ver su perfil.")
+        st.info("Escribe un usuario en el menú lateral o pincha en 'Perfil' desde el feed para ver los canales.")
 
 # 10. Ajustes
 with tabs[9]:
