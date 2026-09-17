@@ -1,4 +1,3 @@
-
 import streamlit as st
 import os
 import sqlite3
@@ -6,8 +5,8 @@ import hashlib
 
 # Configuración de la página
 st.set_page_config(
-    page_title="VibeFeed Photo",
-    page_icon="📸",
+    page_title="VibeFeed Media",
+    page_icon="🎬",
     layout="centered"
 )
 
@@ -38,14 +37,12 @@ def check_hashes(password, hashed_text):
 def init_db():
     conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
     c = conn.cursor()
-    # Tabla de usuarios
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             password TEXT
         )
     ''')
-    # Tabla de posts con el creador asociado
     c.execute('''
         CREATE TABLE IF NOT EXISTS posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -56,7 +53,6 @@ def init_db():
             likes INTEGER
         )
     ''')
-    # Tabla de comentarios con soporte para usuario
     c.execute('''
         CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,11 +73,11 @@ if 'logged_in' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
-# Título principal
-st.title("📸 VibeFeed Photo")
-st.caption("✨ Tu red social visual de creadores.")
+# Título principal actualizado
+st.title("🎬 VibeFeed Media")
+st.caption("✨ Tu red social de fotos y vídeos cortos.")
 
-# Barra lateral para el Login / Registro estilo Instagram
+# Barra lateral para el Login / Registro
 with st.sidebar:
     st.subheader("🔐 Acceso de Creador")
     if not st.session_state['logged_in']:
@@ -121,19 +117,21 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    st.write("Versión 4.1 - Auth Edition")
+    st.write("Versión 4.2 - Media Edition")
 
 # Menú de navegación superior
-menu = st.tabs(["📱 Galería Global", "👤 Perfil Personal", "➕ Subir Foto/Vídeo", "ℹ️ Acerca de"])
+menu = st.tabs(["📱 Feed Global", "👤 Mi Perfil", "➕ Subir Contenido", "ℹ️ Acerca de"])
 
-# --- SECCIÓN 1: LA GALERÍA / FEED VISUAL ---
+# --- SECCIÓN 1: EL FEED GLOBAL ---
 with menu[0]:
-    st.subheader("Explora la Comunidad Visual")
+    st.subheader("Explora la Comunidad Multimedia")
     
-    filtro = st.radio("Filtrar contenido:", ["Todo", "Solo con Multimedia (Fotos/Vídeos)"], horizontal=True)
+    filtro = st.radio("Filtrar contenido:", ["Todo", "Solo Vídeos", "Solo Fotos"], horizontal=True)
     
-    if filtro == "Solo con Multimedia (Fotos/Vídeos)":
-        c.execute("SELECT id, user, caption, file, file_type, likes FROM posts WHERE file_type != 'default' ORDER BY id DESC")
+    if filtro == "Solo Vídeos":
+        c.execute("SELECT id, user, caption, file, file_type, likes FROM posts WHERE file_type LIKE '%video%' ORDER BY id DESC")
+    elif filtro == "Solo Fotos":
+        c.execute("SELECT id, user, caption, file, file_type, likes FROM posts WHERE file_type LIKE '%image%' ORDER BY id DESC")
     else:
         c.execute("SELECT id, user, caption, file, file_type, likes FROM posts ORDER BY id DESC")
         
@@ -152,7 +150,7 @@ with menu[0]:
                 elif "image" in file_type:
                     st.image(file_path, use_container_width=True)
             else:
-                st.info("📷 [ Publicación de texto de la comunidad ]")
+                st.info("💬 [ Publicación de texto ]")
             
             col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
             
@@ -163,7 +161,7 @@ with menu[0]:
                     st.rerun()
             
             with col2:
-                whatsapp_url = f"https://api.whatsapp.com/send?text=Mira%20esta%20foto%20en%20VibeFeed%20Photo:%20{caption}"
+                whatsapp_url = f"https://api.whatsapp.com/send?text=Mira%20este%20contenido%20en%20VibeFeed%20Media:%20{caption}"
                 st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:8px; border-radius:20px; text-align:center; font-weight:bold; font-size:12px;">💬 Compartir</div></a>', unsafe_allow_html=True)
 
             with col3:
@@ -181,7 +179,7 @@ with menu[0]:
                 else:
                     st.write("")
 
-            # Comentarios con control de errores por si acaso
+            # Comentarios
             with st.expander(f"💬 Comentarios"):
                 try:
                     c.execute("SELECT user, comment FROM comments WHERE post_id = ?", (post_id,))
@@ -212,7 +210,7 @@ with menu[0]:
 
 # --- SECCIÓN 2: PERFIL PERSONAL ---
 with menu[1]:
-    st.subheader("👤 Tu Muro Personal")
+    st.subheader("👤 Tu Muro Multimedia")
     if st.session_state['logged_in']:
         current_user = st.session_state['username']
         st.markdown(f"### Perfil de **{current_user}**")
@@ -220,7 +218,7 @@ with menu[1]:
         c.execute("SELECT id, caption, file, file_type, likes FROM posts WHERE user = ? ORDER BY id DESC", (current_user,))
         user_posts = c.fetchall()
         
-        st.info(f"📸 Tienes un total de **{len(user_posts)}** publicaciones en tu muro.")
+        st.info(f"📁 Tienes un total de **{len(user_posts)}** publicaciones en tu perfil.")
         st.markdown("---")
         
         for post in user_posts:
@@ -233,7 +231,7 @@ with menu[1]:
                     elif "image" in file_type:
                         st.image(file_path, use_container_width=True)
                 
-                if st.button(f"🗑️ Borrar mi post", key=f"my_del_{post_id}"):
+                if st.button(f"🗑️ Borrar mi publicación", key=f"my_del_{post_id}"):
                     c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
                     c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
                     conn.commit()
@@ -241,18 +239,18 @@ with menu[1]:
                     st.rerun()
                 st.markdown("---")
     else:
-        st.warning("⚠️ Debes iniciar sesión en la barra lateral para ver y gestionar tu perfil privado.")
+        st.warning("⚠️ Debes iniciar sesión en la barra lateral para ver tu perfil.")
 
-# --- SECCIÓN 3: SUBIR CONTENIDO VISUAL ---
+# --- SECCIÓN 3: SUBIR CONTENIDO ---
 with menu[2]:
-    st.subheader("Comparte tus mejores fotos y vídeos")
+    st.subheader("Comparte tus Fotos o Vídeos")
     if st.session_state['logged_in']:
         with st.form("pub_form", clear_on_submit=True):
             st.write(f"Publicando como: **{st.session_state['username']}**")
-            caption = st.text_area("Añade una descripción o historia a tu foto...")
-            media = st.file_uploader("Sube tu foto o vídeo", type=["mp4", "mov", "jpg", "jpeg", "png"])
+            caption = st.text_area("Añade una descripción...")
+            media = st.file_uploader("Sube una foto o un vídeo", type=["mp4", "mov", "jpg", "jpeg", "png"])
             
-            enviar = st.form_submit_button("Publicar")
+            enviar = st.form_submit_button("Publicar en VibeFeed")
             
             if enviar:
                 if caption:
@@ -268,16 +266,16 @@ with menu[2]:
                     c.execute("INSERT INTO posts (user, caption, file, file_type, likes) VALUES (?, ?, ?, ?, ?)",
                               (st.session_state['username'], caption, path, file_type, 1))
                     conn.commit()
-                    st.success("¡Publicado en tu perfil y en la galería global!")
+                    st.success("¡Contenido publicado con éxito!")
                     st.rerun()
                 else:
                     st.warning("Por favor, añade una descripción.")
     else:
-        st.warning("⚠️ Inicia sesión en la barra lateral con tu cuenta para poder subir contenido.")
+        st.warning("⚠️ Inicia sesión en la barra lateral para poder subir contenido.")
 
 # --- SECCIÓN 4: ACERCA DE ---
 with menu[3]:
-    st.subheader("📊 Estadísticas de VibeFeed")
+    st.subheader("📊 Estadísticas de VibeFeed Media")
     c.execute("SELECT COUNT(*) FROM posts")
     total_posts = c.fetchone()[0]
     c.execute("SELECT COUNT(*) FROM users")
@@ -288,7 +286,7 @@ with menu[3]:
         st.metric("Creadores Registrados", total_users)
     with col_2:
         st.metric("Publicaciones Totales", total_posts)
-        
+    
 
 
     
