@@ -65,6 +65,14 @@ def init_db():
     ''')
     
     c.execute('''
+        CREATE TABLE IF NOT EXISTS follows (
+            follower TEXT,
+            followed TEXT,
+            PRIMARY KEY (follower, followed)
+        )
+    ''')
+    
+    c.execute('''
         CREATE TABLE IF NOT EXISTS posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user TEXT,
@@ -216,15 +224,16 @@ with st.sidebar:
             st.session_state['viewing_user'] = selected_search
             st.success(f"Canal de @{selected_search} seleccionado. ¡Ve a la pestaña 'Canal'!")
 
-# --- PESTAÑAS SUPERIORES HORIZONTALES (Simplificadas y limpias) ---
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
+# --- PESTAÑAS SUPERIORES HORIZONTALES (Con el cohete peculiar para subir) ---
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
     "📱 Feed", 
-    "➕ Subir", 
+    "🚀 Lanzar", 
     "🏆 Top", 
     "🗳️ Algo", 
     "⚔️ Duels", 
     "🌌 Ágora", 
     "👤 Perfil", 
+    "👥 Siguiendo",
     "📺 Canal",
     "⚙️ Ajustes"
 ])
@@ -299,9 +308,9 @@ with tab1:
                             st.error("No tienes suficiente XP.")
             st.markdown("---")
 
-# 2. Subir Contenido
+# 2. Lanzar Contenido (Antes Subir)
 with tab2:
-    st.subheader("➕ Subir Contenido a NoxVibe")
+    st.subheader("🚀 Lanzar Contenido a NoxVibe")
     if st.session_state['logged_in']:
         with st.form("up_form", clear_on_submit=True):
             cap = st.text_input("Descripción...")
@@ -313,7 +322,7 @@ with tab2:
             opp = st.selectbox("Rival", opps) if opps else ""
             pin = st.text_input("🔐 PIN secreto (opcional)")
             
-            if st.form_submit_button("Publicar"):
+            if st.form_submit_button("¡Lanzar Vibe! ⚡"):
                 if cap or media is not None:
                     path, f_type = None, "default"
                     if media is not None:
@@ -329,12 +338,12 @@ with tab2:
                     
                     c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (st.session_state['username'],))
                     conn.commit()
-                    st.success("¡Publicado con éxito! +10 XP ⚡")
+                    st.success("¡Lanzado con éxito! +10 XP ⚡")
                     st.rerun()
                 else:
                     st.warning("Escribe algo o sube un archivo.")
     else:
-        st.warning("Inicia sesión en el menú lateral para subir contenido.")
+        st.warning("Inicia sesión en el menú lateral para lanzar contenido.")
 
 # 3. Leaderboard
 with tab3:
@@ -440,49 +449,46 @@ with tab7:
     else:
         st.warning("Inicia sesión en el menú lateral para ver tu perfil.")
 
-# 8. Canal Personal del Creador seleccionado
+# 8. Mis Siguiendo (Nueva pestaña para ver creadores seguidos)
 with tab8:
+    st.subheader("👥 Creadores a los que Sigues")
+    if st.session_state['logged_in']:
+        cur_user = st.session_state['username']
+        c.execute("SELECT followed FROM follows WHERE follower = ?", (cur_user,))
+        followed_list = [f[0] for f in c.fetchall()]
+        
+        if not followed_list:
+            st.info("Todavía no sigues a nadie. ¡Visita los canales de otros creadores y dándole al botón de seguir!")
+        else:
+            for f_user in followed_list:
+                c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (f_user,))
+                f_data = c.fetchone()
+                if f_data:
+                    f_bio, f_city, f_xp = f_data
+                    f_badge, f_bclass = get_badge(f_xp)
+                    
+                    col_f1, col_f2 = st.columns([3, 1])
+                    with col_f1:
+                        st.markdown(f"### **@{f_user}** <span class='{f_bclass}'>{f_badge}</span>", unsafe_allow_html=True)
+                        st.write(f"💬 *{f_bio}*")
+                        st.caption(f"⚡ XP: {f_xp}")
+                    with col_f2:
+                        if st.button("📺 Canal", key=f"f_visit_{f_user}"):
+                            st.session_state['viewing_user'] = f_user
+                            st.rerun()
+                    st.markdown("---")
+    else:
+        st.warning("Inicia sesión para ver a tus creadores seguidos.")
+
+# 9. Canal Personal del Creador seleccionado (con botón Seguir / Dejar de seguir)
+with tab9:
     st.subheader("📺 Canal de Creador")
     target_user = st.session_state['viewing_user']
     
     if not target_user:
-        st.info("Usa el menú lateral izquierdo (desplegando las opciones) para buscar y seleccionar el canal de cualquier creador.")
+        st.info("Usa el menú lateral izquierdo (buscador) para explorar el canal de cualquier creador.")
     else:
         c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (target_user,))
         u_data = c.fetchone()
         if u_data:
-            u_bio, u_city, u_xp = u_data
-            b_name, b_class = get_badge(u_xp)
-            
-            st.markdown(f"## Canal de **@{target_user}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
-            st.write(f"💬 *{u_bio}*")
-            st.caption(f"📍 Ciudad: {u_city} | ⚡ XP Totales: **{u_xp}**")
-            st.markdown("---")
-            
-            st.subheader(f"Publicaciones de @{target_user}")
-            c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, gifts_received FROM posts WHERE user = ? AND is_story = 0 AND is_duel = 0 ORDER BY id DESC", (target_user,))
-            user_posts = c.fetchall()
-            
-            if not user_posts:
-                st.info(f"@{target_user} todavía no ha subido ninguna publicación.")
-            else:
-                for upost in user_posts:
-                    pid, u_cap, u_file, u_ftype, u_likes, u_vtag, u_gifts = upost
-                    st.markdown(f"**Tema:** `{u_vtag}`")
-                    st.write(u_cap)
-                    if u_file and os.path.exists(u_file):
-                        if "video" in u_ftype: st.video(u_file)
-                        elif "image" in u_ftype: st.image(u_file, use_container_width=True)
-                    st.caption(f"❤️ {u_likes} likes {f'| {u_gifts}' if u_gifts else ''}")
-                    st.markdown("---")
-        else:
-            st.error("El usuario seleccionado no existe.")
-
-# 9. Ajustes
-with tab9:
-    st.subheader("⚙️ Ajustes Pro")
-    sel_t = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], index=0 if st.session_state['theme']=="Modo Oscuro 🌙" else 1)
-    if sel_t != st.session_state['theme']:
-        st.session_state['theme'] = sel_t
-        st.success("¡Tema aplicado!")
-        st.re
+            u_bio, u_ci
