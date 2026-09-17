@@ -440,28 +440,27 @@ with tabs[9]:
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
-        partner = st.selectbox("Para:", [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()])
+        partner = st.selectbox("Para chat:", [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()], key="chat_partner_box")
         if partner:
             st.markdown(f"**Chat con @{partner}**")
             for s, m, t in c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur, partner, partner, cur)).fetchall():
                 st.write(f"**{s}:** {m} ({t})")
-            with st.form("chat_f", clear_on_submit=True):
-                txt = st.text_input("Escribe tu mensaje...")
-                if st.form_submit_button("Enviar"):
-                    if txt:
-                        c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, txt, datetime.now().strftime("%H:%M")))
-                        conn.commit()
-                        st.session_state['active_tab_idx'] = 9
-                        st.rerun()
+            
+            # Formulario limpio de envío
+            msg_input = st.text_input("Escribe tu mensaje...", key="msg_input_field")
+            if st.button("Enviar Mensaje 🚀"):
+                if msg_input:
+                    c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, msg_input, datetime.now().strftime("%H:%M")))
+                    conn.commit()
+                    st.rerun()
     else:
         st.warning("Inicia sesión para chatear.")
 
 # 11. Ajustes
 with tabs[10]:
     st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
+    sel_theme = st.selectbox("Tema de la app:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
-        st.session_state['active_tab_idx'] = 10
         st.rerun()
         
