@@ -78,6 +78,10 @@ def init_db():
                 
     c.execute('''CREATE TABLE IF NOT EXISTS algo_votes (
                 user TEXT PRIMARY KEY, preference TEXT)''')
+                
+    c.execute('''CREATE TABLE IF NOT EXISTS messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, sender TEXT, receiver TEXT, 
+                message TEXT, timestamp TEXT)''')
 
     conn.commit()
     return conn
@@ -169,10 +173,9 @@ with st.sidebar:
 
 tab_titles = [
     "📱 Feed", "🚀 Lanzar", "🏆 Top", "🗳️ Algo", "⚔️ Duels", 
-    "🌌 Ágora", "👤 Mi Perfil", "👥 Siguiendo", "📺 Canal / Perfil", "⚙️ Ajustes"
+    "🌌 Ágora", "👤 Mi Perfil", "👥 Siguiendo", "📺 Canal / Perfil", "💬 Mensajes", "⚙️ Ajustes"
 ]
 
-# Control de índice seguro para evitar que se quede pillado en Ajustes
 if st.session_state['active_tab_idx'] >= len(tab_titles):
     st.session_state['active_tab_idx'] = 0
 
@@ -397,19 +400,23 @@ with tabs[8]:
                 st.info(f"💬 **Biografía:** {u_bio} \n\n 📍 **Ciudad:** {u_city} \n\n ⚡ **Puntos XP:** {u_xp}")
             
             if st.session_state['logged_in'] and st.session_state['username'] != real_username:
-                check_f = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username)).fetchone()
-                
-                if check_f:
-                    if st.button(f"❌ Dejar de seguir a @{real_username}", key=f"unfollow_btn_{real_username}"):
-                        c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username))
-                        conn.commit()
-                        st.success(f"Has dejado de seguir a @{real_username}")
-                        st.rerun()
-                else:
-                    if st.button(f"➕ Seguir a @{real_username}", key=f"follow_btn_{real_username}"):
-                        c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], real_username))
-                        conn.commit()
-                        st.success(f"¡Ahora sigues a @{real_username}!")
+                col_btn1, col_btn2 = st.columns(2)
+                with col_btn1:
+                    check_f = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username)).fetchone()
+                    if check_f:
+                        if st.button(f"❌ Dejar de seguir", key=f"unfollow_btn_{real_username}"):
+                            c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username))
+                            conn.commit()
+                            st.rerun()
+                    else:
+                        if st.button(f"➕ Seguir", key=f"follow_btn_{real_username}"):
+                            c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], real_username))
+                            conn.commit()
+                            st.rerun()
+                with col_btn2:
+                    if st.button(f"💬 Enviar Mensaje", key=f"msg_btn_{real_username}"):
+                        st.session_state['chat_target'] = real_username
+                        st.session_state['active_tab_idx'] = 9
                         st.rerun()
 
             st.markdown("### 📱 Publicaciones del Creador")
@@ -430,13 +437,31 @@ with tabs[8]:
     else:
         st.info("Escribe un usuario en el menú lateral o pincha en 'Perfil' desde el feed para ver los canales.")
 
-# 10. Ajustes
+# 10. Mensajes Privados (Chat)
 with tabs[9]:
-    st.subheader("⚙️ Ajustes Pro")
-    sel_t = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
-    if sel_t != st.session_state['theme']:
-        st.session_state['theme'] = sel_t
-        st.rerun()
-
-# Reseteamos el índice para que al recargar la página no se quede bloqueado en ajustes
-st.session_state['active_tab_idx'] = 0
+    st.subheader("💬 Mensajes Privados")
+    if st.session_state['logged_in']:
+        cur_user = st.session_state['username']
+        
+        # Obtener lista de chats (usuarios con los que ha hablado o a los que sigue)
+        chat_partners = c.execute("""
+            SELECT DISTINCT username FROM users WHERE username != ?
+        """, (cur_user,)).fetchall()
+        
+        partner_list = [p[0] for p in chat_partners]
+        
+        if not partner_list:
+            st.info("No hay otros usuarios registrados para chatear.")
+        else:
+            default_target = st.session_state.get('chat_target')
+            if default_target not in partner_list:
+                default_target = partner_list[0]
+                
+            selected_partner = st.selectbox("Selecciona un chat con:", partner_list, index=partner_list.index(default_target) if default_target in partner_list else 0)
+            st.session_state['chat_target'] = selected_partner
+            
+            st.markdown(f"--- \n### Chat con **@{selected_partner}**")
+            
+            # Cargar mensajes entre cur_user y selected_partner
+            msgs = c.execute("""
+  
