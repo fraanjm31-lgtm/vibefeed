@@ -451,6 +451,7 @@ with tabs[9]:
                     if txt:
                         c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, txt, datetime.now().strftime("%H:%M")))
                         conn.commit()
+                        st.session_state['active_tab_idx'] = 9
                         st.rerun()
     else:
         st.warning("Inicia sesión para chatear.")
@@ -461,6 +462,6 @@ with tabs[10]:
     sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
+        st.session_state['active_tab_idx'] = 10
         st.rerun()
-
-st.session_state['active_tab_idx'] = 0
+        
