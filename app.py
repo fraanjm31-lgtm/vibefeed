@@ -12,13 +12,28 @@ st.set_page_config(
     layout="centered"
 )
 
-# Estilos CSS avanzados
-st.markdown("""
+# Estilos CSS avanzados con soporte dinámico para Modo Oscuro/Claro
+def get_custom_css(theme):
+    if theme == "Modo Claro ☀️":
+        bg_color = "#ffffff"
+        text_color = "#0e1117"
+        card_bg = "#f0f2f6"
+    else:
+        bg_color = "#0e1117"
+        text_color = "#fafafa"
+        card_bg = "#161b22"
+        
+    return f"""
     <style>
-    .main { background-color: #0e1117; }
-    .stButton>button { width: 100%; border-radius: 20px; font-weight: bold; }
+    .main {{ background-color: {bg_color}; color: {text_color}; }}
+    .stButton>button {{ width: 100%; border-radius: 20px; font-weight: bold; }}
     </style>
-""", unsafe_allow_html=True)
+    """
+
+if 'theme' not in st.session_state:
+    st.session_state['theme'] = "Modo Oscuro 🌙"
+
+st.markdown(get_custom_css(st.session_state['theme']), unsafe_allow_html=True)
 
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
@@ -43,7 +58,8 @@ def init_db():
             city TEXT DEFAULT 'Madrid',
             lat REAL DEFAULT 40.4168,
             lon REAL DEFAULT -3.7038,
-            xp INTEGER DEFAULT 100
+            xp INTEGER DEFAULT 100,
+            notif_enabled INTEGER DEFAULT 1
         )
     ''')
     
@@ -137,7 +153,8 @@ def init_db():
         ("posts", "duel_votes_a", "INTEGER DEFAULT 0"),
         ("posts", "duel_votes_b", "INTEGER DEFAULT 0"),
         ("posts", "duel_opponent", "TEXT DEFAULT ''"),
-        ("users", "xp", "INTEGER DEFAULT 100")
+        ("users", "xp", "INTEGER DEFAULT 100"),
+        ("users", "notif_enabled", "INTEGER DEFAULT 1")
     ]
     for table, col, defn in cols:
         try:
@@ -162,7 +179,7 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
 st.title("🌌 VibeFeed Quantum Suite")
-st.caption("✨ Red social descentralizada con Cápsulas PIN, Algoritmo Democrático, Duelos y Ágora IA.")
+st.caption("✨ Red social descentralizada con Cápsulas PIN, Algoritmo Democrático, Duelos, Ágora IA y Ajustes Pro.")
 
 # Sidebar de acceso
 with st.sidebar:
@@ -205,9 +222,9 @@ with st.sidebar:
             st.session_state['username'] = ''
             st.rerun()
     st.markdown("---")
-    st.write("Versión 8.0 - Quantum Matrix")
+    st.write("Versión 9.0 - Quantum Settings Pro")
 
-# Menú expandido con las nuevas funciones exclusivas
+# Menú expandido con la nueva pestaña de Ajustes
 menu = st.tabs([
     "📱 Feed", 
     "🗳️ AlgoDemocracia", 
@@ -222,6 +239,7 @@ menu = st.tabs([
     "💬 Chats", 
     "🔔 Avisos", 
     "👤 Perfil", 
+    "⚙️ Ajustes",
     "➕ Subir"
 ])
 
@@ -229,12 +247,10 @@ menu = st.tabs([
 with menu[0]:
     st.subheader("Feed de la Comunidad")
     
-    pref_query = "SELECT preference FROM algo_votes"
     if st.session_state['logged_in']:
         c.execute("SELECT preference FROM algo_votes WHERE user = ?", (st.session_state['username'],))
         res_p = c.fetchone()
-        if res_p: pref_mode = res_p[0]
-        else: pref_mode = "Todo"
+        pref_mode = res_p[0] if res_p else "Todo"
     else:
         pref_mode = "Todo"
         
@@ -288,7 +304,7 @@ with menu[0]:
 # --- 2. ALGORITMO SOCIAL DEMOCRÁTICO ---
 with menu[1]:
     st.subheader("🗳️ Elige las Reglas del Algoritmo")
-    st.caption("A diferencia de Instagram o TikTok, aquí la comunidad vota en tiempo real cómo funciona el sistema de recomendación.")
+    st.caption("A diferencia de otras plataformas, aquí la comunidad vota en tiempo real cómo funciona el sistema.")
     
     if st.session_state['logged_in']:
         chosen_pref = st.radio("¿Cómo quieres que se ordene el feed general hoy?", ["Todo", "Solo Vídeos", "Solo Fotos", "Modo Sin Likes"])
@@ -300,7 +316,7 @@ with menu[1]:
     else:
         st.warning("Inicia sesión para votar en el algoritmo democrático.")
 
-# --- 3. VIBEDUELS (Batallas 1v1 de Creadores) ---
+# --- 3. VIBEDUELS ---
 with menu[2]:
     st.subheader("⚔️ VibeDuels: Batallas 1v1")
     st.caption("Dos creadores compiten cara a cara. Vota por tu favorito y hazle ganar XP.")
@@ -335,7 +351,7 @@ with menu[2]:
     else:
         st.info("No hay duelos activos en este momento. ¡Crea un duelo desde la pestaña 'Subir'!")
 
-# --- 4. ÁGORA IA (Pensamientos Anónimos y Constelaciones) ---
+# --- 4. ÁGORA IA ---
 with menu[3]:
     st.subheader("🌌 Ágora: Constelaciones de Pensamiento Anónimo")
     st.caption("Un espacio seguro y filosófico donde las ideas de todo el mundo se agrupan por IA.")
@@ -482,24 +498,19 @@ with menu[12]:
                 st.success("¡Actualizado!")
                 st.rerun()
 
-# --- 14. SUBIR CONTENIDO CON OPCIONES CUÁNTICAS ---
+# --- 14. AJUSTES PRO (Tema, Notificaciones, Privacidad y Zona de Peligro) ---
 with menu[13]:
-    st.subheader("➕ Subir Contenido Cuántico")
-    if st.session_state['logged_in']:
-        with st.form("upload_quantum", clear_on_submit=True):
-            caption = st.text_area("Descripción...")
-            media = st.file_uploader("Multimedia", type=["mp4", "mov", "jpg", "jpeg", "png"])
-            
-            st.markdown("---")
-            st.write("⚙️ **Opciones Cuánticas Avanzadas:**")
-            is_story = st.checkbox("⏳ Historia Efímera (24h)")
-            is_duel = st.checkbox("⚔️ Lanzar como VibeDuel 1v1 contra otro usuario")
-            c.execute("SELECT username FROM users WHERE username != ?", (st.session_state['username'],))
-            opps = [r[0] for r in c.fetchall()]
-            duel_opp = st.selectbox("Elige rival para el Duelo", opps) if opps else ""
-            secret_pin = st.text_input("🔐 Bloquear con PIN Secreto (Opcional, déjalo vacío si es público)")
-            
-            if st.form_submit_button("Publicar en la Red Cuántica"):
-                if caption:
-                 cap_l = captio
+    st.subheader("⚙️ Panel de Ajustes y Configuración")
     
+    # 1. Cambiador de Tema
+    st.markdown("### 🎨 Apariencia Visual")
+    selected_theme = st.selectbox("Selecciona el tema de la aplicación:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], index=0 if st.session_state['theme']=="Modo Oscuro 🌙" else 1)
+    if selected_theme != st.session_state['theme']:
+        st.session_state['theme'] = selected_theme
+        st.success("¡Tema cambiado con éxito!")
+        st.rerun()
+        
+    st.markdown("---")
+    
+    if st.session_state['logged_in']:
+      cur_user =
