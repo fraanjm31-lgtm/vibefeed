@@ -147,7 +147,8 @@ with st.sidebar:
         selected_search = st.selectbox("🔍 Ver perfil de:", ["Selecciona..."] + all_users, key="sidebar_channel_select")
         if selected_search != "Selecciona...":
             st.session_state['viewing_user'] = selected_search
-            st.session_state['active_tab'] = 8 
+            st.session_state['active_tab'] = 8
+            # Forzamos recarga limpia para aplicar el cambio de pestaña
             st.rerun()
 
 tab_titles = [
@@ -155,6 +156,7 @@ tab_titles = [
     "🌌 Ágora", "👤 Mi Perfil", "👥 Siguiendo", "📺 Canal / Perfil", "⚙️ Ajustes"
 ]
 
+# Usamos index controlado para cambiar de pestaña automáticamente si hace falta
 tabs = st.tabs(tab_titles)
 
 # 1. Feed
@@ -179,7 +181,6 @@ with tabs[0]:
         with col_u2:
             if st.button("👤 Perfil", key=f"visit_{post_id}_{user}"):
                 st.session_state['viewing_user'] = user
-                st.session_state['active_tab'] = 8
                 st.rerun()
 
         st.write(caption)
@@ -240,7 +241,6 @@ with tabs[2]:
         with col_t2:
             if st.button("Ver Perfil", key=f"top_p_{l_user}"):
                 st.session_state['viewing_user'] = l_user
-                st.session_state['active_tab'] = 8
                 st.rerun()
         st.markdown("---")
 
@@ -311,7 +311,6 @@ with tabs[7]:
                 with col_f2:
                     if st.button("Ver Canal", key=f"btn_f_{fname}"):
                         st.session_state['viewing_user'] = fname
-                        st.session_state['active_tab'] = 8
                         st.rerun()
                 st.markdown("---")
     else:
@@ -320,7 +319,12 @@ with tabs[7]:
 # 9. Canal / Perfil Externo
 with tabs[8]:
     st.subheader("📺 Perfil y Canal del Creador")
-    target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
+    
+    # Si se seleccionó alguien en el menú lateral, tiene prioridad
+    if 'sidebar_channel_select' in st.locals() and st.session_state.get('sidebar_channel_select') != "Selecciona...":
+        target_user = st.session_state.get('sidebar_channel_select')
+    else:
+        target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
     
     if target_user:
         u_data = c.execute("SELECT username, bio, city, xp FROM users WHERE username = ?", (target_user,)).fetchone()
@@ -331,7 +335,6 @@ with tabs[8]:
             st.markdown(f"## Perfil de **@{real_username}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
             st.info(f"💬 **Biografía:** {u_bio} \n\n 📍 **Ciudad:** {u_city} \n\n ⚡ **Puntos XP:** {u_xp}")
             
-            # Botón de Seguir / Dejar de seguir corregido
             if st.session_state['logged_in'] and st.session_state['username'] != real_username:
                 check_f = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username)).fetchone()
                 
