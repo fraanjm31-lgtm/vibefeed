@@ -219,7 +219,7 @@ with st.sidebar:
     c.execute("SELECT username FROM users")
     all_users = [u[0] for u in c.fetchall()]
     if all_users:
-        selected_search = st.selectbox("🔍 Buscar creador:", ["Selecciona..."] + all_users)
+        selected_search = st.selectbox("🔍 Buscar creador:", ["Selecciona..."] + all_users, key="sidebar_channel_select")
         if selected_search != "Selecciona...":
             st.session_state['viewing_user'] = selected_search
             st.success(f"Canal de @{selected_search} seleccionado. ¡Ve a la pestaña 'Canal'!")
@@ -483,16 +483,12 @@ with tab8:
 # 9. Canal Personal del Creador seleccionado
 with tab9:
     st.subheader("📺 Canal de Creador")
-    target_user = st.session_state['viewing_user']
+    
+    # Si no hay un canal seleccionado pero el usuario ha iniciado sesión, mostramos el suyo por defecto
+    if not st.session_state.get('viewing_user') and st.session_state['logged_in']:
+        st.session_state['viewing_user'] = st.session_state['username']
+        
+    target_user = st.session_state.get('viewing_user')
     
     if not target_user:
-        st.info("Usa el menú lateral izquierdo (buscador) para explorar el canal de cualquier creador.")
-    else:
-        c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (target_user,))
-        u_data = c.fetchone()
-        if u_data:
-            u_bio, u_city, u_xp = u_data
-            b_name, b_class = get_badge(u_xp)
-            
-            col_h1, col_h2 = st.columns([3, 1])
-      
+        st.info("Usa el menú lateral izquierdo (buscador) para explorar el canal de cualquier cread
