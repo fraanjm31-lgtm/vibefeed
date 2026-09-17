@@ -465,34 +465,40 @@ with tabs[9]:
         if not users_list:
             st.info("No hay más usuarios registrados.")
         else:
-            partner = st.selectbox("Para:", users_list, key="chat_partner_clean")
+            partner = st.selectbox("Para:", users_list, key="chat_partner_fragment")
             if partner:
-                col_info, col_act = st.columns([3, 1])
-                with col_info:
-                    st.markdown(f"**Chat con @{partner}**")
-                with col_act:
-                    if st.button("🔄 Refrescar"):
-                        st.rerun()
+                st.markdown(f"**Chat con @{partner}**")
+                
+                # Fragmento que se actualiza solo cada 5 segundos solo para los mensajes (sin tocar la sesión ni el login)
+                @st.fragment(run_every=5)
+                def mostrar_mensajes_en_tiempo_real():
+                    inner_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
+                    inner_c = inner_conn.cursor()
+                    
+                    msgs = inner_c.execute("""
+                        SELECT sender, message, timestamp 
+                        FROM messages 
+                        WHERE (sender = ? AND receiver = ?) 
+                           OR (sender = ? AND receiver = ?) 
+                        ORDER BY id ASC
+                    """, (cur, partner, partner, cur)).fetchall()
+                    
+                    inner_conn.close()
+                    
+                    if not msgs:
+                        st.info("No hay mensajes aún. ¡Escribe el primero!")
+                    else:
+                        for s, m, t in msgs:
+                            if s == cur:
+                                st.markdown(f"**Tú:** {m} *({t})*")
+                            else:
+                                st.markdown(f"**@{s}:** {m} *({t})*")
 
-                msgs = chat_c.execute("""
-                    SELECT sender, message, timestamp 
-                    FROM messages 
-                    WHERE (sender = ? AND receiver = ?) 
-                       OR (sender = ? AND receiver = ?) 
-                    ORDER BY id ASC
-                """, (cur, partner, partner, cur)).fetchall()
+                # Llamamos al bloque que se refresca solo
+                mostrar_mensajes_en_tiempo_real()
                 
-                if not msgs:
-                    st.info("No hay mensajes aún. ¡Escribe el primero!")
-                else:
-                    for s, m, t in msgs:
-                        if s == cur:
-                            st.markdown(f"**Tú:** {m} *({t})*")
-                        else:
-                            st.markdown(f"**@{s}:** {m} *({t})*")
-                
-                with st.form(key=f"chat_form_safe_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_safe")
+                with st.form(key=f"chat_form_frag_{partner}", clear_on_submit=True):
+                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_frag")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
                             chat_c.execute(
@@ -510,9 +516,8 @@ with tabs[9]:
 # 11. Ajustes
 with tabs[10]:
     st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_fragment")
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
         
-
