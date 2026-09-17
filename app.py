@@ -34,9 +34,6 @@ if 'theme' not in st.session_state:
 if 'viewing_user' not in st.session_state:
     st.session_state['viewing_user'] = None
 
-if 'active_tab' not in st.session_state:
-    st.session_state['active_tab'] = 0
-
 st.markdown(get_custom_css(st.session_state['theme']), unsafe_allow_html=True)
 
 def make_hashes(password):
@@ -144,11 +141,9 @@ with st.sidebar:
     c.execute("SELECT username FROM users")
     all_users = [u[0] for u in c.fetchall()]
     if all_users:
-        selected_search = st.selectbox("🔍 Ver perfil de:", ["Selecciona..."] + all_users, key="sidebar_channel_select")
+        selected_search = st.selectbox("🔍 Ver perfil de:", ["Selecciona..."] + all_users)
         if selected_search != "Selecciona...":
             st.session_state['viewing_user'] = selected_search
-            st.session_state['active_tab'] = 8
-            # Forzamos recarga limpia para aplicar el cambio de pestaña
             st.rerun()
 
 tab_titles = [
@@ -156,7 +151,6 @@ tab_titles = [
     "🌌 Ágora", "👤 Mi Perfil", "👥 Siguiendo", "📺 Canal / Perfil", "⚙️ Ajustes"
 ]
 
-# Usamos index controlado para cambiar de pestaña automáticamente si hace falta
 tabs = st.tabs(tab_titles)
 
 # 1. Feed
@@ -319,12 +313,7 @@ with tabs[7]:
 # 9. Canal / Perfil Externo
 with tabs[8]:
     st.subheader("📺 Perfil y Canal del Creador")
-    
-    # Si se seleccionó alguien en el menú lateral, tiene prioridad
-    if 'sidebar_channel_select' in st.locals() and st.session_state.get('sidebar_channel_select') != "Selecciona...":
-        target_user = st.session_state.get('sidebar_channel_select')
-    else:
-        target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
+    target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
     
     if target_user:
         u_data = c.execute("SELECT username, bio, city, xp FROM users WHERE username = ?", (target_user,)).fetchone()
