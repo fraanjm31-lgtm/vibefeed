@@ -55,11 +55,10 @@ def init_db():
                 city TEXT DEFAULT "Madrid", xp INTEGER DEFAULT 100,
                 profile_pic TEXT DEFAULT "")''')
     
-    # Por si la base de datos ya existía y no tiene la columna profile_pic
     try:
         c.execute("ALTER TABLE users ADD COLUMN profile_pic TEXT DEFAULT ''")
     except sqlite3.OperationalError:
-        pass # La columna ya existe
+        pass
     
     c.execute('''CREATE TABLE IF NOT EXISTS follows (
                 follower TEXT, followed TEXT, 
@@ -173,6 +172,10 @@ tab_titles = [
     "🌌 Ágora", "👤 Mi Perfil", "👥 Siguiendo", "📺 Canal / Perfil", "⚙️ Ajustes"
 ]
 
+# Control de índice seguro para evitar que se quede pillado en Ajustes
+if st.session_state['active_tab_idx'] >= len(tab_titles):
+    st.session_state['active_tab_idx'] = 0
+
 tabs = st.tabs(tab_titles)
 
 # 1. Feed
@@ -187,7 +190,6 @@ with tabs[0]:
     for post in posts:
         post_id, user, caption, file_path, file_type, likes, views, vibe_tag, gifts_received = post
         
-        # Obtenemos XP y foto de perfil del autor del post
         c.execute("SELECT xp, profile_pic FROM users WHERE username = ?", (user,))
         u_data = c.fetchone()
         p_xp = u_data[0] if u_data else 100
@@ -435,4 +437,6 @@ with tabs[9]:
     if sel_t != st.session_state['theme']:
         st.session_state['theme'] = sel_t
         st.rerun()
-        
+
+# Reseteamos el índice para que al recargar la página no se quede bloqueado en ajustes
+st.session_state['active_tab_idx'] = 0
