@@ -460,3 +460,32 @@ with tabs[9]:
             
             if not msgs:
                 
+# 10. Mensajes Privados
+with tabs[9]:
+    st.subheader("💬 Mensajes Privados")
+    if st.session_state['logged_in']:
+        cur = st.session_state['username']
+        partner = st.selectbox("Para:", [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()])
+        
+        if partner:
+            st.markdown(f"**Chat con @{partner}**")
+            for s, m, t in c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur, partner, partner, cur)).fetchall():
+                st.write(f"**{s}:** {m} ({t})")
+            
+            with st.form("chat_f", clear_on_submit=True):
+                txt = st.text_input("Escribe tu mensaje aquí...")
+                if st.form_submit_button("Enviar"):
+                    if txt:
+                        c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, txt, datetime.now().strftime("%H:%M")))
+                        conn.commit()
+                        st.rerun()
+    else:
+        st.warning("Inicia sesión para chatear.")
+
+# 11. Ajustes
+with tabs[10]:
+    st.subheader("⚙️ Ajustes")
+    if st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"]) != st.session_state['theme']:
+        st.session_state['theme'] = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
+        st.rerun()
+        
