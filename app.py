@@ -435,45 +435,18 @@ with tabs[8]:
     else:
         st.info("Escribe un usuario en el menú lateral o pincha en 'Perfil' desde el feed para ver los canales.")
 
-# 10. Mensajes Privados (Chat)
-with tabs[9]:
-    st.subheader("💬 Mensajes Privados")
-    if st.session_state['logged_in']:
-        cur_user = st.session_state['username']
-        
-        chat_partners = c.execute("SELECT DISTINCT username FROM users WHERE username != ?", (cur_user,)).fetchall()
-        partner_list = [p[0] for p in chat_partners]
-        
-        if not partner_list:
-            st.info("No hay otros usuarios registrados para chatear.")
-        else:
-            default_target = st.session_state.get('chat_target')
-            if default_target not in partner_list:
-                default_target = partner_list[0]
-                
-            selected_partner = st.selectbox("Selecciona un chat con:", partner_list, index=partner_list.index(default_target) if default_target in partner_list else 0)
-            st.session_state['chat_target'] = selected_partner
-            
-            st.markdown(f"--- \n### Chat con **@{selected_partner}**")
-            
-            msgs = c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur_user, selected_partner, selected_partner, cur_user)).fetchall()
-            
-            if not msgs:
-                
 # 10. Mensajes Privados
 with tabs[9]:
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         partner = st.selectbox("Para:", [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()])
-        
         if partner:
             st.markdown(f"**Chat con @{partner}**")
             for s, m, t in c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur, partner, partner, cur)).fetchall():
                 st.write(f"**{s}:** {m} ({t})")
-            
             with st.form("chat_f", clear_on_submit=True):
-                txt = st.text_input("Escribe tu mensaje aquí...")
+                txt = st.text_input("Escribe tu mensaje...")
                 if st.form_submit_button("Enviar"):
                     if txt:
                         c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, txt, datetime.now().strftime("%H:%M")))
