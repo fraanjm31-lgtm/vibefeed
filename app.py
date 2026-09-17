@@ -6,8 +6,8 @@ from datetime import datetime
 
 # Configuración de la página
 st.set_page_config(
-    page_title="VibeFeed Quantum Suite",
-    page_icon="🌌",
+    page_title="NoxVibe",
+    page_icon="⚡",
     layout="centered"
 )
 
@@ -52,7 +52,7 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             password TEXT,
-            bio TEXT DEFAULT 'Creador Cuántico 🌌',
+            bio TEXT DEFAULT 'Creador NoxVibe ⚡',
             city TEXT DEFAULT 'Madrid',
             lat REAL DEFAULT 40.4168,
             lon REAL DEFAULT -3.7038,
@@ -149,18 +149,18 @@ if 'username' not in st.session_state:
 
 def get_badge(xp):
     if xp >= 300:
-        return "🌌 Dios Cuántico", "badge-cuantico"
+        return "⚡ Dios NoxVibe", "badge-cuantico"
     elif xp >= 180:
-        return "⚡ Creador Pro", "badge-pro"
+        return "🔥 Creador Pro", "badge-pro"
     else:
         return "🌱 Novato", "badge-novato"
 
-st.title("🌌 VibeFeed Quantum Suite")
+st.title("⚡ NoxVibe")
 st.caption("✨ Red social con Regalos XP, Leaderboard, Premios y Ajustes Pro.")
 
 # Sidebar de acceso
 with st.sidebar:
-    st.subheader("🔐 Acceso Cuántico")
+    st.subheader("🔐 Acceso NoxVibe")
     if not st.session_state['logged_in']:
         auth_mode = st.radio("Modo:", ["Iniciar Sesión", "Registrarse"])
         u_in = st.text_input("Usuario (@...)")
@@ -335,7 +335,7 @@ with menu[2]:
 # 4. Leaderboard (Salón de la Fama)
 with menu[3]:
     st.subheader("🏆 Salón de la Fama (Leaderboard)")
-    st.caption("🌟 Los creadores con más experiencia (XP) de toda la red social.")
+    st.caption("🌟 Los creadores con más experiencia (XP) de NoxVibe.")
     c.execute("SELECT username, xp, bio FROM users ORDER BY xp DESC LIMIT 10")
     leaders = c.fetchall()
     
@@ -500,4 +500,5 @@ with menu[14]:
                     st.error("Error en los datos.")
                     
         st.markdown("---")
-        
+        st.markdown("### ⚠️ Zona de Peligro")
+ 
