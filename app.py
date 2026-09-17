@@ -201,7 +201,7 @@ with st.sidebar:
             st.session_state['username'] = ''
             st.rerun()
 
-# --- PESTAÑAS SUPERIORES HORIZONTALES (IGUAL QUE EN TU FOTO) ---
+# --- PESTAÑAS SUPERIORES HORIZONTALES ---
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📱 Feed", 
     "➕ Subir", 
@@ -229,7 +229,12 @@ with tab1:
     query += " ORDER BY id DESC"
     
     c.execute(query)
-    for post in c.fetchall():
+    posts = c.fetchall()
+    
+    if not posts:
+        st.info("No hay publicaciones todavía. ¡Sé el primero en subir algo!")
+    
+    for post in posts:
         post_id, user, caption, file_path, file_type, likes, views, vibe_tag, secret_pin, gifts_received = post
         
         c.execute("SELECT xp FROM users WHERE username = ?", (user,))
@@ -286,7 +291,7 @@ with tab2:
             pin = st.text_input("🔐 PIN secreto (opcional)")
             
             if st.form_submit_button("Publicar"):
-                if cap:
+                if cap or media is not None:
                     path, f_type = None, "default"
                     if media is not None:
                         os.makedirs("uploads", exist_ok=True)
@@ -304,7 +309,7 @@ with tab2:
                     st.success("¡Publicado con éxito! +10 XP ⚡")
                     st.rerun()
                 else:
-                    st.warning("Escribe algo.")
+                    st.warning("Escribe algo o sube un archivo.")
     else:
         st.warning("Inicia sesión en el menú lateral para subir contenido.")
 
@@ -312,7 +317,10 @@ with tab2:
 with tab3:
     st.subheader("🏆 Salón de la Fama")
     c.execute("SELECT username, xp, bio FROM users ORDER BY xp DESC LIMIT 10")
-    for idx, (l_user, l_xp, l_bio) in enumerate(c.fetchall()):
+    leaders = c.fetchall()
+    if not leaders:
+        st.info("Todavía no hay usuarios registrados.")
+    for idx, (l_user, l_xp, l_bio) in enumerate(leaders):
         b_name, b_class = get_badge(l_xp)
         medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
         st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
@@ -337,7 +345,10 @@ with tab4:
 with tab5:
     st.subheader("⚔️ VibeDuels 1v1")
     c.execute("SELECT id, user, caption, file, file_type, duel_opponent FROM posts WHERE is_duel = 1")
-    for d in c.fetchall():
+    duels = c.fetchall()
+    if not duels:
+        st.info("No hay duelos activos ahora mismo.")
+    for d in duels:
         d_id, d_user, d_cap, d_file, d_type, d_opp = d
         col1, col2 = st.columns(2)
         with col1:
@@ -370,7 +381,10 @@ with tab6:
                 conn.commit()
                 st.rerun()
     c.execute("SELECT thought, constellation FROM agora ORDER BY id DESC")
-    for ag in c.fetchall():
+    agoras = c.fetchall()
+    if not agoras:
+        st.info("No hay reflexiones en el ágora.")
+    for ag in agoras:
         st.markdown(f"> *\"{ag[0]}\"* \n\n 🏷️ `{ag[1]}`")
         st.markdown("---")
 
@@ -394,7 +408,7 @@ with tab7:
                 st.success("¡Guardado!")
                 st.rerun()
     else:
-        st.warning("Inicia sesión para ver tu perfil.")
+        st.warning("Inicia sesión en el menú lateral para ver tu perfil.")
 
 # 8. Ajustes
 with tab8:
@@ -404,4 +418,12 @@ with tab8:
         st.session_state['theme'] = sel_t
         st.success("¡Tema aplicado!")
         st.rerun()
-    
+        
+    st.markdown("---")
+    st.subheader("🧹 Zona de Limpieza")
+    if st.button("🗑️ Borrar todos los posts y dejar el feed limpio"):
+        c.execute("DELETE FROM posts")
+        conn.commit()
+        st.success("¡Listo! Todos los posts de prueba han sido borrados. El feed está limpio.")
+        st.rerun()
+        
