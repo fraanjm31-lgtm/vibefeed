@@ -158,7 +158,7 @@ def get_badge(xp):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social con Regalos XP, Leaderboard, Premios y Ajustes Pro.")
 
-# Sidebar de acceso
+# Sidebar de acceso y navegación optimizada para móvil
 with st.sidebar:
     st.subheader("🔐 Acceso NoxVibe")
     if not st.session_state['logged_in']:
@@ -200,31 +200,32 @@ with st.sidebar:
             st.session_state['logged_in'] = False
             st.session_state['username'] = ''
             st.rerun()
+            
     st.markdown("---")
-    st.write("Versión 9.3 - Leaderboard Pro")
-
-# Menú completo con pestañas (incluyendo Leaderboard)
-menu = st.tabs([
-    "📱 Feed", 
-    "🗳️ AlgoDemocracia", 
-    "⚔️ VibeDuels", 
-    "🏆 Leaderboard",
-    "🌌 Ágora IA", 
-    "🔐 Cápsulas PIN", 
-    "⏳ Historias", 
-    "🌍 VibeMap", 
-    "🎯 Desafíos", 
-    "🔍 Buscar", 
-    "# Tags", 
-    "💬 Chats", 
-    "🔔 Avisos", 
-    "👤 Perfil", 
-    "⚙️ Ajustes",
-    "➕ Subir"
-])
+    st.subheader("🧭 Menú Principal")
+    menu_option = st.selectbox("Selecciona sección:", [
+        "📱 Feed", 
+        "➕ Subir Contenido",
+        "🏆 Leaderboard",
+        "🗳️ AlgoDemocracia", 
+        "⚔️ VibeDuels", 
+        "🌌 Ágora IA", 
+        "🔐 Cápsulas PIN", 
+        "⏳ Historias", 
+        "🌍 VibeMap", 
+        "🎯 Desafíos", 
+        "🔍 Buscar", 
+        "# Tags", 
+        "💬 Chats", 
+        "🔔 Avisos", 
+        "👤 Perfil", 
+        "⚙️ Ajustes"
+    ])
+    st.markdown("---")
+    st.write("Versión 9.4 - Mobile Pro")
 
 # 1. Feed
-with menu[0]:
+if menu_option == "📱 Feed":
     st.subheader("Feed de la Comunidad")
     if st.session_state['logged_in']:
         c.execute("SELECT preference FROM algo_votes WHERE user = ?", (st.session_state['username'],))
@@ -293,8 +294,60 @@ with menu[0]:
                             st.error("No tienes suficiente XP.")
             st.markdown("---")
 
-# 2. AlgoDemocracia
-with menu[1]:
+# 2. Subir Contenido
+elif menu_option == "➕ Subir Contenido":
+    st.subheader("➕ Subir Contenido a NoxVibe")
+    if st.session_state['logged_in']:
+        with st.form("up_form", clear_on_submit=True):
+            cap = st.text_input("Descripción...")
+            media = st.file_uploader("Multimedia", type=["mp4", "mov", "jpg", "jpeg", "png"])
+            is_st = st.checkbox("⏳ Historia (24h)")
+            is_dl = st.checkbox("⚔️ VibeDuel 1v1")
+            c.execute("SELECT username FROM users WHERE username != ?", (st.session_state['username'],))
+            opps = [r[0] for r in c.fetchall()]
+            opp = st.selectbox("Rival", opps) if opps else ""
+            pin = st.text_input("🔐 PIN secreto (opcional)")
+            
+            if st.form_submit_button("Publicar"):
+                if cap:
+                    path, f_type = None, "default"
+                    if media is not None:
+                        os.makedirs("uploads", exist_ok=True)
+                        path = os.path.join("uploads", media.name)
+                        with open(path, "wb") as f: f.write(media.getbuffer())
+                        f_type = media.type
+                    
+                    c.execute('''
+                        INSERT INTO posts (user, caption, file, file_type, likes, views, is_story, secret_pin, is_duel, duel_opponent)
+                        VALUES (?, ?, ?, ?, 1, 0, ?, ?, ?, ?)
+                    ''', (st.session_state['username'], cap, path, f_type, 1 if is_st else 0, pin, 1 if is_dl else 0, opp if is_dl else ""))
+                    
+                    c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (st.session_state['username'],))
+                    conn.commit()
+                    st.success("¡Publicado con éxito! +10 XP ⚡")
+                    st.rerun()
+                else:
+                    st.warning("Escribe algo.")
+    else:
+        st.warning("Inicia sesión para subir contenido.")
+
+# 3. Leaderboard
+elif menu_option == "🏆 Leaderboard":
+    st.subheader("🏆 Salón de la Fama (Leaderboard)")
+    st.caption("🌟 Los creadores con más experiencia (XP) de NoxVibe.")
+    c.execute("SELECT username, xp, bio FROM users ORDER BY xp DESC LIMIT 10")
+    leaders = c.fetchall()
+    
+    for idx, (l_user, l_xp, l_bio) in enumerate(leaders):
+        b_name, b_class = get_badge(l_xp)
+        medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
+        st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+        st.write(f"💬 *{l_bio}*")
+        st.caption(f"⚡ Puntos XP totales: **{l_xp}**")
+        st.markdown("---")
+
+# 4. AlgoDemocracia
+elif menu_option == "🗳️ AlgoDemocracia":
     st.subheader("🗳️ Elige las Reglas del Algoritmo")
     if st.session_state['logged_in']:
         chosen_pref = st.radio("¿Cómo quieres que se ordene el feed?", ["Todo", "Solo Vídeos", "Solo Fotos", "Modo Sin Likes"])
@@ -306,8 +359,8 @@ with menu[1]:
     else:
         st.warning("Inicia sesión para votar.")
 
-# 3. VibeDuels
-with menu[2]:
+# 5. VibeDuels
+elif menu_option == "⚔️ VibeDuels":
     st.subheader("⚔️ VibeDuels: Batallas 1v1")
     c.execute("SELECT id, user, caption, file, file_type, duel_opponent FROM posts WHERE is_duel = 1")
     for d in c.fetchall():
@@ -332,23 +385,8 @@ with menu[2]:
                 st.rerun()
         st.markdown("---")
 
-# 4. Leaderboard (Salón de la Fama)
-with menu[3]:
-    st.subheader("🏆 Salón de la Fama (Leaderboard)")
-    st.caption("🌟 Los creadores con más experiencia (XP) de NoxVibe.")
-    c.execute("SELECT username, xp, bio FROM users ORDER BY xp DESC LIMIT 10")
-    leaders = c.fetchall()
-    
-    for idx, (l_user, l_xp, l_bio) in enumerate(leaders):
-        b_name, b_class = get_badge(l_xp)
-        medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
-        st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
-        st.write(f"💬 *{l_bio}*")
-        st.caption(f"⚡ Puntos XP totales: **{l_xp}**")
-        st.markdown("---")
-
-# 5. Ágora IA
-with menu[4]:
+# 6. Ágora IA
+elif menu_option == "🌌 Ágora IA":
     st.subheader("🌌 Ágora: Pensamientos Anónimos")
     if st.session_state['logged_in']:
         with st.form("ag_f", clear_on_submit=True):
@@ -362,8 +400,8 @@ with menu[4]:
         st.markdown(f"> *\"{ag[0]}\"* \n\n 🏷️ `{ag[1]}`")
         st.markdown("---")
 
-# 6. Cápsulas PIN
-with menu[5]:
+# 7. Cápsulas PIN
+elif menu_option == "🔐 Cápsulas PIN":
     st.subheader("🔐 Cápsulas PIN")
     pin_s = st.text_input("Introduce clave secreta:")
     if pin_s:
@@ -372,8 +410,8 @@ with menu[5]:
             st.success(f"@{rp[0]}: {rp[1]}")
             if rp[2] and os.path.exists(rp[2]): st.image(rp[2], use_container_width=True)
 
-# 7. Historias
-with menu[6]:
+# 8. Historias
+elif menu_option == "⏳ Historias":
     st.subheader("⏳ Historias (24h)")
     c.execute("SELECT user, caption, file FROM posts WHERE is_story = 1 ORDER BY id DESC")
     for st_item in c.fetchall():
@@ -382,8 +420,8 @@ with menu[6]:
         if st_item[2] and os.path.exists(st_item[2]): st.image(st_item[2], use_container_width=True)
         st.markdown("---")
 
-# 8. VibeMap
-with menu[7]:
+# 9. VibeMap
+elif menu_option == "🌍 VibeMap":
     st.subheader("🌍 VibeMap")
     c.execute("SELECT username, city, lat, lon FROM users")
     m_users = c.fetchall()
@@ -391,15 +429,15 @@ with menu[7]:
         import pandas as pd
         st.map(pd.DataFrame(m_users, columns=['username', 'city', 'lat', 'lon'])[['lat', 'lon']])
 
-# 9. Desafíos
-with menu[8]:
+# 10. Desafíos
+elif menu_option == "🎯 Desafíos":
     st.subheader("🎯 Desafíos")
     c.execute("SELECT title, description FROM challenges")
     chal = c.fetchone()
     if chal: st.info(f"### {chal[0]}\n{chal[1]}")
 
-# 10. Buscar
-with menu[9]:
+# 11. Buscar
+elif menu_option == "🔍 Buscar":
     st.subheader("🔍 Buscar Creadores")
     sq = st.text_input("Usuario...")
     if sq:
@@ -408,8 +446,8 @@ with menu[9]:
             b_n, b_c = get_badge(r[2])
             st.markdown(f"### @{r[0]} <span class='{b_c}'>{b_n}</span> (XP: {r[2]})\n*{r[1]}*", unsafe_allow_html=True)
 
-# 11. Tags
-with menu[10]:
+# 12. Tags
+elif menu_option == "# Tags":
     st.subheader("# Tags")
     tq = st.text_input("Etiqueta...")
     if tq:
@@ -417,8 +455,8 @@ with menu[10]:
         c.execute("SELECT user, caption FROM posts WHERE caption LIKE ?", (f"%{tq}%",))
         for tp in c.fetchall(): st.write(f"**@{tp[0]}**: {tp[1]}")
 
-# 12. Chats
-with menu[11]:
+# 13. Chats
+elif menu_option == "💬 Chats":
     st.subheader("💬 Chats")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -435,14 +473,14 @@ with menu[11]:
                     conn.commit()
                     st.rerun()
 
-# 13. Avisos
-with menu[12]:
+# 14. Avisos
+elif menu_option == "🔔 Avisos":
     st.subheader("🔔 Avisos")
     if st.session_state['logged_in']:
         st.info("Sin notificaciones pendientes.")
 
-# 14. Perfil
-with menu[13]:
+# 15. Perfil
+elif menu_option == "👤 Perfil":
     st.subheader("👤 Perfil y Premios")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -450,55 +488,4 @@ with menu[13]:
         u_info = c.fetchone()
         b_n, b_c = get_badge(u_info[2])
         st.metric("Puntos XP", u_info[2])
-        st.markdown(f"**Tu Insignia Actual:** <span class='{b_c}'>{b_n}</span>", unsafe_allow_html=True)
-        st.info("💡 Sube contenido, recibe regalos o participa en duelos para ganar XP y subir de rango.")
-        
-        with st.form("p_up"):
-            nb = st.text_area("Bio", value=u_info[0])
-            nc = st.text_input("Ciudad", value=u_info[1])
-            if st.form_submit_button("Guardar"):
-                c.execute("UPDATE users SET bio = ?, city = ? WHERE username = ?", (nb, nc, cur))
-                conn.commit()
-                st.success("¡Guardado!")
-                st.rerun()
-
-# 15. Ajustes Pro
-with menu[14]:
-    st.subheader("⚙️ Ajustes Pro")
-    st.markdown("### 🎨 Apariencia")
-    sel_t = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], index=0 if st.session_state['theme']=="Modo Oscuro 🌙" else 1)
-    if sel_t != st.session_state['theme']:
-        st.session_state['theme'] = sel_t
-        st.success("¡Tema aplicado!")
-        st.rerun()
-        
-    st.markdown("---")
-    
-    if st.session_state['logged_in']:
-        cur_user = st.session_state['username']
-        st.markdown("### 🔔 Notificaciones")
-        c.execute("SELECT notif_enabled FROM users WHERE username = ?", (cur_user,))
-        n_status = c.fetchone()[0]
-        n_toggle = st.toggle("Activar avisos", value=True if n_status==1 else False)
-        if n_toggle != (n_status == 1):
-            c.execute("UPDATE users SET notif_enabled = ? WHERE username = ?", (1 if n_toggle else 0, cur_user))
-            conn.commit()
-            st.toast("Actualizado")
-            
-        st.markdown("---")
-        st.markdown("### 🔒 Seguridad")
-        with st.form("pwd_f"):
-            old_p = st.text_input("Contraseña Actual", type="password")
-            new_p = st.text_input("Nueva Contraseña", type="password")
-            if st.form_submit_button("Cambiar Contraseña"):
-                c.execute("SELECT password FROM users WHERE username = ?", (cur_user,))
-                if check_hashes(old_p, c.fetchone()[0]) and new_p:
-                    c.execute("UPDATE users SET password = ? WHERE username = ?", (make_hashes(new_p), cur_user))
-                    conn.commit()
-                    st.success("¡Contraseña cambiada!")
-                else:
-                    st.error("Error en los datos.")
-                    
-        st.markdown("---")
-        st.markdown("### ⚠️ Zona de Peligro")
- 
+        st.markdown(f"**Tu Insig
