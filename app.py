@@ -456,17 +456,27 @@ with tabs[9]:
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
-        users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
+        
+        # Conexión fresca y dedicada para evitar caché de SQLite
+        chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
+        chat_c = chat_conn.cursor()
+        
+        users_list = [u[0] for u in chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
         if not users_list:
             st.info("No hay más usuarios registrados.")
         else:
-            partner = st.selectbox("Para:", users_list, key="chat_partner_fixed")
+            partner = st.selectbox("Para:", users_list, key="chat_partner_fixed_v2")
             if partner:
-                st.markdown(f"**Chat con @{partner}**")
+                col_t1, col_t2 = st.columns([3, 1])
+                with col_t1:
+                    st.markdown(f"**Chat con @{partner}**")
+                with col_t2:
+                    if st.button("🔄 Recargar"):
+                        st.rerun()
                 
-                # Cargar historial bidireccional completo
-                msgs = c.execute("""
+                # Leer mensajes con conexión totalmente limpia de caché
+                msgs = chat_c.execute("""
                     SELECT sender, message, timestamp 
                     FROM messages 
                     WHERE (sender = ? AND receiver = ?) 
@@ -483,21 +493,27 @@ with tabs[9]:
                         else:
                             st.markdown(f"**@{s}:** {m} *({t})*")
                 
-                with st.form(key=f"chat_form_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_box")
+                with st.form(key=f"chat_form_clean_{partner}", clear_on_submit=True):
+                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_clean")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
-                            c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, txt.strip(), datetime.now().strftime("%H:%M")))
-                            conn.commit()
+                            chat_c.execute(
+                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
+                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
+                            )
+                            chat_conn.commit()
+                            chat_conn.close()
                             st.rerun()
+        chat_conn.close()
     else:
         st.warning("Inicia sesión para chatear.")
 
 # 11. Ajustes
 with tabs[10]:
     st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_box")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_box_v2")
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
         
+
