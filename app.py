@@ -449,7 +449,7 @@ with tab7:
     else:
         st.warning("Inicia sesión en el menú lateral para ver tu perfil.")
 
-# 8. Mis Siguiendo (Corregido)
+# 8. Mis Siguiendo
 with tab8:
     st.subheader("👥 Creadores a los que Sigues")
     if st.session_state['logged_in']:
@@ -494,4 +494,5 @@ with tab9:
             u_bio, u_city, u_xp = u_data
             b_name, b_class = get_badge(u_xp)
             
-            col_h1, col_h2 = st.columns([3
+            col_h1, col_h2 = st.columns([3, 1])
+      
