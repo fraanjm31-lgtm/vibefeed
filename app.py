@@ -161,7 +161,7 @@ def get_badge(xp):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social con Regalos XP, Leaderboard, Premios y Ajustes Pro.")
 
-# Sidebar para el Acceso / Login
+# Sidebar para el Acceso / Login y el Buscador de Canales
 with st.sidebar:
     st.subheader("🔐 Acceso NoxVibe")
     if not st.session_state['logged_in']:
@@ -206,7 +206,17 @@ with st.sidebar:
             st.session_state['username'] = ''
             st.rerun()
 
-# --- PESTAÑAS SUPERIORES HORIZONTALES ---
+    st.markdown("---")
+    st.subheader("📺 Explorar Canales")
+    c.execute("SELECT username FROM users")
+    all_users = [u[0] for u in c.fetchall()]
+    if all_users:
+        selected_search = st.selectbox("🔍 Buscar creador:", ["Selecciona..."] + all_users)
+        if selected_search != "Selecciona...":
+            st.session_state['viewing_user'] = selected_search
+            st.success(f"Canal de @{selected_search} seleccionado. ¡Ve a la pestaña 'Canal'!")
+
+# --- PESTAÑAS SUPERIORES HORIZONTALES (Simplificadas y limpias) ---
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     "📱 Feed", 
     "➕ Subir", 
@@ -253,7 +263,7 @@ with tab1:
             with col_u1:
                 st.markdown(f"### **@{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
             with col_u2:
-                if st.button("📺 Ver Canal", key=f"visit_{post_id}_{user}"):
+                if st.button("📺 Canal", key=f"visit_{post_id}_{user}"):
                     st.session_state['viewing_user'] = user
                     st.rerun()
 
@@ -343,7 +353,7 @@ with tab3:
             st.write(f"💬 *{l_bio}*")
             st.caption(f"⚡ XP totales: **{l_xp}**")
         with col_l2:
-            if st.button("📺 Ver Canal", key=f"lead_visit_{l_user}"):
+            if st.button("📺 Canal", key=f"lead_visit_{l_user}"):
                 st.session_state['viewing_user'] = l_user
                 st.rerun()
         st.markdown("---")
@@ -430,25 +440,13 @@ with tab7:
     else:
         st.warning("Inicia sesión en el menú lateral para ver tu perfil.")
 
-# 8. Canal Personal con Buscador de Creadores
+# 8. Canal Personal del Creador seleccionado
 with tab8:
-    st.subheader("📺 Canal de Creador y Buscador")
-    
-    # Buscador de usuarios
-    c.execute("SELECT username FROM users")
-    all_users = [u[0] for u in c.fetchall()]
-    
-    if all_users:
-        selected_search = st.selectbox("🔍 Buscar canal de usuario:", ["Selecciona un usuario..."] + all_users)
-        if selected_search != "Selecciona un usuario...":
-            st.session_state['viewing_user'] = selected_search
-            
-    st.markdown("---")
-    
+    st.subheader("📺 Canal de Creador")
     target_user = st.session_state['viewing_user']
     
     if not target_user:
-        st.info("Usa el buscador de arriba o pulsa 'Ver Canal' en cualquier publicación para ver el contenido completo de un creador.")
+        st.info("Usa el menú lateral izquierdo (desplegando las opciones) para buscar y seleccionar el canal de cualquier creador.")
     else:
         c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (target_user,))
         u_data = c.fetchone()
@@ -487,8 +485,4 @@ with tab9:
     if sel_t != st.session_state['theme']:
         st.session_state['theme'] = sel_t
         st.success("¡Tema aplicado!")
-        st.rerun()
-        
-    st.markdown("---")
-    st.subheader("🧹 Zona de Limpieza")
-            
+        st.re
