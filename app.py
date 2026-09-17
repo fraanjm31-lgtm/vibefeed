@@ -4,7 +4,7 @@ import sqlite3
 
 # Configuración de la página
 st.set_page_config(
-    page_title="VibeFeed Pro - Photo Edition",
+    page_title="VibeFeed Photo",
     page_icon="📸",
     layout="centered"
 )
@@ -19,11 +19,6 @@ st.markdown("""
         width: 100%;
         border-radius: 20px;
         font-weight: bold;
-    }
-    .photo-container {
-        border-radius: 12px;
-        overflow: hidden;
-        margin-bottom: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -90,7 +85,7 @@ with menu[0]:
             st.markdown(f"### **{user}**")
             st.write(caption)
             
-            # Renderizado multimedia mejorado y llamativo
+            # Renderizado multimedia
             if file_path and os.path.exists(file_path):
                 if "video" in file_type:
                     st.video(file_path)
@@ -99,8 +94,8 @@ with menu[0]:
             else:
                 st.info("📷 [ Publicación de texto de la comunidad ]")
             
-            # Botones interactivos (Likes y Compartir)
-            col1, col2, col3 = st.columns([1, 1, 2])
+            # Botones interactivos (Likes, Compartir, Copiar enlace y Borrar)
+            col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
             
             with col1:
                 if st.button(f"❤️ {likes}", key=f"like_{post_id}"):
@@ -110,11 +105,21 @@ with menu[0]:
             
             with col2:
                 whatsapp_url = f"https://api.whatsapp.com/send?text=Mira%20esta%20foto%20en%20VibeFeed%20Photo:%20{caption}"
-                st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:8px; border-radius:20px; text-align:center; font-weight:bold; font-size:14px;">💬 Compartir</div></a>', unsafe_allow_html=True)
+                st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:8px; border-radius:20px; text-align:center; font-weight:bold; font-size:12px;">💬 Compartir</div></a>', unsafe_allow_html=True)
 
             with col3:
-                if st.button(f"🔗 Copiar enlace", key=f"share_{post_id}"):
-                    st.toast(f"¡Enlace de la foto #{post_id} copiado!", icon="📋")
+                if st.button(f"🔗 Copiar", key=f"share_{post_id}"):
+                    st.toast(f"¡Enlace copiado!", icon="📋")
+
+            with col4:
+                if st.button(f"🗑️ Borrar", key=f"del_{post_id}"):
+                    # Borrar comentarios asociados primero
+                    c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
+                    # Borrar el post
+                    c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+                    conn.commit()
+                    st.toast("Publicación borrada con éxito", icon="🗑️")
+                    st.rerun()
 
             # Sección de comentarios dinámicos
             with st.expander(f"💬 Comentarios"):
@@ -192,10 +197,9 @@ with menu[2]:
     st.write("""
         **VibeFeed Photo** es la evolución visual de tu plataforma, diseñada para compartir fotos con la máxima calidad y fluidez en dispositivos móviles.
         
-        * **Versión:** 3.0 Photo Gallery Edition
+        * **Versión:** 3.1 Photo Gallery Edition (con borrado)
         * **Desarrollo:** Optimizado para creadores visuales.
         * **Base de Datos:** SQLite persistente.
     """)
     st.info("¡Sube tus mejores fotos y haz crecer la comunidad!")
     
-
