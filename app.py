@@ -1,3 +1,4 @@
+
 import streamlit as st
 import os
 import sqlite3
@@ -55,7 +56,7 @@ def init_db():
             likes INTEGER
         )
     ''')
-    # Tabla de comentarios
+    # Tabla de comentarios con soporte para usuario
     c.execute('''
         CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -120,7 +121,7 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    st.write("Versión 4.0 - Auth Edition")
+    st.write("Versión 4.1 - Auth Edition")
 
 # Menú de navegación superior
 menu = st.tabs(["📱 Galería Global", "👤 Perfil Personal", "➕ Subir Foto/Vídeo", "ℹ️ Acerca de"])
@@ -170,7 +171,6 @@ with menu[0]:
                     st.toast(f"¡Enlace copiado!", icon="📋")
 
             with col4:
-                # Solo el dueño de la publicación puede borrarla
                 if st.session_state['logged_in'] and st.session_state['username'] == user:
                     if st.button(f"🗑️ Borrar", key=f"del_{post_id}"):
                         c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
@@ -179,16 +179,20 @@ with menu[0]:
                         st.toast("Publicación borrada", icon="🗑️")
                         st.rerun()
                 else:
-                    st.write("") # Espacio vacío si no es el dueño
+                    st.write("")
 
-            # Comentarios
+            # Comentarios con control de errores por si acaso
             with st.expander(f"💬 Comentarios"):
-                c.execute("SELECT user, comment FROM comments WHERE post_id = ?", (post_id,))
-                comments = c.fetchall()
+                try:
+                    c.execute("SELECT user, comment FROM comments WHERE post_id = ?", (post_id,))
+                    comments = c.fetchall()
+                except sqlite3.OperationalError:
+                    comments = []
                 
                 if comments:
                     for com in comments:
-                        st.text(f"@{com[0]}: {com[1]}")
+                        c_user = com[0] if com[0] else "Anónimo"
+                        st.text(f"@{c_user}: {com[1]}")
                 else:
                     st.text("Sé el primero en comentar...")
                 
@@ -196,7 +200,11 @@ with menu[0]:
                 if st.button("Enviar comentario", key=f"btn_com_{post_id}"):
                     if new_com:
                         com_user = st.session_state['username'] if st.session_state['logged_in'] else "Anónimo"
-                        c.execute("INSERT INTO comments (post_id, user, comment) VALUES (?, ?, ?)", (post_id, com_user, new_com))
+                        try:
+                            c.execute("INSERT INTO comments (post_id, user, comment) VALUES (?, ?, ?)", (post_id, com_user, new_com))
+                        except sqlite3.OperationalError:
+                            c.execute("ALTER TABLE comments ADD COLUMN user TEXT")
+                            c.execute("INSERT INTO comments (post_id, user, comment) VALUES (?, ?, ?)", (post_id, com_user, new_com))
                         conn.commit()
                         st.rerun()
             
@@ -240,7 +248,7 @@ with menu[2]:
     st.subheader("Comparte tus mejores fotos y vídeos")
     if st.session_state['logged_in']:
         with st.form("pub_form", clear_on_submit=True):
-            st.write(auto_user := f"Publicando como: **{st.session_state['username']}**")
+            st.write(f"Publicando como: **{st.session_state['username']}**")
             caption = st.text_area("Añade una descripción o historia a tu foto...")
             media = st.file_uploader("Sube tu foto o vídeo", type=["mp4", "mov", "jpg", "jpeg", "png"])
             
@@ -265,7 +273,7 @@ with menu[2]:
                 else:
                     st.warning("Por favor, añade una descripción.")
     else:
-        st.warning("⚠️ Inicia sesión en la barra lateral con tu cuenta para poder subir contenido a VibeFeed.")
+        st.warning("⚠️ Inicia sesión en la barra lateral con tu cuenta para poder subir contenido.")
 
 # --- SECCIÓN 4: ACERCA DE ---
 with menu[3]:
@@ -281,9 +289,6 @@ with menu[3]:
     with col_2:
         st.metric("Publicaciones Totales", total_posts)
         
-    st.markdown("---")
-    st.write("Red social visual privada con autenticación de usuarios por contraseña.")
 
-    
 
     
