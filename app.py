@@ -458,4 +458,5 @@ with tabs[9]:
             
             msgs = c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur_user, selected_partner, selected_partner, cur_user)).fetchall()
             
-            chat_container = st.container
+            if not msgs:
+                
