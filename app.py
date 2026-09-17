@@ -484,11 +484,12 @@ with tab8:
 with tab9:
     st.subheader("📺 Canal de Creador")
     
-    # Si no hay un canal seleccionado pero el usuario ha iniciado sesión, mostramos el suyo por defecto
     if not st.session_state.get('viewing_user') and st.session_state['logged_in']:
         st.session_state['viewing_user'] = st.session_state['username']
         
     target_user = st.session_state.get('viewing_user')
     
     if not target_user:
-        st.info("Usa el menú lateral izquierdo (buscador) para explorar el canal de cualquier cread
+        st.info("Usa el menú lateral izquierdo (buscador) para explorar el canal de cualquier creador.")
+    else:
+        c.execute("SELECT username, bio, city, xp FROM users WHERE LOWER(username) = LOW
