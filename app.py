@@ -141,10 +141,13 @@ with st.sidebar:
     c.execute("SELECT username FROM users")
     all_users = [u[0] for u in c.fetchall()]
     if all_users:
-        selected_search = st.selectbox("🔍 Ver perfil de:", ["Selecciona..."] + all_users)
-        if selected_search != "Selecciona...":
-            st.session_state['viewing_user'] = selected_search
-            st.rerun()
+        selected_search = st.selectbox("🔍 Buscar perfil:", ["Selecciona..."] + all_users, key="search_user_box")
+        if st.button("🔍 Ver Perfil"):
+            if selected_search != "Selecciona...":
+                st.session_state['viewing_user'] = selected_search
+                st.rerun()
+            else:
+                st.warning("Selecciona un usuario.")
 
 tab_titles = [
     "📱 Feed", "🚀 Lanzar", "🏆 Top", "🗳️ Algo", "⚔️ Duels", 
