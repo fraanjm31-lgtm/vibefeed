@@ -34,6 +34,10 @@ if 'theme' not in st.session_state:
 if 'viewing_user' not in st.session_state:
     st.session_state['viewing_user'] = None
 
+# Gestionamos la pestaña activa mediante el estado para poder cambiarla al hacer clic
+if 'active_tab_idx' not in st.session_state:
+    st.session_state['active_tab_idx'] = 0
+
 st.markdown(get_custom_css(st.session_state['theme']), unsafe_allow_html=True)
 
 def make_hashes(password):
@@ -138,7 +142,6 @@ with st.sidebar:
 
     st.markdown("---")
     st.subheader("📺 Explorar Perfiles")
-    # Usamos un campo de texto limpio para evitar bloqueos del selectbox en móviles
     search_query = st.text_input("🔍 Escribe el apodo:", placeholder="Ej: Labachito")
     if st.button("🔍 Buscar Usuario"):
         if search_query:
@@ -146,6 +149,7 @@ with st.sidebar:
             exists = c.execute("SELECT 1 FROM users WHERE username = ?", (clean_q,)).fetchone()
             if exists:
                 st.session_state['viewing_user'] = clean_q
+                st.session_state['active_tab_idx'] = 8  # Índice de la pestaña "Canal / Perfil"
                 st.rerun()
             else:
                 st.error("Usuario no encontrado.")
@@ -181,6 +185,7 @@ with tabs[0]:
         with col_u2:
             if st.button("👤 Perfil", key=f"visit_{post_id}_{user}"):
                 st.session_state['viewing_user'] = user
+                st.session_state['active_tab_idx'] = 8
                 st.rerun()
 
         st.write(caption)
@@ -241,6 +246,7 @@ with tabs[2]:
         with col_t2:
             if st.button("Ver Perfil", key=f"top_p_{l_user}"):
                 st.session_state['viewing_user'] = l_user
+                st.session_state['active_tab_idx'] = 8
                 st.rerun()
         st.markdown("---")
 
@@ -311,6 +317,7 @@ with tabs[7]:
                 with col_f2:
                     if st.button("Ver Canal", key=f"btn_f_{fname}"):
                         st.session_state['viewing_user'] = fname
+                        st.session_state['active_tab_idx'] = 8
                         st.rerun()
                 st.markdown("---")
     else:
@@ -371,4 +378,4 @@ with tabs[9]:
     if sel_t != st.session_state['theme']:
         st.session_state['theme'] = sel_t
         st.rerun()
-        
+            
