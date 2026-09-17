@@ -434,32 +434,61 @@ with tabs[8]:
                 st.markdown("---")
     else:
         st.info("Escribe un usuario en el menú lateral o pincha en 'Perfil' desde el feed para ver los canales.")
-
 # 10. Mensajes Privados
 with tabs[9]:
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
-        partner = st.selectbox("Para chat:", [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()], key="chat_partner_box")
-        if partner:
-            st.markdown(f"**Chat con @{partner}**")
-            for s, m, t in c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur, partner, partner, cur)).fetchall():
-                st.write(f"**{s}:** {m} ({t})")
-            
-            # Formulario limpio de envío
-            msg_input = st.text_input("Escribe tu mensaje...", key="msg_input_field")
-            if st.button("Enviar Mensaje 🚀"):
-                if msg_input:
-                    c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, msg_input, datetime.now().strftime("%H:%M")))
-                    conn.commit()
-                    st.rerun()
+        
+        # Buscar otros usuarios para chatear
+        users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
+        
+        if not users_list:
+            st.info("No hay más usuarios registrados para chatear.")
+        else:
+            partner = st.selectbox("Para:", users_list, key="chat_partner_select")
+            if partner:
+                st.markdown(f"**Chat con @{partner}**")
+                
+                # CONSULTA CORREGIDA: Trae exactamente los mensajes mutuos entre tú y tu pareja, sin errores
+                query = """
+                    SELECT sender, message, timestamp FROM messages 
+                    WHERE (sender = ? AND receiver = ?) 
+                       OR (sender = ? AND receiver = ?) 
+                    ORDER BY id ASC
+                """
+                messages = c.execute(query, (cur, partner, partner, cur)).fetchall()
+                
+                if not messages:
+                    st.info("No hay mensajes aún. ¡Escribe el primero!")
+                else:
+                    for s, m, t in messages:
+                        if s == cur:
+                            st.markdown(f"**Tú:** {m} *({t})*")
+                        else:
+                            st.markdown(f"**@{s}:** {m} *({t})*")
+                
+                # Formulario de envío limpio y seguro
+                with st.form(key=f"chat_form_{partner}", clear_on_submit=True):
+                    txt = st.text_input("Escribe tu mensaje aquí...", key="input_msg_box")
+                    submit_btn = st.form_submit_button("Enviar 🚀")
+                    
+                    if submit_btn:
+                        if txt.strip():
+                            now_time = datetime.now().strftime("%H:%M")
+                            c.execute(
+                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)",
+                                (cur, partner, txt.strip(), now_time)
+                            )
+                            conn.commit()
+                            st.rerun()
     else:
         st.warning("Inicia sesión para chatear.")
 
 # 11. Ajustes
 with tabs[10]:
     st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema de la app:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_box")
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
