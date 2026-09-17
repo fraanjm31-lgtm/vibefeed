@@ -156,7 +156,7 @@ def get_badge(xp):
         return "🌱 Novato", "badge-novato"
 
 st.title("🌌 VibeFeed Quantum Suite")
-st.caption("✨ Red social con Regalos XP, Premios, Insignias y Ajustes Pro.")
+st.caption("✨ Red social con Regalos XP, Leaderboard, Premios y Ajustes Pro.")
 
 # Sidebar de acceso
 with st.sidebar:
@@ -201,18 +201,19 @@ with st.sidebar:
             st.session_state['username'] = ''
             st.rerun()
     st.markdown("---")
-    st.write("Versión 9.2 - Rewards & Badges")
+    st.write("Versión 9.3 - Leaderboard Pro")
 
-# Menú completo con pestañas
+# Menú completo con pestañas (incluyendo Leaderboard)
 menu = st.tabs([
     "📱 Feed", 
     "🗳️ AlgoDemocracia", 
     "⚔️ VibeDuels", 
+    "🏆 Leaderboard",
     "🌌 Ágora IA", 
     "🔐 Cápsulas PIN", 
     "⏳ Historias", 
     "🌍 VibeMap", 
-    "🏆 Desafíos", 
+    "🎯 Desafíos", 
     "🔍 Buscar", 
     "# Tags", 
     "💬 Chats", 
@@ -222,7 +223,7 @@ menu = st.tabs([
     "➕ Subir"
 ])
 
-# 1. Feed con Sistema de Regalos Virtuales
+# 1. Feed
 with menu[0]:
     st.subheader("Feed de la Comunidad")
     if st.session_state['logged_in']:
@@ -241,7 +242,6 @@ with menu[0]:
     for post in c.fetchall():
         post_id, user, caption, file_path, file_type, likes, views, vibe_tag, secret_pin, gifts_received = post
         
-        # Obtener XP e insignia del creador del post
         c.execute("SELECT xp FROM users WHERE username = ?", (user,))
         u_xp_res = c.fetchone()
         p_xp = u_xp_res[0] if u_xp_res else 100
@@ -276,22 +276,21 @@ with menu[0]:
                     st.rerun()
             with col_g:
                 if st.session_state['logged_in']:
-                    gift_choice = st.selectbox("🎁 Enviar regalo (-10 XP):", ["Selecciona...", "🌟 Estrellas", "💎 Gema", "☕ Café"], key=f"g_sel_{post_id}")
-                    if st.button("Enviar Regalo", key=f"g_btn_{post_id}"):
+                    gift_choice = st.selectbox("🎁 Regalo (-10 XP):", ["Selecciona...", "🌟 Estrellas", "💎 Gema", "☕ Café"], key=f"g_sel_{post_id}")
+                    if st.button("Enviar", key=f"g_btn_{post_id}"):
                         cur = st.session_state['username']
                         c.execute("SELECT xp FROM users WHERE username = ?", (cur,))
                         my_xp = c.fetchone()[0]
                         if my_xp >= 10:
-                            # Descontar XP al emisor y sumar al autor
                             c.execute("UPDATE users SET xp = xp - 10 WHERE username = ?", (cur,))
                             c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (user,))
                             new_gift_str = f"{gifts_received} {gift_choice}" if gifts_received else gift_choice
                             c.execute("UPDATE posts SET gifts_received = ? WHERE id = ?", (new_gift_str, post_id))
                             conn.commit()
-                            st.success(f"¡Has enviado {gift_choice} a @{user}!")
+                            st.success(f"¡Regalo enviado a @{user}!")
                             st.rerun()
                         else:
-                            st.error("No tienes suficientes puntos XP para enviar regalos.")
+                            st.error("No tienes suficiente XP.")
             st.markdown("---")
 
 # 2. AlgoDemocracia
@@ -333,8 +332,23 @@ with menu[2]:
                 st.rerun()
         st.markdown("---")
 
-# 4. Ágora IA
+# 4. Leaderboard (Salón de la Fama)
 with menu[3]:
+    st.subheader("🏆 Salón de la Fama (Leaderboard)")
+    st.caption("🌟 Los creadores con más experiencia (XP) de toda la red social.")
+    c.execute("SELECT username, xp, bio FROM users ORDER BY xp DESC LIMIT 10")
+    leaders = c.fetchall()
+    
+    for idx, (l_user, l_xp, l_bio) in enumerate(leaders):
+        b_name, b_class = get_badge(l_xp)
+        medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
+        st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+        st.write(f"💬 *{l_bio}*")
+        st.caption(f"⚡ Puntos XP totales: **{l_xp}**")
+        st.markdown("---")
+
+# 5. Ágora IA
+with menu[4]:
     st.subheader("🌌 Ágora: Pensamientos Anónimos")
     if st.session_state['logged_in']:
         with st.form("ag_f", clear_on_submit=True):
@@ -348,8 +362,8 @@ with menu[3]:
         st.markdown(f"> *\"{ag[0]}\"* \n\n 🏷️ `{ag[1]}`")
         st.markdown("---")
 
-# 5. Cápsulas PIN
-with menu[4]:
+# 6. Cápsulas PIN
+with menu[5]:
     st.subheader("🔐 Cápsulas PIN")
     pin_s = st.text_input("Introduce clave secreta:")
     if pin_s:
@@ -358,8 +372,8 @@ with menu[4]:
             st.success(f"@{rp[0]}: {rp[1]}")
             if rp[2] and os.path.exists(rp[2]): st.image(rp[2], use_container_width=True)
 
-# 6. Historias
-with menu[5]:
+# 7. Historias
+with menu[6]:
     st.subheader("⏳ Historias (24h)")
     c.execute("SELECT user, caption, file FROM posts WHERE is_story = 1 ORDER BY id DESC")
     for st_item in c.fetchall():
@@ -368,8 +382,8 @@ with menu[5]:
         if st_item[2] and os.path.exists(st_item[2]): st.image(st_item[2], use_container_width=True)
         st.markdown("---")
 
-# 7. VibeMap
-with menu[6]:
+# 8. VibeMap
+with menu[7]:
     st.subheader("🌍 VibeMap")
     c.execute("SELECT username, city, lat, lon FROM users")
     m_users = c.fetchall()
@@ -377,15 +391,15 @@ with menu[6]:
         import pandas as pd
         st.map(pd.DataFrame(m_users, columns=['username', 'city', 'lat', 'lon'])[['lat', 'lon']])
 
-# 8. Desafíos
-with menu[7]:
-    st.subheader("🏆 Desafíos")
+# 9. Desafíos
+with menu[8]:
+    st.subheader("🎯 Desafíos")
     c.execute("SELECT title, description FROM challenges")
     chal = c.fetchone()
     if chal: st.info(f"### {chal[0]}\n{chal[1]}")
 
-# 9. Buscar
-with menu[8]:
+# 10. Buscar
+with menu[9]:
     st.subheader("🔍 Buscar Creadores")
     sq = st.text_input("Usuario...")
     if sq:
@@ -394,8 +408,8 @@ with menu[8]:
             b_n, b_c = get_badge(r[2])
             st.markdown(f"### @{r[0]} <span class='{b_c}'>{b_n}</span> (XP: {r[2]})\n*{r[1]}*", unsafe_allow_html=True)
 
-# 10. Tags
-with menu[9]:
+# 11. Tags
+with menu[10]:
     st.subheader("# Tags")
     tq = st.text_input("Etiqueta...")
     if tq:
@@ -403,8 +417,8 @@ with menu[9]:
         c.execute("SELECT user, caption FROM posts WHERE caption LIKE ?", (f"%{tq}%",))
         for tp in c.fetchall(): st.write(f"**@{tp[0]}**: {tp[1]}")
 
-# 11. Chats
-with menu[10]:
+# 12. Chats
+with menu[11]:
     st.subheader("💬 Chats")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -421,14 +435,14 @@ with menu[10]:
                     conn.commit()
                     st.rerun()
 
-# 12. Avisos
-with menu[11]:
+# 13. Avisos
+with menu[12]:
     st.subheader("🔔 Avisos")
     if st.session_state['logged_in']:
         st.info("Sin notificaciones pendientes.")
 
-# 13. Perfil con Insignias y Rango
-with menu[12]:
+# 14. Perfil
+with menu[13]:
     st.subheader("👤 Perfil y Premios")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -448,8 +462,8 @@ with menu[12]:
                 st.success("¡Guardado!")
                 st.rerun()
 
-# 14. Ajustes Pro
-with menu[13]:
+# 15. Ajustes Pro
+with menu[14]:
     st.subheader("⚙️ Ajustes Pro")
     st.markdown("### 🎨 Apariencia")
     sel_t = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], index=0 if st.session_state['theme']=="Modo Oscuro 🌙" else 1)
@@ -486,16 +500,4 @@ with menu[13]:
                     st.error("Error en los datos.")
                     
         st.markdown("---")
-        st.markdown("### ⚠️ Zona de Peligro")
-        if st.button("🧹 Vaciar caché temporal"):
-            import glob
-            for f in glob.glob('uploads/*'):
-                try: os.remove(f)
-                except: pass
-            st.success("Caché vaciada.")
-            
-        if st.button("🗑️ Borrar cuenta permanentemente", type="primary"):
-            c.execute("DELETE FROM users WHERE username = ?", (cur_user,))
-            c.execute("DELETE FROM posts WHERE user = ?", (cur_user,))
-            conn.commit()
-            s
+        
