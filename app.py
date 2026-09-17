@@ -1,4 +1,5 @@
 
+
 import streamlit as st
 import os
 import sqlite3
@@ -21,11 +22,12 @@ st.markdown("""
         border-radius: 20px;
         font-weight: bold;
     }
-    .card {
+    .metric-card {
+        background-color: #161b22;
         padding: 15px;
         border-radius: 10px;
-        background-color: #161b22;
-        margin-bottom: 15px;
+        text-align: center;
+        margin-bottom: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -57,7 +59,7 @@ def init_db():
 conn = init_db()
 c = conn.cursor()
 
-# Título principal y estadísticas de audiencia
+# Título principal
 st.title("🔥 VibeFeed Pro")
 st.caption("✨ La comunidad global de creadores de contenido.")
 
@@ -68,11 +70,9 @@ menu = st.tabs(["📱 Feed en Directo", "➕ Publicar", "ℹ️ Acerca de"])
 with menu[0]:
     st.subheader("Tendencias para ti")
     
-    # Obtener posts de la base de datos
     c.execute("SELECT id, user, caption, file, file_type, likes FROM posts ORDER BY id DESC")
     posts = c.fetchall()
     
-    # Si la base de datos está vacía, insertamos posts de ejemplo iniciales
     if not posts:
         c.execute("INSERT INTO posts (user, caption, file, file_type, likes) VALUES (?, ?, ?, ?, ?)",
                   ("@creator_pro", "¡Bienvenidos a la nueva era de VibeFeed Pro! 🚀🔥", None, "default", 42))
@@ -89,7 +89,6 @@ with menu[0]:
             st.markdown(f"### **{user}**")
             st.write(caption)
             
-            # Renderizado multimedia
             if file_path and os.path.exists(file_path):
                 if "video" in file_type:
                     st.video(file_path)
@@ -98,7 +97,6 @@ with menu[0]:
             else:
                 st.info("🎬 [ Contenido verificado de la comunidad ]")
             
-            # Botón de Me Gusta interactivo
             col1, col2 = st.columns([1, 4])
             with col1:
                 if st.button(f"❤️ {likes}", key=f"like_{post_id}"):
@@ -106,7 +104,6 @@ with menu[0]:
                     conn.commit()
                     st.rerun()
             
-            # Sección de comentarios dinámicos
             with st.expander(f"💬 Comentarios"):
                 c.execute("SELECT comment FROM comments WHERE post_id = ?", (post_id,))
                 comments = c.fetchall()
@@ -155,14 +152,37 @@ with menu[1]:
             else:
                 st.warning("Por favor, rellena tu usuario y la descripción.")
 
-# --- SECCIÓN 3: ACERCA DE ---
+# --- SECCIÓN 3: ACERCA DE Y ESTADÍSTICAS EN VIVO ---
 with menu[2]:
+    st.subheader("📊 Estadísticas de la Comunidad")
+    
+    # Consultas para calcular las métricas reales desde SQLite
+    c.execute("SELECT COUNT(*) FROM posts")
+    total_posts = c.fetchone()[0]
+    
+    c.execute("SELECT SUM(likes) FROM posts")
+    total_likes_result = c.fetchone()[0]
+    total_likes = total_likes_result if total_likes_result else 0
+    
+    c.execute("SELECT COUNT(*) FROM comments")
+    total_comments = c.fetchone()[0]
+    
+    # Mostrar métricas en columnas visuales
+    col_m1, col_m2, col_m3 = st.columns(3)
+    with col_m1:
+        st.metric("Publicaciones", total_posts)
+    with col_m2:
+        st.metric("Total Likes", total_likes)
+    with col_m3:
+        st.metric("Comentarios", total_comments)
+
+    st.markdown("---")
     st.subheader("Acerca de VibeFeed Pro")
     st.write("""
         **VibeFeed Pro** es una plataforma social diseñada para ofrecer experiencias multimedia fluidas, interactivas y adaptadas al rendimiento móvil.
         
-        * **Versión:** 2.0 Pro Audience Edition
+        * **Versión:** 2.1 Live Stats Edition
         * **Desarrollo:** Optimizado para creadores y comunidades activas.
-        * **Estado del Servidor:** Conectado a base de datos segura SQLite.
+        * **Base de Datos:** SQLite conectada en tiempo real.
     """)
     st.info("¡Gracias por formar parte de la comunidad!")
