@@ -33,6 +33,9 @@ def get_custom_css(theme):
 if 'theme' not in st.session_state:
     st.session_state['theme'] = "Modo Oscuro 🌙"
 
+if 'viewing_user' not in st.session_state:
+    st.session_state['viewing_user'] = None
+
 st.markdown(get_custom_css(st.session_state['theme']), unsafe_allow_html=True)
 
 def make_hashes(password):
@@ -158,7 +161,7 @@ def get_badge(xp):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social con Regalos XP, Leaderboard, Premios y Ajustes Pro.")
 
-# Sidebar para el Acceso / Login mejorado (Evita correos públicos)
+# Sidebar para el Acceso / Login
 with st.sidebar:
     st.subheader("🔐 Acceso NoxVibe")
     if not st.session_state['logged_in']:
@@ -169,7 +172,6 @@ with st.sidebar:
         if auth_mode == "Registrarse":
             if st.button("Crear Cuenta"):
                 if u_in and p_in:
-                    # Limpiamos espacios o símbolos raros por seguridad
                     clean_user = u_in.strip().replace("@", "")
                     try:
                         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (clean_user, make_hashes(p_in)))
@@ -205,7 +207,7 @@ with st.sidebar:
             st.rerun()
 
 # --- PESTAÑAS SUPERIORES HORIZONTALES ---
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     "📱 Feed", 
     "➕ Subir", 
     "🏆 Top", 
@@ -213,6 +215,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "⚔️ Duels", 
     "🌌 Ágora", 
     "👤 Perfil", 
+    "📺 Canal",
     "⚙️ Ajustes"
 ])
 
@@ -246,7 +249,15 @@ with tab1:
         b_name, b_class = get_badge(p_xp)
 
         with st.container():
-            st.markdown(f"### **@{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
+            # Hacemos que el nombre de usuario sea un botón para ir directo a su canal
+            col_u1, col_u2 = st.columns([3, 1])
+            with col_u1:
+                st.markdown(f"### **@{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
+            with col_u2:
+                if st.button("📺 Ver Canal", key=f"visit_{post_id}_{user}"):
+                    st.session_state['viewing_user'] = user
+                    st.rerun()
+
             st.write(caption)
             if file_path and os.path.exists(file_path):
                 if "video" in file_type: st.video(file_path)
@@ -273,7 +284,7 @@ with tab1:
                             new_gift_str = f"{gifts_received} {gift_choice}" if gifts_received else gift_choice
                             c.execute("UPDATE posts SET gifts_received = ? WHERE id = ?", (new_gift_str, post_id))
                             conn.commit()
-                            st.success(f"¡Regalo enviado a @{user}!")
+                            st.success(f"¡Regalo enviado al canal de @{user}!")
                             st.rerun()
                         else:
                             st.error("No tienes suficiente XP.")
@@ -326,9 +337,16 @@ with tab3:
     for idx, (l_user, l_xp, l_bio) in enumerate(leaders):
         b_name, b_class = get_badge(l_xp)
         medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
-        st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
-        st.write(f"💬 *{l_bio}*")
-        st.caption(f"⚡ XP totales: **{l_xp}**")
+        
+        col_l1, col_l2 = st.columns([3, 1])
+        with col_l1:
+            st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+            st.write(f"💬 *{l_bio}*")
+            st.caption(f"⚡ XP totales: **{l_xp}**")
+        with col_l2:
+            if st.button("📺 Ver Canal", key=f"lead_visit_{l_user}"):
+                st.session_state['viewing_user'] = l_user
+                st.rerun()
         st.markdown("---")
 
 # 4. AlgoDemocracia
@@ -413,8 +431,46 @@ with tab7:
     else:
         st.warning("Inicia sesión en el menú lateral para ver tu perfil.")
 
-# 8. Ajustes
+# 8. Canal Personal (Pestaña dedicada para ver el contenido de un creador)
 with tab8:
+    st.subheader("📺 Canal de Creador")
+    target_user = st.session_state['viewing_user']
+    
+    if not target_user:
+        st.info("Selecciona 'Ver Canal' en cualquier publicación o en el Salón de la Fama para explorar el perfil y contenido de un creador aquí.")
+    else:
+        c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (target_user,))
+        u_data = c.fetchone()
+        if u_data:
+            u_bio, u_city, u_xp = u_data
+            b_name, b_class = get_badge(u_xp)
+            
+            st.markdown(f"## Canal de **@{target_user}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+            st.write(f"💬 *{u_bio}*")
+            st.caption(f"📍 Ciudad: {u_city} | ⚡ XP Totales: **{u_xp}**")
+            st.markdown("---")
+            
+            st.subheader(f"Publicaciones de @{target_user}")
+            c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, gifts_received FROM posts WHERE user = ? AND is_story = 0 AND is_duel = 0 ORDER BY id DESC", (target_user,))
+            user_posts = c.fetchall()
+            
+            if not user_posts:
+                st.info(f"@{target_user} todavía no ha subido ninguna publicación.")
+            else:
+                for upost in user_posts:
+                    pid, u_cap, u_file, u_ftype, u_likes, u_vtag, u_gifts = upost
+                    st.markdown(f"**Tema:** `{u_vtag}`")
+                    st.write(u_cap)
+                    if u_file and os.path.exists(u_file):
+                        if "video" in u_ftype: st.video(u_file)
+                        elif "image" in u_ftype: st.image(u_file, use_container_width=True)
+                    st.caption(f"❤️ {u_likes} likes {f'| {u_gifts}' if u_gifts else ''}")
+                    st.markdown("---")
+        else:
+            st.error("El usuario seleccionado no existe.")
+
+# 9. Ajustes
+with tab9:
     st.subheader("⚙️ Ajustes Pro")
     sel_t = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], index=0 if st.session_state['theme']=="Modo Oscuro 🌙" else 1)
     if sel_t != st.session_state['theme']:
