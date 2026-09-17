@@ -34,6 +34,9 @@ if 'theme' not in st.session_state:
 if 'viewing_user' not in st.session_state:
     st.session_state['viewing_user'] = None
 
+if 'active_tab' not in st.session_state:
+    st.session_state['active_tab'] = 0
+
 st.markdown(get_custom_css(st.session_state['theme']), unsafe_allow_html=True)
 
 def make_hashes(password):
@@ -90,7 +93,7 @@ def get_badge(xp):
         return "🌱 Novato", "badge-novato"
 
 st.title("⚡ NoxVibe")
-st.caption("✨ Red social completa con XP, Canales y Ajustes Pro.")
+st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
 with st.sidebar:
     st.subheader("🔐 Acceso NoxVibe")
@@ -137,23 +140,25 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    st.subheader("📺 Explorar Canales")
+    st.subheader("📺 Explorar Perfiles")
     c.execute("SELECT username FROM users")
     all_users = [u[0] for u in c.fetchall()]
     if all_users:
-        selected_search = st.selectbox("🔍 Buscar creador:", ["Selecciona..."] + all_users, key="sidebar_channel_select")
+        selected_search = st.selectbox("🔍 Ver perfil de:", ["Selecciona..."] + all_users, key="sidebar_channel_select")
         if selected_search != "Selecciona...":
             st.session_state['viewing_user'] = selected_search
-            st.success(f"Canal de @{selected_search} seleccionado.")
+            st.session_state['active_tab'] = 8  # Cambia automáticamente a la pestaña de Canal/Perfil
+            st.rerun()
 
-# PESTAÑAS COMPLETAS
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs([
+tab_titles = [
     "📱 Feed", "🚀 Lanzar", "🏆 Top", "🗳️ Algo", "⚔️ Duels", 
-    "🌌 Ágora", "👤 Perfil", "👥 Siguiendo", "📺 Canal", "⚙️ Ajustes"
-])
+    "🌌 Ágora", "👤 Mi Perfil", "👥 Siguiendo", "📺 Canal / Perfil", "⚙️ Ajustes"
+]
+
+tabs = st.tabs(tab_titles)
 
 # 1. Feed
-with tab1:
+with tabs[0]:
     st.subheader("Feed de la Comunidad")
     c.execute("SELECT id, user, caption, file, file_type, likes, views, vibe_tag, gifts_received FROM posts WHERE is_story = 0 AND is_duel = 0 ORDER BY id DESC")
     posts = c.fetchall()
@@ -172,8 +177,9 @@ with tab1:
         with col_u1:
             st.markdown(f"### **@{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
         with col_u2:
-            if st.button("📺 Canal", key=f"visit_{post_id}_{user}"):
+            if st.button("👤 Perfil", key=f"visit_{post_id}_{user}"):
                 st.session_state['viewing_user'] = user
+                st.session_state['active_tab'] = 8
                 st.rerun()
 
         st.write(caption)
@@ -181,7 +187,7 @@ with tab1:
             if "video" in file_type: st.video(file_path)
             elif "image" in file_type: st.image(file_path, use_container_width=True)
         
-        st.caption(f"❤️ {likes} likes | 👁️ {(views or 0) + 1} vistas {f'| {gifts_received}' if gifts_received else ''}")
+        st.caption(f"❤️ {likes} likes | 👁️ {(views or 0) + 1} vistas")
         
         if st.button("❤️ Like", key=f"l_{post_id}"):
             c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
@@ -190,7 +196,7 @@ with tab1:
         st.markdown("---")
 
 # 2. Lanzar
-with tab2:
+with tabs[1]:
     st.subheader("🚀 Lanzar Contenido")
     if st.session_state['logged_in']:
         with st.form("up_form", clear_on_submit=True):
@@ -220,18 +226,26 @@ with tab2:
         st.warning("Inicia sesión en el menú lateral para lanzar contenido.")
 
 # 3. Top
-with tab3:
+with tabs[2]:
     st.subheader("🏆 Salón de la Fama")
     c.execute("SELECT username, xp, bio FROM users ORDER BY xp DESC LIMIT 10")
     for idx, (l_user, l_xp, l_bio) in enumerate(c.fetchall()):
         b_name, b_class = get_badge(l_xp)
         medal = "🥇" if idx == 0 else ("🥈" if idx == 1 else ("🥉" if idx == 2 else f"#{idx+1}"))
-        st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
-        st.write(f"💬 *{l_bio}* | ⚡ XP: **{l_xp}**")
+        
+        col_t1, col_t2 = st.columns([3, 1])
+        with col_t1:
+            st.markdown(f"### {medal} @{l_user} <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+            st.write(f"💬 *{l_bio}* | ⚡ XP: **{l_xp}**")
+        with col_t2:
+            if st.button("Ver Perfil", key=f"top_p_{l_user}"):
+                st.session_state['viewing_user'] = l_user
+                st.session_state['active_tab'] = 8
+                st.rerun()
         st.markdown("---")
 
 # 4. Algo
-with tab4:
+with tabs[3]:
     st.subheader("🗳️ Reglas del Algoritmo")
     if st.session_state['logged_in']:
         pref = st.radio("Preferencia de feed:", ["Todo", "Solo Vídeos", "Solo Fotos"])
@@ -243,12 +257,12 @@ with tab4:
         st.warning("Inicia sesión para votar.")
 
 # 5. Duels
-with tab5:
+with tabs[4]:
     st.subheader("⚔️ VibeDuels 1v1")
     st.info("Sección de duelos activa. ¡Próximamente más novedades!")
 
 # 6. Ágora
-with tab6:
+with tabs[5]:
     st.subheader("🌌 Ágora: Reflexiones")
     if st.session_state['logged_in']:
         t_txt = st.text_area("Lanza un pensamiento...")
@@ -260,9 +274,9 @@ with tab6:
         st.markdown(f"> *\"{ag[0]}\"* \n\n 🏷️ `{ag[1]}`")
         st.markdown("---")
 
-# 7. Perfil
-with tab7:
-    st.subheader("👤 Tu Perfil")
+# 7. Mi Perfil (Edición propia)
+with tabs[6]:
+    st.subheader("👤 Tu Perfil Personal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         u_info = c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (cur,)).fetchone()
@@ -270,18 +284,18 @@ with tab7:
         st.metric("Puntos XP", u_info[2])
         st.markdown(f"**Insignia:** <span class='{b_c}'>{b_n}</span>", unsafe_allow_html=True)
         
-        nb = st.text_area("Bio", value=u_info[0])
-        nc = st.text_input("Ciudad", value=u_info[1])
-        if st.button("Actualizar Perfil"):
+        nb = st.text_area("Edita tu Bio", value=u_info[0])
+        nc = st.text_input("Edita tu Ciudad", value=u_info[1])
+        if st.button("Guardar Cambios de Perfil"):
             c.execute("UPDATE users SET bio = ?, city = ? WHERE username = ?", (nb, nc, cur))
             conn.commit()
-            st.success("¡Guardado!")
+            st.success("¡Perfil actualizado con éxito!")
             st.rerun()
     else:
-        st.warning("Inicia sesión.")
+        st.warning("Inicia sesión para ver y editar tu perfil.")
 
 # 8. Siguiendo
-with tab8:
+with tabs[7]:
     st.subheader("👥 Siguiendo")
     if st.session_state['logged_in']:
         for f in c.execute("SELECT followed FROM follows WHERE follower = ?", (st.session_state['username'],)).fetchall():
@@ -289,9 +303,9 @@ with tab8:
     else:
         st.warning("Inicia sesión.")
 
-# 9. Canal
-with tab9:
-    st.subheader("📺 Canal de Creador")
+# 9. Canal / Perfil Externo
+with tabs[8]:
+    st.subheader("📺 Perfil y Canal del Creador")
     target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
     
     if target_user:
@@ -299,11 +313,32 @@ with tab9:
         if u_data:
             real_username, u_bio, u_city, u_xp = u_data
             b_name, b_class = get_badge(u_xp)
-            st.markdown(f"## Canal de **@{real_username}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
-            st.write(f"💬 *{u_bio}* | 📍 {u_city} | ⚡ XP: **{u_xp}**")
-            st.markdown("---")
             
-            for upost in c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE user = ? ORDER BY id DESC", (real_username,)).fetchall():
+            st.markdown(f"## Perfil de **@{real_username}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+            st.info(f"💬 **Biografía:** {u_bio} \n\n 📍 **Ciudad:** {u_city} \n\n ⚡ **Puntos XP:** {u_xp}")
+            
+            # Botón para seguir / dejar de seguir
+            if st.session_state['logged_in'] and st.session_state['username'] != real_username:
+                is_following = c.execute("SELECT 1 FROM follows WHERE follower = ? AND masked = ?", (st.session_state['username'], real_username)).fetchone()
+                # Botón simplificado de seguimiento
+                if st.button(f"🤝 Seguir / Dejar de seguir a @{real_username}"):
+                    check_f = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username)).fetchone()
+                    if check_f:
+                        c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], real_username))
+                        st.success(f"Has dejado de seguir a @{real_username}")
+                    else:
+                        c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], real_username))
+                        st.success(f"¡Ahora sigues a @{real_username}!")
+                    conn.commit()
+                    st.rerun()
+
+            st.markdown("### 📱 Publicaciones del Creador")
+            user_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE user = ? ORDER BY id DESC", (real_username,)).fetchall()
+            
+            if not user_posts:
+                st.write("Este usuario aún no ha publicado nada.")
+            
+            for upost in user_posts:
                 pid, u_cap, u_file, u_ftype, u_likes, u_vtag = upost
                 st.markdown(f"**Tema:** `{u_vtag}`")
                 st.write(u_cap)
@@ -313,10 +348,10 @@ with tab9:
                 st.caption(f"❤️ {u_likes} likes")
                 st.markdown("---")
     else:
-        st.info("Selecciona un creador en el menú lateral.")
+        st.info("Selecciona un creador en el menú lateral o desde el feed para ver su perfil.")
 
 # 10. Ajustes
-with tab10:
+with tabs[9]:
     st.subheader("⚙️ Ajustes Pro")
     sel_t = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
     if sel_t != st.session_state['theme']:
