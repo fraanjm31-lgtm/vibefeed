@@ -33,7 +33,7 @@ def check_hashes(password, hashed_text):
         return True
     return False
 
-# --- CONFIGURACIÓN DE LA BASE DE DATOS SQLITE ---
+# --- CONFIGURACIÓN DE LA BASE DE DATOS SQLITE (CON AUTO-ACTUALIZACIÓN) ---
 def init_db():
     conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
     c = conn.cursor()
@@ -54,6 +54,12 @@ def init_db():
             views INTEGER DEFAULT 0
         )
     ''')
+    # Comprobar y añadir la columna views si la tabla es antigua
+    try:
+        c.execute("SELECT views FROM posts LIMIT 1")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0")
+
     c.execute('''
         CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -125,7 +131,7 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    st.write("Versión 5.0 - Social Pro Edition")
+    st.write("Versión 5.1 - Social Pro Edition")
 
 # Menú de navegación superior
 menu = st.tabs(["📱 Feed", "🔍 Buscar", "👤 Mi Perfil", "➕ Subir", "ℹ️ Info"])
@@ -134,7 +140,6 @@ menu = st.tabs(["📱 Feed", "🔍 Buscar", "👤 Mi Perfil", "➕ Subir", "ℹ�
 with menu[0]:
     st.subheader("Feed de la Comunidad")
     
-    # Selector de tipo de feed si está logueado
     feed_type = "Global"
     if st.session_state['logged_in']:
         feed_mode = st.radio("Mostrar publicaciones de:", ["🌍 Global", "👥 Siguiendo"], horizontal=True)
@@ -143,7 +148,6 @@ with menu[0]:
 
     filtro = st.radio("Filtrar:", ["Todo", "Vídeos", "Fotos"], horizontal=True)
     
-    # Construcción de consulta según feed y filtros
     query = "SELECT id, user, caption, file, file_type, likes, views FROM posts"
     params = []
     
@@ -156,7 +160,7 @@ with menu[0]:
             conditions.append(f"user IN ({placeholders})")
             params.extend(following_users)
         else:
-            conditions.append("1 = 0") # No sigue a nadie todavía
+            conditions.append("1 = 0")
             
     if filtro == "Vídeos":
         conditions.append("file_type LIKE '%video%'")
@@ -176,9 +180,12 @@ with menu[0]:
     for post in posts:
         post_id, user, caption, file_path, file_type, likes, views = post
         
-        # Incrementar contador de visitas automáticamente
-        c.execute("UPDATE posts SET views = views + 1 WHERE id = ?", (post_id,))
-        conn.commit()
+        # Incrementar vistas de forma segura
+        try:
+            c.execute("UPDATE posts SET views = views + 1 WHERE id = ?", (post_id,))
+            conn.commit()
+        except sqlite3.OperationalError:
+            pass
         
         with st.container():
             st.markdown(f"### **{user}**")
@@ -192,12 +199,14 @@ with menu[0]:
             else:
                 st.info("💬 [ Publicación de texto ]")
             
-            # Métricas rápidas (Likes + Vistas)
+            current_views = views if views is not None else 0
+            current_likes = likes if likes is not None else 0
+            
             col_m1, col_m2 = st.columns(2)
             with col_m1:
-                st.caption(f"❤️ {likes} likes")
+                st.caption(f"❤️ {current_likes} likes")
             with col_m2:
-                st.caption(f"👁️ {views + 1} vistas")
+                st.caption(f"👁️ {current_views + 1} vistas")
             
             col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
             
@@ -269,7 +278,6 @@ with menu[1]:
                 f_user = fu[0]
                 st.markdown(f"### 👤 @{f_user}")
                 
-                # Botón de Seguir / Dejar de seguir
                 if st.session_state['logged_in'] and st.session_state['username'] != f_user:
                     c.execute("SELECT * FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], f_user))
                     is_following = c.fetchone()
@@ -285,7 +293,6 @@ with menu[1]:
                             conn.commit()
                             st.rerun()
                 
-                # Ver muro rápido del usuario encontrado
                 c.execute("SELECT caption, file, file_type, likes FROM posts WHERE user = ? ORDER BY id DESC", (f_user,))
                 u_posts = c.fetchall()
                 st.caption(f"Publicaciones: {len(u_posts)}")
@@ -300,7 +307,6 @@ with menu[2]:
         current_user = st.session_state['username']
         st.markdown(f"### Perfil de **{current_user}**")
         
-        # Contadores de seguidores / seguidos
         c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (current_user,))
         followers_count = c.fetchone()[0]
         c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (current_user,))
@@ -330,7 +336,9 @@ with menu[2]:
                     elif "image" in file_type:
                         st.image(file_path, use_container_width=True)
                 
-                st.caption(f"❤️ {likes} likes | 👁️ {views} vistas")
+                v_count = views if views is not None else 0
+                l_count = likes if likes is not None else 0
+                st.caption(f"❤️ {l_count} likes | 👁️ {v_count} vistas")
                 
                 if st.button("🗑️ Borrar publicación", key=f"my_del_{post_id}"):
                     c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
