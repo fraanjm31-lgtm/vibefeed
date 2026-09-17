@@ -249,7 +249,6 @@ with tab1:
         b_name, b_class = get_badge(p_xp)
 
         with st.container():
-            # Hacemos que el nombre de usuario sea un botón para ir directo a su canal
             col_u1, col_u2 = st.columns([3, 1])
             with col_u1:
                 st.markdown(f"### **@{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
@@ -431,13 +430,25 @@ with tab7:
     else:
         st.warning("Inicia sesión en el menú lateral para ver tu perfil.")
 
-# 8. Canal Personal (Pestaña dedicada para ver el contenido de un creador)
+# 8. Canal Personal con Buscador de Creadores
 with tab8:
-    st.subheader("📺 Canal de Creador")
+    st.subheader("📺 Canal de Creador y Buscador")
+    
+    # Buscador de usuarios
+    c.execute("SELECT username FROM users")
+    all_users = [u[0] for u in c.fetchall()]
+    
+    if all_users:
+        selected_search = st.selectbox("🔍 Buscar canal de usuario:", ["Selecciona un usuario..."] + all_users)
+        if selected_search != "Selecciona un usuario...":
+            st.session_state['viewing_user'] = selected_search
+            
+    st.markdown("---")
+    
     target_user = st.session_state['viewing_user']
     
     if not target_user:
-        st.info("Selecciona 'Ver Canal' en cualquier publicación o en el Salón de la Fama para explorar el perfil y contenido de un creador aquí.")
+        st.info("Usa el buscador de arriba o pulsa 'Ver Canal' en cualquier publicación para ver el contenido completo de un creador.")
     else:
         c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (target_user,))
         u_data = c.fetchone()
@@ -480,9 +491,4 @@ with tab9:
         
     st.markdown("---")
     st.subheader("🧹 Zona de Limpieza")
-    if st.button("🗑️ Borrar todos los posts y dejar el feed limpio"):
-        c.execute("DELETE FROM posts")
-        conn.commit()
-        st.success("¡Listo! Todos los posts han sido borrados.")
-        st.rerun()
-        
+            
