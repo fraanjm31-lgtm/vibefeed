@@ -229,7 +229,6 @@ menu = st.tabs([
 with menu[0]:
     st.subheader("Feed de la Comunidad")
     
-    # Comprobar preferencia democrática global o del usuario
     pref_query = "SELECT preference FROM algo_votes"
     if st.session_state['logged_in']:
         c.execute("SELECT preference FROM algo_votes WHERE user = ?", (st.session_state['username'],))
@@ -254,7 +253,6 @@ with menu[0]:
     for post in posts:
         post_id, user, caption, file_path, file_type, likes, views, vibe_tag, secret_pin = post
         
-        # Si tiene PIN secreto, mostrar pantalla de bloqueo
         if secret_pin and secret_pin.strip() != "":
             with st.container():
                 st.markdown(f"### **{user}** 🔒 *[Cápsula Protegida por PIN]*")
@@ -276,7 +274,6 @@ with menu[0]:
                 if "video" in file_type: st.video(file_path)
                 elif "image" in file_type: st.image(file_path, use_container_width=True)
             
-            # Si el algoritmo democrático es "Modo sin Likes" ocultamos los likes
             if pref_mode != "Modo Sin Likes":
                 st.caption(f"❤️ {likes} likes | 👁️ {(views or 0) + 1} vistas")
             else:
@@ -500,5 +497,9 @@ with menu[13]:
             c.execute("SELECT username FROM users WHERE username != ?", (st.session_state['username'],))
             opps = [r[0] for r in c.fetchall()]
             duel_opp = st.selectbox("Elige rival para el Duelo", opps) if opps else ""
-            secret_pin = st.text_input("🔐 Bloque
+            secret_pin = st.text_input("🔐 Bloquear con PIN Secreto (Opcional, déjalo vacío si es público)")
+            
+            if st.form_submit_button("Publicar en la Red Cuántica"):
+                if caption:
+                 cap_l = captio
     
