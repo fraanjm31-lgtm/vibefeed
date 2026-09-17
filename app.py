@@ -34,7 +34,6 @@ if 'theme' not in st.session_state:
 if 'viewing_user' not in st.session_state:
     st.session_state['viewing_user'] = None
 
-# Gestionamos la pestaña activa mediante el estado para poder cambiarla al hacer clic
 if 'active_tab_idx' not in st.session_state:
     st.session_state['active_tab_idx'] = 0
 
@@ -149,7 +148,7 @@ with st.sidebar:
             exists = c.execute("SELECT 1 FROM users WHERE username = ?", (clean_q,)).fetchone()
             if exists:
                 st.session_state['viewing_user'] = clean_q
-                st.session_state['active_tab_idx'] = 8  # Índice de la pestaña "Canal / Perfil"
+                st.session_state['active_tab_idx'] = 8
                 st.rerun()
             else:
                 st.error("Usuario no encontrado.")
@@ -334,7 +333,8 @@ with tabs[8]:
             real_username, u_bio, u_city, u_xp = u_data
             b_name, b_class = get_badge(u_xp)
             
-            st.markdown(f"## Perfil de **@{real_username}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+            # Insignia colocada limpia y elegante al lado del nombre
+            st.markdown(f"## **@{real_username}** &nbsp; <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
             st.info(f"💬 **Biografía:** {u_bio} \n\n 📍 **Ciudad:** {u_city} \n\n ⚡ **Puntos XP:** {u_xp}")
             
             if st.session_state['logged_in'] and st.session_state['username'] != real_username:
@@ -378,4 +378,4 @@ with tabs[9]:
     if sel_t != st.session_state['theme']:
         st.session_state['theme'] = sel_t
         st.rerun()
-            
+        
