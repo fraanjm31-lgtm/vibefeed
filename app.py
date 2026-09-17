@@ -158,38 +158,41 @@ def get_badge(xp):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social con Regalos XP, Leaderboard, Premios y Ajustes Pro.")
 
-# Sidebar exclusivamente para el Acceso / Login
+# Sidebar para el Acceso / Login mejorado (Evita correos públicos)
 with st.sidebar:
     st.subheader("🔐 Acceso NoxVibe")
     if not st.session_state['logged_in']:
         auth_mode = st.radio("Modo:", ["Iniciar Sesión", "Registrarse"])
-        u_in = st.text_input("Usuario (@...)")
+        u_in = st.text_input("Apodo / Nombre de usuario (ej. labachito)")
         p_in = st.text_input("Contraseña", type="password")
         
         if auth_mode == "Registrarse":
             if st.button("Crear Cuenta"):
                 if u_in and p_in:
+                    # Limpiamos espacios o símbolos raros por seguridad
+                    clean_user = u_in.strip().replace("@", "")
                     try:
-                        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (u_in, make_hashes(p_in)))
+                        c.execute("INSERT INTO users (username, password) VALUES (?, ?)", (clean_user, make_hashes(p_in)))
                         conn.commit()
-                        st.success("¡Registrado con éxito!")
+                        st.success("¡Registrado con éxito! Ya puedes iniciar sesión.")
                     except sqlite3.IntegrityError:
-                        st.error("El usuario ya existe.")
+                        st.error("Ese apodo ya está en uso. Elige otro.")
                 else:
-                    st.warning("Rellena los campos.")
+                    st.warning("Rellena todos los campos.")
         else:
             if st.button("Entrar"):
-                c.execute("SELECT password FROM users WHERE username = ?", (u_in,))
+                clean_user = u_in.strip().replace("@", "")
+                c.execute("SELECT password FROM users WHERE username = ?", (clean_user,))
                 res = c.fetchone()
                 if res and check_hashes(p_in, res[0]):
                     st.session_state['logged_in'] = True
-                    st.session_state['username'] = u_in
-                    st.success(f"¡Bienvenido, {u_in}!")
+                    st.session_state['username'] = clean_user
+                    st.success(f"¡Bienvenido, @{clean_user}!")
                     st.rerun()
                 else:
                     st.error("Datos incorrectos.")
     else:
-        st.success(f"Sesión: **{st.session_state['username']}**")
+        st.success(f"Sesión: **@{st.session_state['username']}**")
         c.execute("SELECT xp FROM users WHERE username = ?", (st.session_state['username'],))
         xp_val = c.fetchone()[0]
         badge_name, badge_class = get_badge(xp_val)
@@ -243,7 +246,7 @@ with tab1:
         b_name, b_class = get_badge(p_xp)
 
         with st.container():
-            st.markdown(f"### **{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
+            st.markdown(f"### **@{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
             st.write(caption)
             if file_path and os.path.exists(file_path):
                 if "video" in file_type: st.video(file_path)
@@ -424,6 +427,6 @@ with tab8:
     if st.button("🗑️ Borrar todos los posts y dejar el feed limpio"):
         c.execute("DELETE FROM posts")
         conn.commit()
-        st.success("¡Listo! Todos los posts de prueba han sido borrados. El feed está limpio.")
+        st.success("¡Listo! Todos los posts han sido borrados.")
         st.rerun()
         
