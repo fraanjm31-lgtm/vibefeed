@@ -451,35 +451,43 @@ with tabs[9]:
                 st.markdown(f"**Chat con @{partner}**")
                 
                 # CONSULTA CORREGIDA: Trae exactamente los mensajes mutuos entre tú y tu pareja, sin errores
-                query = """
-                    SELECT sender, message, timestamp FROM messages 
+                # 10. Mensajes Privados
+with tabs[9]:
+    st.subheader("💬 Mensajes Privados")
+    if st.session_state['logged_in']:
+        cur = st.session_state['username']
+        users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
+        
+        if not users_list:
+            st.info("No hay más usuarios registrados.")
+        else:
+            partner = st.selectbox("Para:", users_list, key="chat_partner_fixed")
+            if partner:
+                st.markdown(f"**Chat con @{partner}**")
+                
+                # Cargar historial bidireccional completo
+                msgs = c.execute("""
+                    SELECT sender, message, timestamp 
+                    FROM messages 
                     WHERE (sender = ? AND receiver = ?) 
                        OR (sender = ? AND receiver = ?) 
                     ORDER BY id ASC
-                """
-                messages = c.execute(query, (cur, partner, partner, cur)).fetchall()
+                """, (cur, partner, partner, cur)).fetchall()
                 
-                if not messages:
+                if not msgs:
                     st.info("No hay mensajes aún. ¡Escribe el primero!")
                 else:
-                    for s, m, t in messages:
+                    for s, m, t in msgs:
                         if s == cur:
                             st.markdown(f"**Tú:** {m} *({t})*")
                         else:
                             st.markdown(f"**@{s}:** {m} *({t})*")
                 
-                # Formulario de envío limpio y seguro
                 with st.form(key=f"chat_form_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje aquí...", key="input_msg_box")
-                    submit_btn = st.form_submit_button("Enviar 🚀")
-                    
-                    if submit_btn:
+                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_box")
+                    if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
-                            now_time = datetime.now().strftime("%H:%M")
-                            c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)",
-                                (cur, partner, txt.strip(), now_time)
-                            )
+                            c.execute("INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", (cur, partner, txt.strip(), datetime.now().strftime("%H:%M")))
                             conn.commit()
                             st.rerun()
     else:
