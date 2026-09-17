@@ -244,9 +244,7 @@ with tabs[1]:
                         with open(path, "wb") as f: f.write(media.getbuffer())
                         f_type = media.type
                     
-                    c.execute("""INSERT INTO posts (user, caption, file, file_type, likes, views, vibe_tag) 
-                                 VALUES (?, ?, ?, ?, 1, 0, ?)""", 
-                              (st.session_state['username'], cap, path, f_type, vtag))
+                    c.execute("INSERT INTO posts (user, caption, file, file_type, likes, views, vibe_tag) VALUES (?, ?, ?, ?, 1, 0, ?)", (st.session_state['username'], cap, path, f_type, vtag))
                     c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (st.session_state['username'],))
                     conn.commit()
                     st.success("¡Lanzado con éxito! +10 XP ⚡")
@@ -443,11 +441,7 @@ with tabs[9]:
     if st.session_state['logged_in']:
         cur_user = st.session_state['username']
         
-        # Obtener lista de chats (usuarios con los que ha hablado o a los que sigue)
-        chat_partners = c.execute("""
-            SELECT DISTINCT username FROM users WHERE username != ?
-        """, (cur_user,)).fetchall()
-        
+        chat_partners = c.execute("SELECT DISTINCT username FROM users WHERE username != ?", (cur_user,)).fetchall()
         partner_list = [p[0] for p in chat_partners]
         
         if not partner_list:
@@ -462,6 +456,6 @@ with tabs[9]:
             
             st.markdown(f"--- \n### Chat con **@{selected_partner}**")
             
-            # Cargar mensajes entre cur_user y selected_partner
-            msgs = c.execute("""
-  
+            msgs = c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur_user, selected_partner, selected_partner, cur_user)).fetchall()
+            
+            chat_container = st.container
