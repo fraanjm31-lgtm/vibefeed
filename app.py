@@ -1,5 +1,4 @@
 
-
 import streamlit as st
 import os
 import sqlite3
@@ -97,13 +96,26 @@ with menu[0]:
             else:
                 st.info("🎬 [ Contenido verificado de la comunidad ]")
             
-            col1, col2 = st.columns([1, 4])
+            # Botones interactivos (Likes y Compartir)
+            col1, col2, col3 = st.columns([1, 1, 2])
+            
             with col1:
                 if st.button(f"❤️ {likes}", key=f"like_{post_id}"):
                     c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
                     conn.commit()
                     st.rerun()
             
+            with col2:
+                # Botón de compartir rápido por WhatsApp
+                whatsapp_url = f"https://api.whatsapp.com/send?text=Mira%20esta%20publicación%20en%20VibeFeed%20Pro:%20{caption}"
+                st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:8px; border-radius:20px; text-align:center; font-weight:bold; font-size:14px;">💬 Compartir</div></a>', unsafe_allow_html=True)
+
+            with col3:
+                # Botón para copiar enlace o simular aviso
+                if st.button(f"🔗 Copiar enlace", key=f"share_{post_id}"):
+                    st.toast(f"¡Enlace del post #{post_id} copiado al portapapeles!", icon="📋")
+
+            # Sección de comentarios dinámicos
             with st.expander(f"💬 Comentarios"):
                 c.execute("SELECT comment FROM comments WHERE post_id = ?", (post_id,))
                 comments = c.fetchall()
@@ -156,7 +168,6 @@ with menu[1]:
 with menu[2]:
     st.subheader("📊 Estadísticas de la Comunidad")
     
-    # Consultas para calcular las métricas reales desde SQLite
     c.execute("SELECT COUNT(*) FROM posts")
     total_posts = c.fetchone()[0]
     
@@ -167,7 +178,6 @@ with menu[2]:
     c.execute("SELECT COUNT(*) FROM comments")
     total_comments = c.fetchone()[0]
     
-    # Mostrar métricas en columnas visuales
     col_m1, col_m2, col_m3 = st.columns(3)
     with col_m1:
         st.metric("Publicaciones", total_posts)
@@ -181,7 +191,7 @@ with menu[2]:
     st.write("""
         **VibeFeed Pro** es una plataforma social diseñada para ofrecer experiencias multimedia fluidas, interactivas y adaptadas al rendimiento móvil.
         
-        * **Versión:** 2.1 Live Stats Edition
+        * **Versión:** 2.2 Social Share Edition
         * **Desarrollo:** Optimizado para creadores y comunidades activas.
         * **Base de Datos:** SQLite conectada en tiempo real.
     """)
