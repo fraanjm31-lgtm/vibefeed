@@ -2,30 +2,25 @@ import streamlit as st
 import os
 import sqlite3
 import hashlib
-import re
+import pandas as datetime
+import random
+from datetime import datetime, timedelta
 
 # Configuración de la página
 st.set_page_config(
-    page_title="VibeFeed Media Pro",
-    page_icon="🎬",
+    page_title="VibeFeed Ultimate Suite",
+    page_icon="🚀",
     layout="centered"
 )
 
-# Estilos CSS profesionales
+# Estilos CSS avanzados
 st.markdown("""
     <style>
-    .main {
-        background-color: #0e1117;
-    }
-    .stButton>button {
-        width: 100%;
-        border-radius: 20px;
-        font-weight: bold;
-    }
+    .main { background-color: #0e1117; }
+    .stButton>button { width: 100%; border-radius: 20px; font-weight: bold; }
     </style>
 """, unsafe_allow_html=True)
 
-# Funciones de encriptación
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -34,22 +29,25 @@ def check_hashes(password, hashed_text):
         return True
     return False
 
-# --- CONFIGURACIÓN DE LA BASE DE DATOS SQLITE (CON TODAS LAS TABLAS) ---
+# --- BASE DE DATOS TOTALMENTE AMPLIADA ---
 def init_db():
     conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
     c = conn.cursor()
     
-    # Usuarios con bio y avatar
+    # Usuarios (con Bio, Avatar, Ciudad y Coordenadas para el VibeMap)
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
             password TEXT,
-            bio TEXT DEFAULT 'Creador de contenido en VibeFeed 🚀',
-            avatar TEXT DEFAULT ''
+            bio TEXT DEFAULT 'Creador en VibeFeed 🚀',
+            avatar TEXT DEFAULT '',
+            city TEXT DEFAULT 'Madrid',
+            lat REAL DEFAULT 40.4168,
+            lon REAL DEFAULT -3.7038
         )
     ''')
     
-    # Posts
+    # Posts (con Soporte para VibeAI Tag, Historias efímeras y Retos)
     c.execute('''
         CREATE TABLE IF NOT EXISTS posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,11 +56,13 @@ def init_db():
             file TEXT,
             file_type TEXT,
             likes INTEGER,
-            views INTEGER DEFAULT 0
+            views INTEGER DEFAULT 0,
+            vibe_tag TEXT DEFAULT 'General 🌍',
+            is_story INTEGER DEFAULT 0,
+            challenge_name TEXT DEFAULT ''
         )
     ''')
     
-    # Comentarios
     c.execute('''
         CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,7 +72,6 @@ def init_db():
         )
     ''')
     
-    # Seguidores
     c.execute('''
         CREATE TABLE IF NOT EXISTS follows (
             follower TEXT,
@@ -81,7 +80,6 @@ def init_db():
         )
     ''')
     
-    # Notificaciones
     c.execute('''
         CREATE TABLE IF NOT EXISTS notifications (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -91,7 +89,6 @@ def init_db():
         )
     ''')
     
-    # Mensajes Privados (DMs)
     c.execute('''
         CREATE TABLE IF NOT EXISTS messages (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -102,17 +99,34 @@ def init_db():
         )
     ''')
     
-    # Migraciones / Comprobaciones seguras por si la BD ya existía
-    try:
-        c.execute("SELECT views FROM posts LIMIT 1")
-    except sqlite3.OperationalError:
-        c.execute("ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0")
-        
-    try:
-        c.execute("SELECT bio FROM users LIMIT 1")
-    except sqlite3.OperationalError:
-        c.execute("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT 'Creador de contenido en VibeFeed 🚀'")
-        c.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''")
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS challenges (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT,
+            description TEXT
+        )
+    ''')
+    
+    # Migraciones seguras si la BD ya existía
+    columns_to_check = [
+        ("posts", "vibe_tag", "TEXT DEFAULT 'General 🌍'"),
+        ("posts", "is_story", "INTEGER DEFAULT 0"),
+        ("posts", "challenge_name", "TEXT DEFAULT ''"),
+        ("users", "city", "TEXT DEFAULT 'Madrid'"),
+        ("users", "lat", "REAL DEFAULT 40.4168"),
+        ("users", "lon", "REAL DEFAULT -3.7038")
+    ]
+    for table, col, definition in columns_to_check:
+        try:
+            c.execute(f"SELECT {col} FROM {table} LIMIT 1")
+        except sqlite3.OperationalError:
+            c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {definition}")
+
+    # Rellenar un reto inicial si está vacío
+    c.execute("SELECT COUNT(*) FROM challenges")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO challenges (title, description) VALUES (?, ?)", 
+                  ("Reto #CodeMobile", "Sube contenido mostrando cómo programas o creas apps desde el móvil."))
 
     conn.commit()
     return conn
@@ -120,22 +134,19 @@ def init_db():
 conn = init_db()
 c = conn.cursor()
 
-# Control de sesión en Streamlit
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
-# Título principal
-st.title("🎬 VibeFeed Media Pro")
-st.caption("✨ Red social multimedia completa con DMs, Biografías y Notificaciones.")
+st.title("🚀 VibeFeed Ultimate Suite")
+st.caption("✨ Red social con VibeMap global, análisis VibeAI, Desafíos y Historias efímeras.")
 
-# Barra lateral para el Login / Registro
+# Barra lateral de autenticación
 with st.sidebar:
-    st.subheader("🔐 Acceso de Creador")
+    st.subheader("🔐 Acceso")
     if not st.session_state['logged_in']:
-        auth_mode = st.radio("Elige opción:", ["Iniciar Sesión", "Registrarse"])
-        
+        auth_mode = st.radio("Opción:", ["Iniciar Sesión", "Registrarse"])
         user_input = st.text_input("Usuario (@...)")
         pass_input = st.text_input("Contraseña", type="password")
         
@@ -146,335 +157,295 @@ with st.sidebar:
                         c.execute("INSERT INTO users (username, password) VALUES (?, ?)", 
                                   (user_input, make_hashes(pass_input)))
                         conn.commit()
-                        st.success("¡Cuenta creada! Ya puedes iniciar sesión.")
+                        st.success("¡Cuenta creada con éxito!")
                     except sqlite3.IntegrityError:
-                        st.error("Ese nombre de usuario ya está cogido.")
+                        st.error("El usuario ya existe.")
                 else:
-                    st.warning("Rellena todos los campos.")
+                    st.warning("Rellena los campos.")
         else:
             if st.button("Entrar"):
                 c.execute("SELECT password FROM users WHERE username = ?", (user_input,))
-                result = c.fetchone()
-                if result and check_hashes(pass_input, result[0]):
+                res = c.fetchone()
+                if res and check_hashes(pass_input, res[0]):
                     st.session_state['logged_in'] = True
                     st.session_state['username'] = user_input
-                    st.success(f"¡Bienvenido de nuevo, {user_input}!")
+                    st.success(f"¡Hola, {user_input}!")
                     st.rerun()
                 else:
-                    st.error("Usuario o contraseña incorrectos.")
+                    st.error("Credenciales incorrectas.")
     else:
-        st.success(f"Sesión iniciada como:\n**{st.session_state['username']}**")
-        
-        # Badge de Notificaciones no leídas en la barra lateral
+        st.success(f"Sesión: **{st.session_state['username']}**")
         c.execute("SELECT COUNT(*) FROM notifications WHERE user = ? AND is_read = 0", (st.session_state['username'],))
-        unread_count = c.fetchone()[0]
-        if unread_count > 0:
-            st.warning(f"🔔 Tienes {unread_count} notificación(es) nueva(s)")
-            
+        unread = c.fetchone()[0]
+        if unread > 0:
+            st.warning(f"🔔 {unread} notificación(es)")
         if st.button("Cerrar Sesión"):
             st.session_state['logged_in'] = False
             st.session_state['username'] = ''
             st.rerun()
-
     st.markdown("---")
-    st.write("Versión 6.0 - Full Social Suite")
+    st.write("Versión 7.0 - Innovación Total")
 
-# Menú de navegación superior (Se han añadido la Campanita de Avisos y los DMs)
-menu = st.tabs(["📱 Feed", "🔍 Buscar", "# Hashtags", "💬 Chats", "🔔 Avisos", "👤 Mi Perfil", "➕ Subir"])
+# Navegación expandida con las 4 nuevas secciones
+menu = st.tabs(["📱 Feed", "⏳ Historias", "🌍 VibeMap", "🏆 Desafíos", "🔍 Buscar", "# Tags", "💬 Chats", "🔔 Avisos", "👤 Perfil", "➕ Subir"])
 
-# --- SECCIÓN 1: EL FEED (Global o Siguiendo) ---
+# --- 1. FEED ---
 with menu[0]:
     st.subheader("Feed de la Comunidad")
+    filtro = st.radio("Filtrar contenido:", ["Todo", "Vídeos", "Fotos"], horizontal=True)
     
-    feed_type = "Global"
-    if st.session_state['logged_in']:
-        feed_mode = st.radio("Mostrar publicaciones de:", ["🌍 Global", "👥 Siguiendo"], horizontal=True)
-        if feed_mode == "👥 Siguiendo":
-            feed_type = "Following"
-
-    filtro = st.radio("Filtrar por tipo:", ["Todo", "Vídeos", "Fotos"], horizontal=True)
-    
-    query = "SELECT id, user, caption, file, file_type, likes, views FROM posts"
+    query = "SELECT id, user, caption, file, file_type, likes, views, vibe_tag FROM posts WHERE is_story = 0"
     params = []
-    
-    conditions = []
-    if feed_type == "Following":
-        c.execute("SELECT followed FROM follows WHERE follower = ?", (st.session_state['username'],))
-        following_users = [row[0] for row in c.fetchall()]
-        if following_users:
-            placeholders = ','.join(['?'] * len(following_users))
-            conditions.append(f"user IN ({placeholders})")
-            params.extend(following_users)
-        else:
-            conditions.append("1 = 0")
-            
     if filtro == "Vídeos":
-        conditions.append("file_type LIKE '%video%'")
+        query += " AND file_type LIKE '%video%'"
     elif filtro == "Fotos":
-        conditions.append("file_type LIKE '%image%'")
-        
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
+        query += " AND file_type LIKE '%image%'"
     query += " ORDER BY id DESC"
     
     c.execute(query, params)
     posts = c.fetchall()
 
-    if not posts and feed_type == "Following":
-        st.info("Aún no sigues a ningún creador o no han publicado nada. ¡Busca perfiles en la pestaña 'Buscar'!")
-
     for post in posts:
-        post_id, user, caption, file_path, file_type, likes, views = post
-        
-        # Incrementar vistas de forma segura
+        post_id, user, caption, file_path, file_type, likes, views, vibe_tag = post
         try:
             c.execute("UPDATE posts SET views = views + 1 WHERE id = ?", (post_id,))
             conn.commit()
-        except sqlite3.OperationalError:
+        except:
             pass
         
         with st.container():
-            # Cargar avatar del creador si existe
             c.execute("SELECT avatar FROM users WHERE username = ?", (user,))
-            res_av = c.fetchone()
-            avatar_path = res_av[0] if res_av and res_av[0] else None
+            av = c.fetchone()
+            av_path = av[0] if av and av[0] else None
             
-            col_av, col_name = st.columns([1, 6])
-            with col_av:
-                if avatar_path and os.path.exists(avatar_path):
-                    st.image(avatar_path, width=40)
+            col_a, col_b = st.columns([1, 6])
+            with col_a:
+                if av_path and os.path.exists(av_path):
+                    st.image(av_path, width=35)
                 else:
                     st.write("👤")
-            with col_name:
-                st.markdown(f"### **{user}**")
+            with col_b:
+                st.markdown(f"### **{user}**  `{vibe_tag}`")
                 
             st.write(caption)
-            
             if file_path and os.path.exists(file_path):
                 if "video" in file_type:
                     st.video(file_path)
                 elif "image" in file_type:
                     st.image(file_path, use_container_width=True)
-            else:
-                st.info("💬 [ Publicación de texto ]")
             
-            current_views = views if views is not None else 0
-            current_likes = likes if likes is not None else 0
+            st.caption(f"❤️ {likes} likes | 👁️ {(views or 0) + 1} vistas")
             
-            col_m1, col_m2 = st.columns(2)
-            with col_m1:
-                st.caption(f"❤️ {current_likes} likes")
-            with col_m2:
-                st.caption(f"👁️ {current_views + 1} vistas")
-            
-            col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
-            
-            with col1:
-                if st.button("❤️ Like", key=f"like_{post_id}"):
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                if st.button("❤️ Like", key=f"f_like_{post_id}"):
                     c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
                     conn.commit()
-                    # Registrar notificación de like si no es su propio post
-                    if st.session_state['logged_in'] and st.session_state['username'] != user:
-                        msg_notif = f"❤️ @{st.session_state['username']} le dio like a tu publicación."
-                        c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (user, msg_notif))
-                        conn.commit()
                     st.rerun()
-            
-            with col2:
-                whatsapp_url = f"https://api.whatsapp.com/send?text=Mira%20esto%20en%20VibeFeed:%20{caption}"
-                st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:8px; border-radius:20px; text-align:center; font-weight:bold; font-size:12px;">💬 Compartir</div></a>', unsafe_allow_html=True)
-
-            with col3:
-                if st.button("🔗 Copiar", key=f"share_{post_id}"):
+            with c2:
+                if st.button("🔗 Copiar", key=f"f_share_{post_id}"):
                     st.toast("¡Enlace copiado!", icon="📋")
-
-            with col4:
+            with c3:
                 if st.session_state['logged_in'] and st.session_state['username'] == user:
-                    if st.button("🗑️ Borrar", key=f"del_{post_id}"):
-                        c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
+                    if st.button("🗑️ Borrar", key=f"f_del_{post_id}"):
                         c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
                         conn.commit()
-                        st.toast("Publicación borrada", icon="🗑️")
                         st.rerun()
-                else:
-                    st.write("")
-
-            # Comentarios
-            with st.expander("💬 Comentarios"):
-                try:
-                    c.execute("SELECT user, comment FROM comments WHERE post_id = ?", (post_id,))
-                    comments = c.fetchall()
-                except sqlite3.OperationalError:
-                    comments = []
-                
-                if comments:
-                    for com in comments:
-                        c_user = com[0] if com[0] else "Anónimo"
-                        st.text(f"@{c_user}: {com[1]}")
-                else:
-                    st.text("Sé el primero en comentar...")
-                
-                new_com = st.text_input("Escribe un comentario...", key=f"com_input_{post_id}")
-                if st.button("Enviar", key=f"btn_com_{post_id}"):
-                    if new_com:
-                        com_user = st.session_state['username'] if st.session_state['logged_in'] else "Anónimo"
-                        try:
-                            c.execute("INSERT INTO comments (post_id, user, comment) VALUES (?, ?, ?)", (post_id, com_user, new_com))
-                        except sqlite3.OperationalError:
-                            c.execute("ALTER TABLE comments ADD COLUMN user TEXT")
-                            c.execute("INSERT INTO comments (post_id, user, comment) VALUES (?, ?, ?)", (post_id, com_user, new_com))
-                        
-                        # Notificar al dueño del post
-                        if st.session_state['logged_in'] and st.session_state['username'] != user:
-                            msg_com = f"💬 @{com_user} comentó tu publicación: '{new_com[:20]}...'"
-                            c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (user, msg_com))
-                            
-                        conn.commit()
-                        st.rerun()
-            
             st.markdown("---")
 
-# --- SECCIÓN 2: BUSCADOR DE CREADORES ---
+# --- 2. HISTORIAS EFÍMERAS (Cápsulas de Tiempo 24h) ---
 with menu[1]:
-    st.subheader("🔍 Buscar Creadores")
-    search_query = st.text_input("Escribe el nombre del usuario a buscar...", key="search_user_box")
+    st.subheader("⏳ Cápsulas de Tiempo (Stories 24h)")
+    st.caption("Contenido efímero que se comparte en directo con la comunidad.")
     
-    if search_query:
-        c.execute("SELECT username, bio, avatar FROM users WHERE username LIKE ?", (f"%{search_query}%",))
-        found_users = c.fetchall()
-        
-        if found_users:
-            for fu in found_users:
-                f_user, f_bio, f_avatar = fu
-                
-                col_av_s, col_info_s = st.columns([1, 5])
-                with col_av_s:
-                    if f_avatar and os.path.exists(f_avatar):
-                        st.image(f_avatar, width=50)
-                    else:
-                        st.write("👤")
-                with col_info_s:
-                    st.markdown(f"### @{f_user}")
-                    st.write(f"*{f_bio}*")
-                
-                if st.session_state['logged_in'] and st.session_state['username'] != f_user:
-                    c.execute("SELECT * FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], f_user))
-                    is_following = c.fetchone()
-                    
-                    if is_following:
-                        if st.button(f"Dejar de seguir @{f_user}", key=f"unfollow_{f_user}"):
-                            c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], f_user))
-                            conn.commit()
-                            st.rerun()
-                    else:
-                        if st.button(f"Seguir @{f_user}", key=f"follow_{f_user}"):
-                            c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], f_user))
-                            # Notificar al usuario seguido
-                            msg_follow = f"👤 @{st.session_state['username']} ha empezado a seguirte."
-                            c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (f_user, msg_follow))
-                            conn.commit()
-                            st.rerun()
-                
-                c.execute("SELECT caption, file, file_type, likes FROM posts WHERE user = ? ORDER BY id DESC", (f_user,))
-                u_posts = c.fetchall()
-                st.caption(f"Publicaciones totales: {len(u_posts)}")
-                st.markdown("---")
-        else:
-            st.warning("No se ha encontrado ningún creador con ese nombre.")
-
-# --- SECCIÓN 3: HASHTAGS ---
-with menu[2]:
-    st.subheader("# Explorador de Hashtags")
-    tag_query = st.text_input("Busca una etiqueta (ej. #tech, #humor, #viajes)...")
+    c.execute("SELECT id, user, caption, file, file_type FROM posts WHERE is_story = 1 ORDER BY id DESC")
+    stories = c.fetchall()
     
-    if tag_query:
-        # Asegurarse de que incluya '#' para buscar bien
-        if not tag_query.startswith("#"):
-            tag_query = "#" + tag_query
-            
-        c.execute("SELECT id, user, caption, file, file_type, likes, views FROM posts WHERE caption LIKE ? ORDER BY id DESC", (f"%{tag_query}%",))
-        tagged_posts = c.fetchall()
-        
-        st.info(f"Mostrando resultados para: **{tag_query}** ({len(tagged_posts)} encontrados)")
-        
-        for post in tagged_posts:
-            post_id, user, caption, file_path, file_type, likes, views = post
+    if stories:
+        for st_item in stories:
+            s_id, s_user, s_cap, s_file, s_type = st_item
             with st.container():
-                st.markdown(f"### **{user}**")
-                st.write(caption)
-                if file_path and os.path.exists(file_path):
-                    if "video" in file_type:
-                        st.video(file_path)
-                    elif "image" in file_type:
-                        st.image(file_path, use_container_width=True)
-                st.caption(f"❤️ {likes} likes | 👁️ {views} vistas")
+                st.markdown(f"**🔴 Historia de @{s_user}**")
+                st.write(s_cap)
+                if s_file and os.path.exists(s_file):
+                    if "video" in s_type:
+                        st.video(s_file)
+                    else:
+                        st.image(s_file, use_container_width=True)
                 st.markdown("---")
-
-# --- SECCIÓN 4: MENSAJERÍA PRIVADA (DMs) ---
-with menu[3]:
-    st.subheader("💬 Mensajes Privados (DMs)")
-    if st.session_state['logged_in']:
-        current_user = st.session_state['username']
-        
-        # Obtener lista de usuarios para chatear
-        c.execute("SELECT username FROM users WHERE username != ?", (current_user,))
-        other_users = [row[0] for row in c.fetchall()]
-        
-        if other_users:
-            chat_with = st.selectbox("Selecciona un creador para chatear:", other_users)
-            
-            if chat_with:
-                st.markdown(f"--- \n **Chat activo con @{chat_with}**")
-                
-                # Cargar historial de mensajes entre ambos
-                c.execute('''
-                    SELECT sender, receiver, message, timestamp FROM messages 
-                    WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)
-                    ORDER BY id ASC
-                ''', (current_user, chat_with, chat_with, current_user))
-                messages = c.fetchall()
-                
-                chat_container = st.container(height=300)
-                with chat_container:
-                    for msg in messages:
-                        sender, receiver, text, timestamp = msg
-                        if sender == current_user:
-                            st.markdown(f"<div style='text-align: right; background-color: #1f6feb; color: white; padding: 8px 12px; border-radius: 12px; margin: 5px 0;'><b>Tú:</b> {text}</div>", unsafe_allow_html=True)
-                        else:
-                            st.markdown(f"<div style='text-align: left; background-color: #21262d; color: white; padding: 8px 12px; border-radius: 12px; margin: 5px 0;'><b>@{sender}:</b> {text}</div>", unsafe_allow_html=True)
-                
-                with st.form(key="dm_form", clear_on_submit=True):
-                    new_msg = st.text_input("Escribe tu mensaje privado...")
-                    send_dm = st.form_submit_button("Enviar Mensaje")
-                    
-                    if send_dm and new_msg:
-                        c.execute("INSERT INTO messages (sender, receiver, message) VALUES (?, ?, ?)", (current_user, chat_with, new_msg))
-                        # Notificar al destinatario
-                        c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (chat_with, f"💬 Nuevo mensaje privado de @{current_user}"))
-                        conn.commit()
-                        st.rerun()
-        else:
-            st.info("No hay más usuarios registrados en la plataforma para chatear todavía.")
     else:
-        st.warning("⚠️ Inicia sesión para usar la mensajería privada.")
+        st.info("No hay historias activas en este momento. ¡Sube una desde la pestaña 'Subir' marcándola como historia!")
 
-# --- SECCIÓN 5: NOTIFICACIONES / AVISOS ---
+# --- 3. VIBEMAP (Mapa Global Interactivo) ---
+with menu[2]:
+    st.subheader("🌍 VibeMap: Creadores en el Mundo")
+    st.caption("Descubre dónde están conectados los creadores de la comunidad.")
+    
+    c.execute("SELECT username, city, lat, lon FROM users")
+    map_users = c.fetchall()
+    
+    if map_users:
+        import pandas as pd
+        df_map = pd.DataFrame(map_users, columns=['username', 'city', 'lat', 'lon'])
+        st.map(df_map[['lat', 'lon']])
+        st.write("### Creadores registrados:")
+        for mu in map_users:
+            st.markdown(f"- **@{mu[0]}** en *{mu[1]}*")
+    else:
+        st.info("Aún no hay ubicaciones registradas.")
+
+# --- 4. DESAFÍOS DE LA COMUNIDAD ---
+with menu[3]:
+    st.subheader("🏆 Panel de Desafíos Activos")
+    c.execute("SELECT title, description FROM challenges")
+    challenge = c.fetchone()
+    
+    if challenge:
+        st.markdown(f"### {challenge[0]}")
+        st.info(challenge[1])
+        
+        st.write("---")
+        st.subheader("Participaciones en este reto:")
+        c.execute("SELECT user, caption, file, file_type, likes FROM posts WHERE challenge_name != '' ORDER BY id DESC")
+        chal_posts = c.fetchall()
+        
+        if chal_posts:
+            for cp in chal_posts:
+                st.markdown(f"**@{cp[0]}**: {cp[1]}")
+                if cp[2] and os.path.exists(cp[2]):
+                    if "video" in cp[3]:
+                        st.video(cp[2])
+                    else:
+                        st.image(cp[2], use_container_width=True)
+                st.markdown("---")
+        else:
+            st.write("¡Sé el primero en subir contenido a este desafío!")
+
+# --- 5. BUSCADOR ---
 with menu[4]:
-    st.subheader("🔔 Tus Notificaciones")
+    st.subheader("🔍 Buscar Creadores")
+    sq = st.text_input("Nombre de usuario...", key="search_box_main")
+    if sq:
+        c.execute("SELECT username, bio, avatar, city FROM users WHERE username LIKE ?", (f"%{sq}%",))
+        res = c.fetchall()
+        for r in res:
+            st.markdown(f"### @{r[0]} ({r[3]})")
+            st.write(f"*{r[1]}*")
+            st.markdown("---")
+
+# --- 6. HASHTAGS ---
+with menu[5]:
+    st.subheader("# Explorador de Hashtags")
+    tq = st.text_input("Busca etiqueta (ej. #tech)...")
+    if tq:
+        if not tq.startswith("#"): tq = "#" + tq
+        c.execute("SELECT user, caption, file, file_type, likes FROM posts WHERE caption LIKE ?", (f"%{tq}%",))
+        for tp in c.fetchall():
+            st.markdown(f"**@{tp[0]}**: {tp[1]}")
+            if tp[2] and os.path.exists(tp[2]):
+                st.image(tp[2], use_container_width=True)
+            st.markdown("---")
+
+# --- 7. CHATS PRIVADOS ---
+with menu[6]:
+    st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
-        current_user = st.session_state['username']
+        cur = st.session_state['username']
+        c.execute("SELECT username FROM users WHERE username != ?", (cur,))
+        others = [row[0] for row in c.fetchall()]
+        if others:
+            dest = st.selectbox("Hablar con:", others)
+            c.execute("SELECT sender, message FROM messages WHERE (sender=? AND receiver=?) OR (sender=? AND receiver=?)", (cur, dest, dest, cur))
+            for msg in c.fetchall():
+                st.text(f"@{msg[0]}: {msg[1]}")
+            with st.form("dm_f", clear_on_submit=True):
+                txt = st.text_input("Mensaje...")
+                if st.form_submit_button("Enviar") and txt:
+                    c.execute("INSERT INTO messages (sender, receiver, message) VALUES (?, ?, ?)", (cur, dest, txt))
+                    conn.commit()
+                    st.rerun()
+    else:
+        st.warning("Inicia sesión para usar los chats.")
+
+# --- 8. AVISOS / NOTIFICACIONES ---
+with menu[7]:
+    st.subheader("🔔 Notificaciones")
+    if st.session_state['logged_in']:
+        c.execute("SELECT message, is_read FROM notifications WHERE user = ? ORDER BY id DESC", (st.session_state['username'],))
+        for notif in c.fetchall():
+            prefix = "🔴" if notif[1] == 0 else "⚪"
+            st.markdown(f"{prefix} {notif[0]}")
+    else:
+        st.warning("Inicia sesión para ver tus avisos.")
+
+# --- 9. PERFIL ---
+with menu[8]:
+    st.subheader("👤 Tu Perfil y Ubicación en el VibeMap")
+    if st.session_state['logged_in']:
+        cur = st.session_state['username']
+        c.execute("SELECT bio, city FROM users WHERE username = ?", (cur,))
+        u_info = c.fetchone()
         
-        c.execute("SELECT id, message, is_read FROM notifications WHERE user = ? ORDER BY id DESC", (current_user,))
-        notifs = c.fetchall()
-        
-        if st.button("Marcar todas como leídas"):
-            c.execute("UPDATE notifications SET is_read = 1 WHERE user = ?", (current_user,))
-            conn.commit()
-            st.rerun()
+        with st.form("profile_upd"):
+            new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
+            new_city = st.text_input("Ciudad (para el VibeMap)", value=u_info[1] if u_info else "Madrid")
+            if st.form_submit_button("Actualizar Perfil"):
+                # Coordenadas automáticas simplificadas según ciudad española/global de ejemplo
+                lat, lon = 40.4168, -3.7038
+                if "barcelona" in new_city.lower(): lat, lon = 41.3851, 2.1734
+                elif "valencia" in new_city.lower(): lat, lon = 39.4699, -0.3763
+                elif "sevilla" in new_city.lower(): lat, lon = 37.3891, -5.9845
+                
+                c.execute("UPDATE users SET bio = ?, city = ?, lat = ?, lon = ? WHERE username = ?", (new_bio, new_city, lat, lon, cur))
+                conn.commit()
+                st.success("¡Perfil y ubicación actualizados!")
+                st.rerun()
+    else:
+        st.warning("Inicia sesión.")
+
+# --- 10. SUBIR CONTENIDO (CON VibeAI AUTOMÁTICO Y RETOS) ---
+with menu[9]:
+    st.subheader("➕ Subir Contenido Multimedia")
+    if st.session_state['logged_in']:
+        with st.form("upload_full", clear_on_submit=True):
+            caption = st.text_area("Escribe tu descripción...")
+            media = st.file_uploader("Multimedia", type=["mp4", "mov", "jpg", "jpeg", "png"])
+            is_story = st.checkbox("⏳ Publicar como Historia efímera (24h)")
+            join_challenge = st.checkbox("🏆 Participar en el Desafío Activo (#CodeMobile)")
             
-        st.markdown("---")
-        if notifs:
-            for notif in notifs:
-                nid, text, read_status = notif
-        
+            if st.form_submit_button("Publicar Contenido"):
+                if caption:
+                    # 🤖 VibeAI: Analizador automático de sentimientos / etiquetas del post
+                    cap_lower = caption.lower()
+                    vibe_tag = "General 🌍"
+                    if any(w in cap_lower for w in ["código", "app", "python", "dev", "bug", "programar"]):
+                        vibe_tag = "Tech 💻"
+                    elif any(w in cap_lower for w in ["risa", "jaja", "humor", "meme", "bromas"]):
+                        vibe_tag = "Humor 😂"
+                    elif any(w in cap_lower for w in ["viaje", "playa", "montaña", "avión"]):
+                        vibe_tag = "Viajes ✈️"
+                    elif any(w in cap_lower for w in ["motivación", "fuerza", "logro", "meta"]):
+                        vibe_tag = "Motivación 🔥"
+                    
+                    path, f_type = None, "default"
+                    if media is not None:
+                        os.makedirs("uploads", exist_ok=True)
+                        path = os.path.join("uploads", media.name)
+                        with open(path, "wb") as f:
+                            f.write(media.getbuffer())
+                        f_type = media.type
+                    
+                    chal_val = "CodeMobile" if join_challenge else ""
+                    
+                    c.execute('''
+                        INSERT INTO posts (user, caption, file, file_type, likes, views, vibe_tag, is_story, challenge_name) 
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ''', (st.session_state['username'], caption, path, f_type, 1, 0, vibe_tag, 1 if is_story else 0, chal_val))
+                    conn.commit()
+                    st.success("¡Publicado con éxito gracias a VibeAI! 🚀")
+                    st.rerun()
+                else:
+                    st.warning("Escribe una descripción.")
+    else:
+        st.warning("Inicia sesión para subir contenido.")
     
