@@ -1,16 +1,15 @@
-
 import streamlit as st
 import os
 import sqlite3
 
 # Configuración de la página
 st.set_page_config(
-    page_title="VibeFeed Pro",
-    page_icon="🔥",
+    page_title="VibeFeed Pro - Photo Edition",
+    page_icon="📸",
     layout="centered"
 )
 
-# Estilos CSS profesionales
+# Estilos CSS profesionales enfocados en multimedia
 st.markdown("""
     <style>
     .main {
@@ -21,11 +20,9 @@ st.markdown("""
         border-radius: 20px;
         font-weight: bold;
     }
-    .metric-card {
-        background-color: #161b22;
-        padding: 15px;
-        border-radius: 10px;
-        text-align: center;
+    .photo-container {
+        border-radius: 12px;
+        overflow: hidden;
         margin-bottom: 10px;
     }
     </style>
@@ -59,24 +56,29 @@ conn = init_db()
 c = conn.cursor()
 
 # Título principal
-st.title("🔥 VibeFeed Pro")
-st.caption("✨ La comunidad global de creadores de contenido.")
+st.title("📸 VibeFeed Photo")
+st.caption("✨ Tu galería global de momentos y creadores visuales.")
 
 # Menú de navegación superior
-menu = st.tabs(["📱 Feed en Directo", "➕ Publicar", "ℹ️ Acerca de"])
+menu = st.tabs(["📱 Galería Global", "➕ Subir Foto/Vídeo", "ℹ️ Acerca de"])
 
-# --- SECCIÓN 1: EL FEED ---
+# --- SECCIÓN 1: LA GALERÍA / FEED VISUAL ---
 with menu[0]:
-    st.subheader("Tendencias para ti")
+    st.subheader("Explora la Comunidad Visual")
     
-    c.execute("SELECT id, user, caption, file, file_type, likes FROM posts ORDER BY id DESC")
+    # Filtro rápido de contenido
+    filtro = st.radio("Filtrar contenido:", ["Todo", "Solo con Multimedia (Fotos/Vídeos)"], horizontal=True)
+    
+    if filtro == "Solo con Multimedia (Fotos/Vídeos)":
+        c.execute("SELECT id, user, caption, file, file_type, likes FROM posts WHERE file_type != 'default' ORDER BY id DESC")
+    else:
+        c.execute("SELECT id, user, caption, file, file_type, likes FROM posts ORDER BY id DESC")
+        
     posts = c.fetchall()
     
     if not posts:
         c.execute("INSERT INTO posts (user, caption, file, file_type, likes) VALUES (?, ?, ?, ?, ?)",
-                  ("@creator_pro", "¡Bienvenidos a la nueva era de VibeFeed Pro! 🚀🔥", None, "default", 42))
-        c.execute("INSERT INTO posts (user, caption, file, file_type, likes) VALUES (?, ?, ?, ?, ?)",
-                  ("@code_ninja", "Programando apps profesionales desde el móvil. ¡Todo es posible! 📱💻", None, "default", 28))
+                  ("@photo_master", "¡Bienvenidos a la nueva experiencia visual de VibeFeed! 📸✨", None, "default", 50))
         conn.commit()
         c.execute("SELECT id, user, caption, file, file_type, likes FROM posts ORDER BY id DESC")
         posts = c.fetchall()
@@ -88,13 +90,14 @@ with menu[0]:
             st.markdown(f"### **{user}**")
             st.write(caption)
             
+            # Renderizado multimedia mejorado y llamativo
             if file_path and os.path.exists(file_path):
                 if "video" in file_type:
                     st.video(file_path)
                 elif "image" in file_type:
                     st.image(file_path, use_container_width=True)
             else:
-                st.info("🎬 [ Contenido verificado de la comunidad ]")
+                st.info("📷 [ Publicación de texto de la comunidad ]")
             
             # Botones interactivos (Likes y Compartir)
             col1, col2, col3 = st.columns([1, 1, 2])
@@ -106,14 +109,12 @@ with menu[0]:
                     st.rerun()
             
             with col2:
-                # Botón de compartir rápido por WhatsApp
-                whatsapp_url = f"https://api.whatsapp.com/send?text=Mira%20esta%20publicación%20en%20VibeFeed%20Pro:%20{caption}"
+                whatsapp_url = f"https://api.whatsapp.com/send?text=Mira%20esta%20foto%20en%20VibeFeed%20Photo:%20{caption}"
                 st.markdown(f'<a href="{whatsapp_url}" target="_blank" style="text-decoration:none;"><div style="background-color:#25d366; color:white; padding:8px; border-radius:20px; text-align:center; font-weight:bold; font-size:14px;">💬 Compartir</div></a>', unsafe_allow_html=True)
 
             with col3:
-                # Botón para copiar enlace o simular aviso
                 if st.button(f"🔗 Copiar enlace", key=f"share_{post_id}"):
-                    st.toast(f"¡Enlace del post #{post_id} copiado al portapapeles!", icon="📋")
+                    st.toast(f"¡Enlace de la foto #{post_id} copiado!", icon="📋")
 
             # Sección de comentarios dinámicos
             with st.expander(f"💬 Comentarios"):
@@ -124,7 +125,7 @@ with menu[0]:
                     for com in comments:
                         st.text(f"• {com[0]}")
                 else:
-                    st.text("Sé el primero en comentar...")
+                    st.text("Sé el primero en comentar esta foto...")
                 
                 new_com = st.text_input("Escribe un comentario...", key=f"com_input_{post_id}")
                 if st.button("Enviar comentario", key=f"btn_com_{post_id}"):
@@ -135,15 +136,15 @@ with menu[0]:
             
             st.markdown("---")
 
-# --- SECCIÓN 2: PUBLICAR CONTENIDO ---
+# --- SECCIÓN 2: SUBIR CONTENIDO VISUAL ---
 with menu[1]:
-    st.subheader("Comparte tu momento con el mundo")
+    st.subheader("Comparte tus mejores fotos y vídeos")
     with st.form("pub_form", clear_on_submit=True):
         username = st.text_input("Tu nombre de usuario", value="@")
-        caption = st.text_area("¿Qué estás pensando o creando?")
-        media = st.file_uploader("Sube tu foto o vídeo", type=["mp4", "mov", "jpg", "png"])
+        caption = st.text_area("Añade una descripción o historia a tu foto...")
+        media = st.file_uploader("Sube tu foto o vídeo de galería", type=["mp4", "mov", "jpg", "jpeg", "png"])
         
-        enviar = st.form_submit_button("Publicar en VibeFeed")
+        enviar = st.form_submit_button("Publicar en la Galería")
         
         if enviar:
             if username and caption:
@@ -159,14 +160,14 @@ with menu[1]:
                 c.execute("INSERT INTO posts (user, caption, file, file_type, likes) VALUES (?, ?, ?, ?, ?)",
                           (username, caption, path, file_type, 1))
                 conn.commit()
-                st.success("¡Tu publicación ya está en directo para toda la audiencia!")
+                st.success("¡Tu foto ya está brillando en la galería global!")
                 st.rerun()
             else:
                 st.warning("Por favor, rellena tu usuario y la descripción.")
 
 # --- SECCIÓN 3: ACERCA DE Y ESTADÍSTICAS EN VIVO ---
 with menu[2]:
-    st.subheader("📊 Estadísticas de la Comunidad")
+    st.subheader("📊 Estadísticas de la Comunidad Visual")
     
     c.execute("SELECT COUNT(*) FROM posts")
     total_posts = c.fetchone()[0]
@@ -187,12 +188,14 @@ with menu[2]:
         st.metric("Comentarios", total_comments)
 
     st.markdown("---")
-    st.subheader("Acerca de VibeFeed Pro")
+    st.subheader("Acerca de VibeFeed Photo")
     st.write("""
-        **VibeFeed Pro** es una plataforma social diseñada para ofrecer experiencias multimedia fluidas, interactivas y adaptadas al rendimiento móvil.
+        **VibeFeed Photo** es la evolución visual de tu plataforma, diseñada para compartir fotos con la máxima calidad y fluidez en dispositivos móviles.
         
-        * **Versión:** 2.2 Social Share Edition
-        * **Desarrollo:** Optimizado para creadores y comunidades activas.
-        * **Base de Datos:** SQLite conectada en tiempo real.
+        * **Versión:** 3.0 Photo Gallery Edition
+        * **Desarrollo:** Optimizado para creadores visuales.
+        * **Base de Datos:** SQLite persistente.
     """)
-    st.info("¡Gracias por formar parte de la comunidad!")
+    st.info("¡Sube tus mejores fotos y haz crecer la comunidad!")
+    
+
