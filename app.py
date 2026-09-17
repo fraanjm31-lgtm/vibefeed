@@ -54,9 +54,25 @@ def init_db():
         except sqlite3.OperationalError:
             c.execute(f"ALTER TABLE {table} ADD COLUMN {col} {defn}")
             
+    # Insertar datos de prueba si está vacío para que no aparezca en blanco
+    c.execute("SELECT COUNT(*) FROM users")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO users (username, password, bio, xp) VALUES (?, ?, ?, ?)", 
+                  ("code_ninja", make_hashes("1234"), "Programando apps profesionales desde el móvil. 📱💻", 350))
+        c.execute("INSERT INTO users (username, password, bio, xp) VALUES (?, ?, ?, ?)", 
+                  ("creator_pro", make_hashes("1234"), "¡Bienvenidos a la nueva era de VibeFeed!", 210))
+        
+    c.execute("SELECT COUNT(*) FROM posts")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO posts (user, caption, likes, vibe_tag, gifts_received) VALUES (?, ?, ?, ?, ?)",
+                  ("code_ninja", "¡Bienvenidos a NoxVibe! La red social del futuro construida 100% desde el móvil ⚡", 42, "Tecnología 💻", "🌟 Estrellas ☕ Café"))
+        c.execute("INSERT INTO posts (user, caption, likes, vibe_tag, gifts_received) VALUES (?, ?, ?, ?, ?)",
+                  ("creator_pro", "Probando las nuevas funciones de diseño y rangos dinámicos. ¡Esto va a otro nivel! 🚀", 19, "General 🌍", "💎 Gema"))
+
     c.execute("SELECT COUNT(*) FROM challenges")
     if c.fetchone()[0] == 0:
-        c.execute("INSERT INTO challenges (title, description) VALUES (?, ?)", ("Reto #CodeMobile", "Comparte tu avance."))
+        c.execute("INSERT INTO challenges (title, description) VALUES (?, ?)", ("Reto #CodeMobile", "Comparte tu avance creando apps desde el móvil."))
+        
     conn.commit()
     return conn
 
@@ -123,11 +139,12 @@ if menu_option == "📱 Feed":
     for post in c.fetchall():
         post_id, user, caption, file_path, file_type, likes, views, vibe_tag, secret_pin, gifts_received = post
         c.execute("SELECT xp FROM users WHERE username = ?", (user,))
-        p_xp = c.fetchone()[0] if c.fetchone() else 100
+        user_xp_row = c.fetchone()
+        p_xp = user_xp_row[0] if user_xp_row else 100
         b_n, b_c = get_badge(p_xp)
         
         with st.container():
-            st.markdown(f"### **{user}** <span class='{b_c}'>{b_n}</span>  `{vibe_tag}`", unsafe_allow_html=True)
+            st.markdown(f"### **@{user}** <span class='{b_c}'>{b_n}</span>  `{vibe_tag}`", unsafe_allow_html=True)
             st.write(caption)
             if file_path and os.path.exists(file_path):
                 if "video" in file_type: st.video(file_path)
@@ -189,4 +206,4 @@ elif menu_option == "👤 Perfil":
 else:
     st.subheader(f"Sección: {menu_option}")
     st.info("Sección activa y lista para usar.")
-                    
+    
