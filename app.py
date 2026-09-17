@@ -51,80 +51,13 @@ def init_db():
     conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
     c = conn.cursor()
     
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            username TEXT PRIMARY KEY,
-            password TEXT,
-            bio TEXT DEFAULT 'Creador NoxVibe ⚡',
-            city TEXT DEFAULT 'Madrid',
-            lat REAL DEFAULT 40.4168,
-            lon REAL DEFAULT -3.7038,
-            xp INTEGER DEFAULT 100,
-            notif_enabled INTEGER DEFAULT 1
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS follows (
-            follower TEXT,
-            followed TEXT,
-            PRIMARY KEY (follower, followed)
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS posts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user TEXT,
-            caption TEXT,
-            file TEXT,
-            file_type TEXT,
-            likes INTEGER,
-            views INTEGER DEFAULT 0,
-            vibe_tag TEXT DEFAULT 'General 🌍',
-            is_story INTEGER DEFAULT 0,
-            secret_pin TEXT DEFAULT '',
-            is_duel INTEGER DEFAULT 0,
-            duel_votes_a INTEGER DEFAULT 0,
-            duel_votes_b INTEGER DEFAULT 0,
-            duel_opponent TEXT DEFAULT '',
-            gifts_received TEXT DEFAULT ''
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            sender TEXT,
-            receiver TEXT,
-            message TEXT,
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS challenges (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            title TEXT,
-            description TEXT
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS agora (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            thought TEXT,
-            constellation TEXT DEFAULT 'Filosofía 🌌',
-            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
-        )
-    ''')
-    
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS algo_votes (
-            user TEXT PRIMARY KEY,
-            preference TEXT
-        )
-    ''')
+    c.execute('CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, bio TEXT DEFAULT "Creador NoxVibe ⚡", city TEXT DEFAULT "Madrid", lat REAL DEFAULT 40.4168, lon REAL DEFAULT -3.7038, xp INTEGER DEFAULT 100, notif_enabled INTEGER DEFAULT 1)')
+    c.execute('CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT, PRIMARY KEY (follower, followed))')
+    c.execute('CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, user TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, views INTEGER DEFAULT 0, vibe_tag TEXT DEFAULT "General 🌍", is_story INTEGER DEFAULT 0, secret_pin TEXT DEFAULT "", is_duel INTEGER DEFAULT 0, duel_votes_a INTEGER DEFAULT 0, duel_votes_b INTEGER DEFAULT 0, duel_opponent TEXT DEFAULT "", gifts_received TEXT DEFAULT "")')
+    c.execute('CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender TEXT, receiver TEXT, message TEXT, timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)')
+    c.execute('CREATE TABLE IF NOT EXISTS challenges (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, description TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS agora (id INTEGER PRIMARY KEY AUTOINCREMENT, thought TEXT, constellation TEXT DEFAULT "Filosofía 🌌", timestamp DATETIME DEFAULT CURRENT_TIMESTAMP)')
+    c.execute('CREATE TABLE IF NOT EXISTS algo_votes (user TEXT PRIMARY KEY, preference TEXT)')
 
     cols = [
         ("posts", "secret_pin", "TEXT DEFAULT ''"),
@@ -144,8 +77,7 @@ def init_db():
 
     c.execute("SELECT COUNT(*) FROM challenges")
     if c.fetchone()[0] == 0:
-        c.execute("INSERT INTO challenges (title, description) VALUES (?, ?)", 
-                  ("Reto #CodeMobile", "Comparte tu avance creando apps desde el móvil."))
+        c.execute("INSERT INTO challenges (title, description) VALUES (?, ?)", ("Reto #CodeMobile", "Comparte tu avance creando apps desde el móvil."))
 
     conn.commit()
     return conn
@@ -331,11 +263,7 @@ with tab2:
                         with open(path, "wb") as f: f.write(media.getbuffer())
                         f_type = media.type
                     
-                    c.execute('''
-                        INSERT INTO posts (user, caption, file, file_type, likes, views, is_story, secret_pin, is_duel, duel_opponent)
-                        VALUES (?, ?, ?, ?, 1, 0, ?, ?, ?, ?)
-                    ''', (st.session_state['username'], cap, path, f_type, 1 if is_st else 0, pin, 1 if is_dl else 0, opp if is_dl else ""))
-                    
+                    c.execute("INSERT INTO posts (user, caption, file, file_type, likes, views, is_story, secret_pin, is_duel, duel_opponent) VALUES (?, ?, ?, ?, 1, 0, ?, ?, ?, ?)", (st.session_state['username'], cap, path, f_type, 1 if is_st else 0, pin, 1 if is_dl else 0, opp if is_dl else ""))
                     c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (st.session_state['username'],))
                     conn.commit()
                     st.success("¡Lanzado con éxito! +10 XP ⚡")
@@ -492,4 +420,19 @@ with tab9:
     if not target_user:
         st.info("Usa el menú lateral izquierdo (buscador) para explorar el canal de cualquier creador.")
     else:
-        c.execute("SELECT username, bio, city, xp FROM users WHERE LOWER(username) = LOW
+        c.execute("SELECT username, bio, city, xp FROM users WHERE LOWER(username) = LOWER(?)", (target_user,))
+        u_data = c.fetchone()
+        
+        if u_data:
+            real_username, u_bio, u_city, u_xp = u_data
+            b_name, b_class = get_badge(u_xp)
+            
+            col_h1, col_h2 = st.columns([3, 1])
+            with col_h1:
+                st.markdown(f"## Canal de **@{real_username}** <span class='{b_class}'>{b_name}</span>", unsafe_allow_html=True)
+                st.write(f"💬 *{u_bio or 'Creador NoxVibe'}*")
+                st.caption(f"📍 Ciudad: {u_city or 'Madrid'} | ⚡ XP Totales: **{u_xp}**")
+            with col_h2:
+                if st.session_state['logged_in'] and st.session_state['username'].lower() != real_username.lower():
+                    cur = st.session_state['username']
+                    c.execute("SELECT * FROM follows WHERE follower = ? 
