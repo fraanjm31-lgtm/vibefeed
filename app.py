@@ -6,12 +6,12 @@ from datetime import datetime
 
 # Configuración de la página
 st.set_page_config(
-    page_title="VibeFeed Quantum Edition",
+    page_title="VibeFeed Quantum Suite",
     page_icon="🌌",
     layout="centered"
 )
 
-# Estilos CSS avanzados con soporte dinámico para Modo Oscuro/Claro
+# Estilos CSS avanzados con colores dinámicos y soporte de temas
 def get_custom_css(theme):
     if theme == "Modo Claro ☀️":
         bg_color = "#ffffff"
@@ -24,6 +24,9 @@ def get_custom_css(theme):
     <style>
     .main {{ background-color: {bg_color}; color: {text_color}; }}
     .stButton>button {{ width: 100%; border-radius: 20px; font-weight: bold; }}
+    .badge-novato {{ background-color: #3b82f6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }}
+    .badge-pro {{ background-color: #8b5cf6; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }}
+    .badge-cuantico {{ background-color: #f59e0b; color: white; padding: 2px 8px; border-radius: 10px; font-size: 11px; }}
     </style>
     """
 
@@ -40,7 +43,7 @@ def check_hashes(password, hashed_text):
         return True
     return False
 
-# --- BASE DE DATOS ---
+# --- BASE DE DATOS ACTUALIZADA ---
 def init_db():
     conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
     c = conn.cursor()
@@ -73,7 +76,8 @@ def init_db():
             is_duel INTEGER DEFAULT 0,
             duel_votes_a INTEGER DEFAULT 0,
             duel_votes_b INTEGER DEFAULT 0,
-            duel_opponent TEXT DEFAULT ''
+            duel_opponent TEXT DEFAULT '',
+            gifts_received TEXT DEFAULT ''
         )
     ''')
     
@@ -117,6 +121,7 @@ def init_db():
         ("posts", "duel_votes_a", "INTEGER DEFAULT 0"),
         ("posts", "duel_votes_b", "INTEGER DEFAULT 0"),
         ("posts", "duel_opponent", "TEXT DEFAULT ''"),
+        ("posts", "gifts_received", "TEXT DEFAULT ''"),
         ("users", "xp", "INTEGER DEFAULT 100"),
         ("users", "notif_enabled", "INTEGER DEFAULT 1")
     ]
@@ -142,8 +147,16 @@ if 'logged_in' not in st.session_state:
 if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
+def get_badge(xp):
+    if xp >= 300:
+        return "🌌 Dios Cuántico", "badge-cuantico"
+    elif xp >= 180:
+        return "⚡ Creador Pro", "badge-pro"
+    else:
+        return "🌱 Novato", "badge-novato"
+
 st.title("🌌 VibeFeed Quantum Suite")
-st.caption("✨ Red social descentralizada con Cápsulas PIN, Algoritmo Democrático, Duelos, Ágora IA y Ajustes Pro.")
+st.caption("✨ Red social con Regalos XP, Premios, Insignias y Ajustes Pro.")
 
 # Sidebar de acceso
 with st.sidebar:
@@ -179,16 +192,18 @@ with st.sidebar:
         st.success(f"Sesión: **{st.session_state['username']}**")
         c.execute("SELECT xp FROM users WHERE username = ?", (st.session_state['username'],))
         xp_val = c.fetchone()[0]
+        badge_name, badge_class = get_badge(xp_val)
         st.metric("Tus Puntos XP", xp_val)
+        st.markdown(f"Rango: <span class='{badge_class}'>{badge_name}</span>", unsafe_allow_html=True)
         
         if st.button("Cerrar Sesión"):
             st.session_state['logged_in'] = False
             st.session_state['username'] = ''
             st.rerun()
     st.markdown("---")
-    st.write("Versión 9.1 - Quantum Settings Pro")
+    st.write("Versión 9.2 - Rewards & Badges")
 
-# Menú completo con todas las pestañas ordenadas exactamente
+# Menú completo con pestañas
 menu = st.tabs([
     "📱 Feed", 
     "🗳️ AlgoDemocracia", 
@@ -207,7 +222,7 @@ menu = st.tabs([
     "➕ Subir"
 ])
 
-# 1. Feed
+# 1. Feed con Sistema de Regalos Virtuales
 with menu[0]:
     st.subheader("Feed de la Comunidad")
     if st.session_state['logged_in']:
@@ -217,20 +232,25 @@ with menu[0]:
     else:
         pref_mode = "Todo"
         
-    st.caption(f"⚙️ Algoritmo actual en vigor: **{pref_mode}**")
-    
-    query = "SELECT id, user, caption, file, file_type, likes, views, vibe_tag, secret_pin FROM posts WHERE is_story = 0 AND is_duel = 0"
+    query = "SELECT id, user, caption, file, file_type, likes, views, vibe_tag, secret_pin, gifts_received FROM posts WHERE is_story = 0 AND is_duel = 0"
     if pref_mode == "Solo Vídeos": query += " AND file_type LIKE '%video%'"
     elif pref_mode == "Solo Fotos": query += " AND file_type LIKE '%image%'"
     query += " ORDER BY id DESC"
     
     c.execute(query)
     for post in c.fetchall():
-        post_id, user, caption, file_path, file_type, likes, views, vibe_tag, secret_pin = post
+        post_id, user, caption, file_path, file_type, likes, views, vibe_tag, secret_pin, gifts_received = post
+        
+        # Obtener XP e insignia del creador del post
+        c.execute("SELECT xp FROM users WHERE username = ?", (user,))
+        u_xp_res = c.fetchone()
+        p_xp = u_xp_res[0] if u_xp_res else 100
+        b_name, b_class = get_badge(p_xp)
+        
         if secret_pin and secret_pin.strip() != "":
             with st.container():
-                st.markdown(f"### **{user}** 🔒 *[Cápsula Protegida]*")
-                entered_pin = st.text_input(f"PIN para abrir post #{post_id}", type="password", key=f"pin_{post_id}")
+                st.markdown(f"### **{user}** <span class='{b_class}'>{b_name}</span> 🔒 *[Cápsula]*", unsafe_allow_html=True)
+                entered_pin = st.text_input(f"PIN para post #{post_id}", type="password", key=f"pin_{post_id}")
                 if entered_pin == secret_pin:
                     st.success(caption)
                     if file_path and os.path.exists(file_path):
@@ -240,16 +260,38 @@ with menu[0]:
             continue
 
         with st.container():
-            st.markdown(f"### **{user}**  `{vibe_tag}`")
+            st.markdown(f"### **{user}** <span class='{b_class}'>{b_name}</span>  `{vibe_tag}`", unsafe_allow_html=True)
             st.write(caption)
             if file_path and os.path.exists(file_path):
                 if "video" in file_type: st.video(file_path)
                 elif "image" in file_type: st.image(file_path, use_container_width=True)
-            st.caption(f"❤️ {likes} likes | 👁️ {(views or 0) + 1} vistas")
-            if st.button("❤️ Like", key=f"l_{post_id}"):
-                c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
-                conn.commit()
-                st.rerun()
+            
+            st.caption(f"❤️ {likes} likes | 👁️ {(views or 0) + 1} vistas {f'| {gifts_received}' if gifts_received else ''}")
+            
+            col_l, col_g = st.columns(2)
+            with col_l:
+                if st.button("❤️ Like", key=f"l_{post_id}"):
+                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
+                    conn.commit()
+                    st.rerun()
+            with col_g:
+                if st.session_state['logged_in']:
+                    gift_choice = st.selectbox("🎁 Enviar regalo (-10 XP):", ["Selecciona...", "🌟 Estrellas", "💎 Gema", "☕ Café"], key=f"g_sel_{post_id}")
+                    if st.button("Enviar Regalo", key=f"g_btn_{post_id}"):
+                        cur = st.session_state['username']
+                        c.execute("SELECT xp FROM users WHERE username = ?", (cur,))
+                        my_xp = c.fetchone()[0]
+                        if my_xp >= 10:
+                            # Descontar XP al emisor y sumar al autor
+                            c.execute("UPDATE users SET xp = xp - 10 WHERE username = ?", (cur,))
+                            c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (user,))
+                            new_gift_str = f"{gifts_received} {gift_choice}" if gifts_received else gift_choice
+                            c.execute("UPDATE posts SET gifts_received = ? WHERE id = ?", (new_gift_str, post_id))
+                            conn.commit()
+                            st.success(f"¡Has enviado {gift_choice} a @{user}!")
+                            st.rerun()
+                        else:
+                            st.error("No tienes suficientes puntos XP para enviar regalos.")
             st.markdown("---")
 
 # 2. AlgoDemocracia
@@ -344,12 +386,13 @@ with menu[7]:
 
 # 9. Buscar
 with menu[8]:
-    st.subheader("🔍 Buscar")
+    st.subheader("🔍 Buscar Creadores")
     sq = st.text_input("Usuario...")
     if sq:
         c.execute("SELECT username, bio, xp FROM users WHERE username LIKE ?", (f"%{sq}%",))
         for r in c.fetchall():
-            st.markdown(f"### @{r[0]} (XP: {r[2]})\n*{r[1]}*")
+            b_n, b_c = get_badge(r[2])
+            st.markdown(f"### @{r[0]} <span class='{b_c}'>{b_n}</span> (XP: {r[2]})\n*{r[1]}*", unsafe_allow_html=True)
 
 # 10. Tags
 with menu[9]:
@@ -382,16 +425,20 @@ with menu[10]:
 with menu[11]:
     st.subheader("🔔 Avisos")
     if st.session_state['logged_in']:
-        st.info("No hay nuevas notificaciones push.")
+        st.info("Sin notificaciones pendientes.")
 
-# 13. Perfil
+# 13. Perfil con Insignias y Rango
 with menu[12]:
-    st.subheader("👤 Perfil")
+    st.subheader("👤 Perfil y Premios")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         c.execute("SELECT bio, city, xp FROM users WHERE username = ?", (cur,))
         u_info = c.fetchone()
-        st.metric("XP", u_info[2])
+        b_n, b_c = get_badge(u_info[2])
+        st.metric("Puntos XP", u_info[2])
+        st.markdown(f"**Tu Insignia Actual:** <span class='{b_c}'>{b_n}</span>", unsafe_allow_html=True)
+        st.info("💡 Sube contenido, recibe regalos o participa en duelos para ganar XP y subir de rango.")
+        
         with st.form("p_up"):
             nb = st.text_area("Bio", value=u_info[0])
             nc = st.text_input("Ciudad", value=u_info[1])
@@ -401,10 +448,9 @@ with menu[12]:
                 st.success("¡Guardado!")
                 st.rerun()
 
-# 14. Ajustes Pro (¡Arreglado y operativo!)
+# 14. Ajustes Pro
 with menu[13]:
     st.subheader("⚙️ Ajustes Pro")
-    
     st.markdown("### 🎨 Apariencia")
     sel_t = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], index=0 if st.session_state['theme']=="Modo Oscuro 🌙" else 1)
     if sel_t != st.session_state['theme']:
@@ -416,7 +462,6 @@ with menu[13]:
     
     if st.session_state['logged_in']:
         cur_user = st.session_state['username']
-        
         st.markdown("### 🔔 Notificaciones")
         c.execute("SELECT notif_enabled FROM users WHERE username = ?", (cur_user,))
         n_status = c.fetchone()[0]
@@ -427,7 +472,6 @@ with menu[13]:
             st.toast("Actualizado")
             
         st.markdown("---")
-        
         st.markdown("### 🔒 Seguridad")
         with st.form("pwd_f"):
             old_p = st.text_input("Contraseña Actual", type="password")
@@ -454,47 +498,4 @@ with menu[13]:
             c.execute("DELETE FROM users WHERE username = ?", (cur_user,))
             c.execute("DELETE FROM posts WHERE user = ?", (cur_user,))
             conn.commit()
-            st.session_state['logged_in'] = False
-            st.session_state['username'] = ''
-            st.success("Cuenta eliminada.")
-            st.rerun()
-    else:
-        st.info("Inicia sesión para ver ajustes.")
-
-# 15. Subir
-with menu[14]:
-    st.subheader("➕ Subir Contenido")
-    if st.session_state['logged_in']:
-        with st.form("up_form", clear_on_submit=True):
-            cap = st.text_area("Descripción...")
-            media = st.file_uploader("Multimedia", type=["mp4", "mov", "jpg", "jpeg", "png"])
-            is_st = st.checkbox("⏳ Historia (24h)")
-            is_dl = st.checkbox("⚔️ VibeDuel 1v1")
-            c.execute("SELECT username FROM users WHERE username != ?", (st.session_state['username'],))
-            opps = [r[0] for r in c.fetchall()]
-            opp = st.selectbox("Rival", opps) if opps else ""
-            pin = st.text_input("🔐 PIN secreto (opcional)")
-            
-            if st.form_submit_button("Publicar"):
-                if cap:
-                    path, f_type = None, "default"
-                    if media is not None:
-                        os.makedirs("uploads", exist_ok=True)
-                        path = os.path.join("uploads", media.name)
-                        with open(path, "wb") as f: f.write(media.getbuffer())
-                        f_type = media.type
-                    
-                    c.execute('''
-                        INSERT INTO posts (user, caption, file, file_type, likes, views, is_story, secret_pin, is_duel, duel_opponent)
-                        VALUES (?, ?, ?, ?, 1, 0, ?, ?, ?, ?)
-                    ''', (st.session_state['username'], cap, path, f_type, 1 if is_st else 0, pin, 1 if is_dl else 0, opp if is_dl else ""))
-                    
-                    c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (st.session_state['username'],))
-                    conn.commit()
-                    st.success("¡Publicado con éxito! 🚀")
-                    st.rerun()
-                else:
-                    st.warning("Escribe algo.")
-    else:
-        st.warning("Inicia sesión para subir contenido.")
-    
+            s
