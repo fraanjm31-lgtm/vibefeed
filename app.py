@@ -2,10 +2,11 @@ import streamlit as st
 import os
 import sqlite3
 import hashlib
+import re
 
 # Configuración de la página
 st.set_page_config(
-    page_title="VibeFeed Media",
+    page_title="VibeFeed Media Pro",
     page_icon="🎬",
     layout="centered"
 )
@@ -24,7 +25,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# Función para encriptar contraseñas
+# Funciones de encriptación
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -33,16 +34,22 @@ def check_hashes(password, hashed_text):
         return True
     return False
 
-# --- CONFIGURACIÓN DE LA BASE DE DATOS SQLITE (CON AUTO-ACTUALIZACIÓN) ---
+# --- CONFIGURACIÓN DE LA BASE DE DATOS SQLITE (CON TODAS LAS TABLAS) ---
 def init_db():
     conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
     c = conn.cursor()
+    
+    # Usuarios con bio y avatar
     c.execute('''
         CREATE TABLE IF NOT EXISTS users (
             username TEXT PRIMARY KEY,
-            password TEXT
+            password TEXT,
+            bio TEXT DEFAULT 'Creador de contenido en VibeFeed 🚀',
+            avatar TEXT DEFAULT ''
         )
     ''')
+    
+    # Posts
     c.execute('''
         CREATE TABLE IF NOT EXISTS posts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -54,12 +61,8 @@ def init_db():
             views INTEGER DEFAULT 0
         )
     ''')
-    # Comprobar y añadir la columna views si la tabla es antigua
-    try:
-        c.execute("SELECT views FROM posts LIMIT 1")
-    except sqlite3.OperationalError:
-        c.execute("ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0")
-
+    
+    # Comentarios
     c.execute('''
         CREATE TABLE IF NOT EXISTS comments (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -68,6 +71,8 @@ def init_db():
             comment TEXT
         )
     ''')
+    
+    # Seguidores
     c.execute('''
         CREATE TABLE IF NOT EXISTS follows (
             follower TEXT,
@@ -75,6 +80,40 @@ def init_db():
             PRIMARY KEY (follower, followed)
         )
     ''')
+    
+    # Notificaciones
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user TEXT,
+            message TEXT,
+            is_read INTEGER DEFAULT 0
+        )
+    ''')
+    
+    # Mensajes Privados (DMs)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sender TEXT,
+            receiver TEXT,
+            message TEXT,
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+    ''')
+    
+    # Migraciones / Comprobaciones seguras por si la BD ya existía
+    try:
+        c.execute("SELECT views FROM posts LIMIT 1")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE posts ADD COLUMN views INTEGER DEFAULT 0")
+        
+    try:
+        c.execute("SELECT bio FROM users LIMIT 1")
+    except sqlite3.OperationalError:
+        c.execute("ALTER TABLE users ADD COLUMN bio TEXT DEFAULT 'Creador de contenido en VibeFeed 🚀'")
+        c.execute("ALTER TABLE users ADD COLUMN avatar TEXT DEFAULT ''")
+
     conn.commit()
     return conn
 
@@ -88,8 +127,8 @@ if 'username' not in st.session_state:
     st.session_state['username'] = ''
 
 # Título principal
-st.title("🎬 VibeFeed Media")
-st.caption("✨ Red social multimedia con perfiles, seguidores y analíticas.")
+st.title("🎬 VibeFeed Media Pro")
+st.caption("✨ Red social multimedia completa con DMs, Biografías y Notificaciones.")
 
 # Barra lateral para el Login / Registro
 with st.sidebar:
@@ -125,16 +164,23 @@ with st.sidebar:
                     st.error("Usuario o contraseña incorrectos.")
     else:
         st.success(f"Sesión iniciada como:\n**{st.session_state['username']}**")
+        
+        # Badge de Notificaciones no leídas en la barra lateral
+        c.execute("SELECT COUNT(*) FROM notifications WHERE user = ? AND is_read = 0", (st.session_state['username'],))
+        unread_count = c.fetchone()[0]
+        if unread_count > 0:
+            st.warning(f"🔔 Tienes {unread_count} notificación(es) nueva(s)")
+            
         if st.button("Cerrar Sesión"):
             st.session_state['logged_in'] = False
             st.session_state['username'] = ''
             st.rerun()
 
     st.markdown("---")
-    st.write("Versión 5.1 - Social Pro Edition")
+    st.write("Versión 6.0 - Full Social Suite")
 
-# Menú de navegación superior
-menu = st.tabs(["📱 Feed", "🔍 Buscar", "👤 Mi Perfil", "➕ Subir", "ℹ️ Info"])
+# Menú de navegación superior (Se han añadido la Campanita de Avisos y los DMs)
+menu = st.tabs(["📱 Feed", "🔍 Buscar", "# Hashtags", "💬 Chats", "🔔 Avisos", "👤 Mi Perfil", "➕ Subir"])
 
 # --- SECCIÓN 1: EL FEED (Global o Siguiendo) ---
 with menu[0]:
@@ -146,7 +192,7 @@ with menu[0]:
         if feed_mode == "👥 Siguiendo":
             feed_type = "Following"
 
-    filtro = st.radio("Filtrar:", ["Todo", "Vídeos", "Fotos"], horizontal=True)
+    filtro = st.radio("Filtrar por tipo:", ["Todo", "Vídeos", "Fotos"], horizontal=True)
     
     query = "SELECT id, user, caption, file, file_type, likes, views FROM posts"
     params = []
@@ -188,7 +234,20 @@ with menu[0]:
             pass
         
         with st.container():
-            st.markdown(f"### **{user}**")
+            # Cargar avatar del creador si existe
+            c.execute("SELECT avatar FROM users WHERE username = ?", (user,))
+            res_av = c.fetchone()
+            avatar_path = res_av[0] if res_av and res_av[0] else None
+            
+            col_av, col_name = st.columns([1, 6])
+            with col_av:
+                if avatar_path and os.path.exists(avatar_path):
+                    st.image(avatar_path, width=40)
+                else:
+                    st.write("👤")
+            with col_name:
+                st.markdown(f"### **{user}**")
+                
             st.write(caption)
             
             if file_path and os.path.exists(file_path):
@@ -214,6 +273,11 @@ with menu[0]:
                 if st.button("❤️ Like", key=f"like_{post_id}"):
                     c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
                     conn.commit()
+                    # Registrar notificación de like si no es su propio post
+                    if st.session_state['logged_in'] and st.session_state['username'] != user:
+                        msg_notif = f"❤️ @{st.session_state['username']} le dio like a tu publicación."
+                        c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (user, msg_notif))
+                        conn.commit()
                     st.rerun()
             
             with col2:
@@ -259,6 +323,12 @@ with menu[0]:
                         except sqlite3.OperationalError:
                             c.execute("ALTER TABLE comments ADD COLUMN user TEXT")
                             c.execute("INSERT INTO comments (post_id, user, comment) VALUES (?, ?, ?)", (post_id, com_user, new_com))
+                        
+                        # Notificar al dueño del post
+                        if st.session_state['logged_in'] and st.session_state['username'] != user:
+                            msg_com = f"💬 @{com_user} comentó tu publicación: '{new_com[:20]}...'"
+                            c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (user, msg_com))
+                            
                         conn.commit()
                         st.rerun()
             
@@ -267,16 +337,25 @@ with menu[0]:
 # --- SECCIÓN 2: BUSCADOR DE CREADORES ---
 with menu[1]:
     st.subheader("🔍 Buscar Creadores")
-    search_query = st.text_input("Escribe el nombre del usuario a buscar...")
+    search_query = st.text_input("Escribe el nombre del usuario a buscar...", key="search_user_box")
     
     if search_query:
-        c.execute("SELECT username FROM users WHERE username LIKE ?", (f"%{search_query}%",))
+        c.execute("SELECT username, bio, avatar FROM users WHERE username LIKE ?", (f"%{search_query}%",))
         found_users = c.fetchall()
         
         if found_users:
             for fu in found_users:
-                f_user = fu[0]
-                st.markdown(f"### 👤 @{f_user}")
+                f_user, f_bio, f_avatar = fu
+                
+                col_av_s, col_info_s = st.columns([1, 5])
+                with col_av_s:
+                    if f_avatar and os.path.exists(f_avatar):
+                        st.image(f_avatar, width=50)
+                    else:
+                        st.write("👤")
+                with col_info_s:
+                    st.markdown(f"### @{f_user}")
+                    st.write(f"*{f_bio}*")
                 
                 if st.session_state['logged_in'] and st.session_state['username'] != f_user:
                     c.execute("SELECT * FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], f_user))
@@ -290,109 +369,112 @@ with menu[1]:
                     else:
                         if st.button(f"Seguir @{f_user}", key=f"follow_{f_user}"):
                             c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], f_user))
+                            # Notificar al usuario seguido
+                            msg_follow = f"👤 @{st.session_state['username']} ha empezado a seguirte."
+                            c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (f_user, msg_follow))
                             conn.commit()
                             st.rerun()
                 
                 c.execute("SELECT caption, file, file_type, likes FROM posts WHERE user = ? ORDER BY id DESC", (f_user,))
                 u_posts = c.fetchall()
-                st.caption(f"Publicaciones: {len(u_posts)}")
+                st.caption(f"Publicaciones totales: {len(u_posts)}")
                 st.markdown("---")
         else:
             st.warning("No se ha encontrado ningún creador con ese nombre.")
 
-# --- SECCIÓN 3: PERFIL PERSONAL ---
+# --- SECCIÓN 3: HASHTAGS ---
 with menu[2]:
-    st.subheader("👤 Tu Muro y Estadísticas")
-    if st.session_state['logged_in']:
-        current_user = st.session_state['username']
-        st.markdown(f"### Perfil de **{current_user}**")
-        
-        c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (current_user,))
-        followers_count = c.fetchone()[0]
-        c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (current_user,))
-        following_count = c.fetchone()[0]
-        
-        col_f1, col_f2 = st.columns(2)
-        with col_f1:
-            st.metric("Seguidores", followers_count)
-        with col_f2:
-            st.metric("Siguiendo", following_count)
+    st.subheader("# Explorador de Hashtags")
+    tag_query = st.text_input("Busca una etiqueta (ej. #tech, #humor, #viajes)...")
+    
+    if tag_query:
+        # Asegurarse de que incluya '#' para buscar bien
+        if not tag_query.startswith("#"):
+            tag_query = "#" + tag_query
             
-        st.markdown("---")
+        c.execute("SELECT id, user, caption, file, file_type, likes, views FROM posts WHERE caption LIKE ? ORDER BY id DESC", (f"%{tag_query}%",))
+        tagged_posts = c.fetchall()
         
-        c.execute("SELECT id, caption, file, file_type, likes, views FROM posts WHERE user = ? ORDER BY id DESC", (current_user,))
-        user_posts = c.fetchall()
+        st.info(f"Mostrando resultados para: **{tag_query}** ({len(tagged_posts)} encontrados)")
         
-        st.info(f"📁 Tienes un total de **{len(user_posts)}** publicaciones.")
-        st.markdown("---")
-        
-        for post in user_posts:
-            post_id, caption, file_path, file_type, likes, views = post
+        for post in tagged_posts:
+            post_id, user, caption, file_path, file_type, likes, views = post
             with st.container():
+                st.markdown(f"### **{user}**")
                 st.write(caption)
                 if file_path and os.path.exists(file_path):
                     if "video" in file_type:
                         st.video(file_path)
                     elif "image" in file_type:
                         st.image(file_path, use_container_width=True)
-                
-                v_count = views if views is not None else 0
-                l_count = likes if likes is not None else 0
-                st.caption(f"❤️ {l_count} likes | 👁️ {v_count} vistas")
-                
-                if st.button("🗑️ Borrar publicación", key=f"my_del_{post_id}"):
-                    c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
-                    c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
-                    conn.commit()
-                    st.toast("Publicación eliminada", icon="🗑️")
-                    st.rerun()
+                st.caption(f"❤️ {likes} likes | 👁️ {views} vistas")
                 st.markdown("---")
-    else:
-        st.warning("⚠️ Inicia sesión para ver tu perfil.")
 
-# --- SECCIÓN 4: SUBIR CONTENIDO ---
+# --- SECCIÓN 4: MENSAJERÍA PRIVADA (DMs) ---
 with menu[3]:
-    st.subheader("Sube Contenido Multimedia")
+    st.subheader("💬 Mensajes Privados (DMs)")
     if st.session_state['logged_in']:
-        with st.form("pub_form", clear_on_submit=True):
-            st.write(f"Publicando como: **{st.session_state['username']}**")
-            caption = st.text_area("Añade una descripción...")
-            media = st.file_uploader("Sube foto o vídeo", type=["mp4", "mov", "jpg", "jpeg", "png"])
+        current_user = st.session_state['username']
+        
+        # Obtener lista de usuarios para chatear
+        c.execute("SELECT username FROM users WHERE username != ?", (current_user,))
+        other_users = [row[0] for row in c.fetchall()]
+        
+        if other_users:
+            chat_with = st.selectbox("Selecciona un creador para chatear:", other_users)
             
-            enviar = st.form_submit_button("Publicar")
-            
-            if enviar:
-                if caption:
-                    path = None
-                    file_type = "default"
-                    if media is not None:
-                        os.makedirs("uploads", exist_ok=True)
-                        path = os.path.join("uploads", media.name)
-                        with open(path, "wb") as f:
-                            f.write(media.getbuffer())
-                        file_type = media.type
+            if chat_with:
+                st.markdown(f"--- \n **Chat activo con @{chat_with}**")
+                
+                # Cargar historial de mensajes entre ambos
+                c.execute('''
+                    SELECT sender, receiver, message, timestamp FROM messages 
+                    WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)
+                    ORDER BY id ASC
+                ''', (current_user, chat_with, chat_with, current_user))
+                messages = c.fetchall()
+                
+                chat_container = st.container(height=300)
+                with chat_container:
+                    for msg in messages:
+                        sender, receiver, text, timestamp = msg
+                        if sender == current_user:
+                            st.markdown(f"<div style='text-align: right; background-color: #1f6feb; color: white; padding: 8px 12px; border-radius: 12px; margin: 5px 0;'><b>Tú:</b> {text}</div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"<div style='text-align: left; background-color: #21262d; color: white; padding: 8px 12px; border-radius: 12px; margin: 5px 0;'><b>@{sender}:</b> {text}</div>", unsafe_allow_html=True)
+                
+                with st.form(key="dm_form", clear_on_submit=True):
+                    new_msg = st.text_input("Escribe tu mensaje privado...")
+                    send_dm = st.form_submit_button("Enviar Mensaje")
                     
-                    c.execute("INSERT INTO posts (user, caption, file, file_type, likes, views) VALUES (?, ?, ?, ?, ?, ?)",
-                              (st.session_state['username'], caption, path, file_type, 1, 0))
-                    conn.commit()
-                    st.success("¡Publicado con éxito!")
-                    st.rerun()
-                else:
-                    st.warning("Escribe una descripción.")
+                    if send_dm and new_msg:
+                        c.execute("INSERT INTO messages (sender, receiver, message) VALUES (?, ?, ?)", (current_user, chat_with, new_msg))
+                        # Notificar al destinatario
+                        c.execute("INSERT INTO notifications (user, message) VALUES (?, ?)", (chat_with, f"💬 Nuevo mensaje privado de @{current_user}"))
+                        conn.commit()
+                        st.rerun()
+        else:
+            st.info("No hay más usuarios registrados en la plataforma para chatear todavía.")
     else:
-        st.warning("⚠️ Inicia sesión para subir contenido.")
+        st.warning("⚠️ Inicia sesión para usar la mensajería privada.")
 
-# --- SECCIÓN 5: INFORMACIÓN ---
+# --- SECCIÓN 5: NOTIFICACIONES / AVISOS ---
 with menu[4]:
-    st.subheader("📊 Estadísticas Generales")
-    c.execute("SELECT COUNT(*) FROM posts")
-    total_posts = c.fetchone()[0]
-    c.execute("SELECT COUNT(*) FROM users")
-    total_users = c.fetchone()[0]
-    
-    col_1, col_2 = st.columns(2)
-    with col_1:
-        st.metric("Creadores", total_users)
-    with col_2:
-        st.metric("Posts Globales", total_posts)
+    st.subheader("🔔 Tus Notificaciones")
+    if st.session_state['logged_in']:
+        current_user = st.session_state['username']
+        
+        c.execute("SELECT id, message, is_read FROM notifications WHERE user = ? ORDER BY id DESC", (current_user,))
+        notifs = c.fetchall()
+        
+        if st.button("Marcar todas como leídas"):
+            c.execute("UPDATE notifications SET is_read = 1 WHERE user = ?", (current_user,))
+            conn.commit()
+            st.rerun()
+            
+        st.markdown("---")
+        if notifs:
+            for notif in notifs:
+                nid, text, read_status = notif
+        
     
