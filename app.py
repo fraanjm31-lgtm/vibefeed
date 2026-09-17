@@ -457,7 +457,7 @@ with tabs[9]:
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         
-        # Conexión fresca y dedicada para evitar caché de SQLite
+        # Conexión fresca para lectura en tiempo real
         chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
         chat_c = chat_conn.cursor()
         
@@ -466,16 +466,17 @@ with tabs[9]:
         if not users_list:
             st.info("No hay más usuarios registrados.")
         else:
-            partner = st.selectbox("Para:", users_list, key="chat_partner_fixed_v2")
+            partner = st.selectbox("Para:", users_list, key="chat_partner_auto")
             if partner:
-                col_t1, col_t2 = st.columns([3, 1])
-                with col_t1:
+                col_info, col_act = st.columns([3, 1])
+                with col_info:
                     st.markdown(f"**Chat con @{partner}**")
-                with col_t2:
-                    if st.button("🔄 Recargar"):
+                with col_act:
+                    # Botón manual de recarga instantánea
+                    if st.button("🔄 Refrescar"):
                         st.rerun()
-                
-                # Leer mensajes con conexión totalmente limpia de caché
+
+                # Cargar historial actualizado de la base de datos
                 msgs = chat_c.execute("""
                     SELECT sender, message, timestamp 
                     FROM messages 
@@ -493,8 +494,9 @@ with tabs[9]:
                         else:
                             st.markdown(f"**@{s}:** {m} *({t})*")
                 
-                with st.form(key=f"chat_form_clean_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_clean")
+                # Formulario de envío
+                with st.form(key=f"chat_form_auto_{partner}", clear_on_submit=True):
+                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_auto")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
                             chat_c.execute(
@@ -504,16 +506,24 @@ with tabs[9]:
                             chat_conn.commit()
                             chat_conn.close()
                             st.rerun()
+                            
         chat_conn.close()
+        
+        # Truco definitivo: recarga automática de la página cada 6 segundos para que los mensajes entren solos
+        st.markdown(
+            """
+            <meta http-equiv="refresh" content="6">
+            """,
+            unsafe_allow_html=True
+        )
     else:
         st.warning("Inicia sesión para chatear.")
 
 # 11. Ajustes
 with tabs[10]:
     st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_box_v2")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_box_auto")
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
         
-
