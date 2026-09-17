@@ -54,8 +54,8 @@ c = conn.cursor()
 st.title("📸 VibeFeed Photo")
 st.caption("✨ Tu galería global de momentos y creadores visuales.")
 
-# Menú de navegación superior
-menu = st.tabs(["📱 Galería Global", "➕ Subir Foto/Vídeo", "ℹ️ Acerca de"])
+# Menú de navegación superior (Añadida la pestaña Perfil)
+menu = st.tabs(["📱 Galería Global", "👤 Perfil de Creador", "➕ Subir Foto/Vídeo", "ℹ️ Acerca de"])
 
 # --- SECCIÓN 1: LA GALERÍA / FEED VISUAL ---
 with menu[0]:
@@ -94,7 +94,7 @@ with menu[0]:
             else:
                 st.info("📷 [ Publicación de texto de la comunidad ]")
             
-            # Botones interactivos (Likes, Compartir, Copiar enlace y Borrar)
+            # Botones interactivos
             col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
             
             with col1:
@@ -113,9 +113,7 @@ with menu[0]:
 
             with col4:
                 if st.button(f"🗑️ Borrar", key=f"del_{post_id}"):
-                    # Borrar comentarios asociados primero
                     c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
-                    # Borrar el post
                     c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
                     conn.commit()
                     st.toast("Publicación borrada con éxito", icon="🗑️")
@@ -141,8 +139,59 @@ with menu[0]:
             
             st.markdown("---")
 
-# --- SECCIÓN 2: SUBIR CONTENIDO VISUAL ---
+# --- SECCIÓN 2: PERFIL DE CREADOR ---
 with menu[1]:
+    st.subheader("👤 Muro Personal de Creador")
+    
+    # Obtener lista de usuarios únicos de la base de datos
+    c.execute("SELECT DISTINCT user FROM posts ORDER BY user")
+    users = [row[0] for row in c.fetchall()]
+    
+    if users:
+        selected_user = st.selectbox("Selecciona un usuario para ver su galería:", users)
+        
+        if selected_user:
+            st.markdown(f"## Muro de **{selected_user}**")
+            c.execute("SELECT id, user, caption, file, file_type, likes FROM posts WHERE user = ? ORDER BY id DESC", (selected_user,))
+            user_posts = c.fetchall()
+            
+            st.info(f"📸 Total de publicaciones de {selected_user}: **{len(user_posts)}**")
+            st.markdown("---")
+            
+            for post in user_posts:
+                post_id, user, caption, file_path, file_type, likes = post
+                
+                with st.container():
+                    st.write(caption)
+                    if file_path and os.path.exists(file_path):
+                        if "video" in file_type:
+                            st.video(file_path)
+                        elif "image" in file_type:
+                            st.image(file_path, use_container_width=True)
+                    else:
+                        st.info("📷 [ Publicación de texto ]")
+                    
+                    # Botones rápidos en el perfil
+                    p_col1, p_col2 = st.columns(2)
+                    with p_col1:
+                        if st.button(f"❤️ {likes}", key=f"prof_like_{post_id}"):
+                            c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (post_id,))
+                            conn.commit()
+                            st.rerun()
+                    with p_col2:
+                        if st.button(f"🗑️ Borrar", key=f"prof_del_{post_id}"):
+                            c.execute("DELETE FROM comments WHERE post_id = ?", (post_id,))
+                            c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+                            conn.commit()
+                            st.toast("Publicación borrada", icon="🗑️")
+                            st.rerun()
+                    
+                    st.markdown("---")
+    else:
+        st.warning("Todavía no hay perfiles registrados en la comunidad.")
+
+# --- SECCIÓN 3: SUBIR CONTENIDO VISUAL ---
+with menu[2]:
     st.subheader("Comparte tus mejores fotos y vídeos")
     with st.form("pub_form", clear_on_submit=True):
         username = st.text_input("Tu nombre de usuario", value="@")
@@ -170,8 +219,8 @@ with menu[1]:
             else:
                 st.warning("Por favor, rellena tu usuario y la descripción.")
 
-# --- SECCIÓN 3: ACERCA DE Y ESTADÍSTICAS EN VIVO ---
-with menu[2]:
+# --- SECCIÓN 4: ACERCA DE Y ESTADÍSTICAS EN VIVO ---
+with menu[3]:
     st.subheader("📊 Estadísticas de la Comunidad Visual")
     
     c.execute("SELECT COUNT(*) FROM posts")
@@ -195,11 +244,13 @@ with menu[2]:
     st.markdown("---")
     st.subheader("Acerca de VibeFeed Photo")
     st.write("""
-        **VibeFeed Photo** es la evolución visual de tu plataforma, diseñada para compartir fotos con la máxima calidad y fluidez en dispositivos móviles.
+        **VibeFeed Photo** cuenta ahora con perfiles de usuario personalizados para explorar el contenido exclusivo de cada creador.
         
-        * **Versión:** 3.1 Photo Gallery Edition (con borrado)
+        * **Versión:** 3.2 Profile Edition
         * **Desarrollo:** Optimizado para creadores visuales.
         * **Base de Datos:** SQLite persistente.
     """)
-    st.info("¡Sube tus mejores fotos y haz crecer la comunidad!")
+    st.info("¡Disfruta de tu propio muro personal en la app!")
+    
+
     
