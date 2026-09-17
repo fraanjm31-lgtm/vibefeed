@@ -458,7 +458,4 @@ with tabs[9]:
 # 11. Ajustes
 with tabs[10]:
     st.subheader("⚙️ Ajustes")
-    if st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"]) != st.session_state['theme']:
-        st.session_state['theme'] = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"])
-        st.rerun()
-        
+    if st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"]) != st.sess
