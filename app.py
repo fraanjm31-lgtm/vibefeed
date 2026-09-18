@@ -202,34 +202,37 @@ if menu == "👤 Mi Perfil":
         num_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,)).fetchone()[0]
         num_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,)).fetchone()[0]
         
-        col_p1, col_p2 = st.columns([1, 2])
-        with col_p1:
-            if u_info and u_info[3] and os.path.exists(u_info[3]):
-                st.image(u_info[3], width=100)
+        # Estilo tipo Instagram unificado en horizontal (Foto a la izquierda, textos y contadores a la derecha)
+        pic_path_html = u_info[3] if (u_info and u_info[3] and os.path.exists(u_info[3])) else ""
+        
+        # Convertimos la imagen a un bloque HTML o la mostramos con columnas limpias de Streamlit en paralelo
+        col_img, col_txt = st.columns([1, 2])
+        with col_img:
+            if pic_path_html:
+                st.image(pic_path_html, width=110)
             else:
-                st.write("📷 Sin foto")
-        with col_p2:
+                st.markdown("📷 *Sin foto*")
+        
+        with col_txt:
             st.markdown(f"### @{cur}")
-            
-            # Estadísticas en línea horizontal forzada con HTML/CSS
             st.markdown(f"""
-                <div style="display: flex; justify-content: space-between; max-width: 300px; margin-bottom: 10px;">
-                    <div style="text-align: center; margin-right: 20px;">
-                        <strong>{num_posts}</strong><br><span style="font-size: 14px; color: gray;">publicaciones</span>
+                <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 8px;">
+                    <div style="text-align: center; margin-right: 15px;">
+                        <strong>{num_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
                     </div>
-                    <div style="text-align: center; margin-right: 20px;">
-                        <strong>{num_followers}</strong><br><span style="font-size: 14px; color: gray;">seguidores</span>
+                    <div style="text-align: center; margin-right: 15px;">
+                        <strong>{num_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
                     </div>
                     <div style="text-align: center;">
-                        <strong>{num_following}</strong><br><span style="font-size: 14px; color: gray;">seguidos</span>
+                        <strong>{num_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-                
-            if u_info:
-                st.markdown(f"**Bio:** {u_info[0]}")
-                st.markdown(f"**Ciudad:** {u_info[1]}")
-                st.markdown(f"**XP:** {u_info[2]}")
+
+        if u_info:
+            st.markdown(f"**Bio:** {u_info[0]}")
+            st.markdown(f"**Ciudad:** {u_info[1]}")
+            st.markdown(f"**XP:** {u_info[2]}")
         
         with st.expander("⚙️ Editar mi Perfil y Foto"):
             with st.form("edit_profile_form"):
@@ -320,41 +323,39 @@ elif menu == "🔍 Explorar Canales":
             col_ping1, col_ping2 = st.columns([1, 2])
             with col_ping1:
                 if u_data[4] and os.path.exists(u_data[4]):
-                    st.image(u_data[4], width=100)
+                    st.image(u_data[4], width=110)
                 else:
-                    st.write("📷")
+                    st.markdown("📷")
             with col_ping2:
                 st.markdown(f"### @{u_data[0]} [{b_name}]")
-                
-                # Estadísticas horizontales para canales explorados
                 st.markdown(f"""
-                    <div style="display: flex; justify-content: space-between; max-width: 300px; margin-bottom: 10px;">
-                        <div style="text-align: center; margin-right: 20px;">
-                            <strong>{t_posts}</strong><br><span style="font-size: 14px; color: gray;">publicaciones</span>
+                    <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 8px;">
+                        <div style="text-align: center; margin-right: 15px;">
+                            <strong>{t_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
                         </div>
-                        <div style="text-align: center; margin-right: 20px;">
-                            <strong>{t_followers}</strong><br><span style="font-size: 14px; color: gray;">seguidores</span>
+                        <div style="text-align: center; margin-right: 15px;">
+                            <strong>{t_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
                         </div>
                         <div style="text-align: center;">
-                            <strong>{t_following}</strong><br><span style="font-size: 14px; color: gray;">seguidos</span>
+                            <strong>{t_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
                     
-                st.markdown(f"**Bio:** {u_data[1]} | **Ciudad:** {u_data[2]} | **XP:** {u_data[3]}")
+            st.markdown(f"**Bio:** {u_data[1]} | **Ciudad:** {u_data[2]} | **XP:** {u_data[3]}")
                 
-                if st.session_state['logged_in'] and st.session_state['username'] != target_user:
-                    is_following = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], target_user)).fetchone()
-                    if is_following:
-                        if st.button("❌ Dejar de seguir"):
-                            c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], target_user))
-                            conn.commit()
-                            st.rerun()
-                    else:
-                        if st.button("➕ Seguir"):
-                            c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], target_user))
-                            conn.commit()
-                            st.rerun()
+            if st.session_state['logged_in'] and st.session_state['username'] != target_user:
+                is_following = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], target_user)).fetchone()
+                if is_following:
+                    if st.button("❌ Dejar de seguir"):
+                        c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], target_user))
+                        conn.commit()
+                        st.rerun()
+                else:
+                    if st.button("➕ Seguir"):
+                        c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], target_user))
+                        conn.commit()
+                        st.rerun()
                             
             st.markdown("---")
             user_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (target_user,)).fetchall()
@@ -433,4 +434,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-                                  
+        
