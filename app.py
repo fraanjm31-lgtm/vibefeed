@@ -11,21 +11,6 @@ st.markdown("""
         background-color: #0e1117;
         color: #ffffff;
     }
-    .stButton>button {
-        background: linear-gradient(90deg, #6366f1 0%, #a855f7 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        padding: 0.4rem 0.2rem;
-        font-weight: bold;
-        width: 100%;
-    }
-    /* Forzar que las columnas de las reacciones no se apilen en el móvil */
-    [data-testid="column"] {
-        width: 33.33% !important;
-        flex: 1 1 33.33% !important;
-        min-width: unset !important;
-    }
     .profile-stats {
         display: flex;
         justify-content: space-around;
@@ -47,6 +32,16 @@ st.markdown("""
     .stat-label {
         font-size: 12px;
         color: #8b949e;
+    }
+    /* Estilo para las reacciones en horizontal estilo perfil */
+    .reactions-bar {
+        display: flex;
+        justify-content: space-around;
+        background: #161b22;
+        padding: 8px;
+        border-radius: 10px;
+        margin-top: 5px;
+        margin-bottom: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -265,20 +260,20 @@ else:
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
-                # Botones de reacción forzados en horizontal
+                # Reacciones ordenadas perfectamente en horizontal estilo perfil
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}"):
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}", use_container_width=True):
                         c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r2:
-                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}"):
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}", use_container_width=True):
                         c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r3:
-                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}"):
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}", use_container_width=True):
                         c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
@@ -295,17 +290,17 @@ else:
                 
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}"):
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}", use_container_width=True):
                         c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r2:
-                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}"):
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}", use_container_width=True):
                         c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r3:
-                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}"):
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}", use_container_width=True):
                         c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
@@ -336,17 +331,17 @@ else:
             
             col_r1, col_r2, col_r3 = st.columns(3)
             with col_r1:
-                if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"muro_fire_{p_id}"):
+                if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"muro_fire_{p_id}", use_container_width=True):
                     c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
                     conn.commit()
                     st.rerun()
             with col_r2:
-                if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"muro_like_{p_id}"):
+                if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"muro_like_{p_id}", use_container_width=True):
                     c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
                     conn.commit()
                     st.rerun()
             with col_r3:
-                if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"muro_heart_{p_id}"):
+                if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"muro_heart_{p_id}", use_container_width=True):
                     c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
                     conn.commit()
                     st.rerun()
