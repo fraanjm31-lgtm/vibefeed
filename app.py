@@ -246,15 +246,12 @@ if not st.session_state.logged_in:
     r_email = st.text_input("Correo Electronico (Obligatorio)", key="r_email")
     r_user = st.text_input("Nuevo Usuario", key="r_user")
     r_pass = st.text_input("Nueva Contrasena", type="password", key="r_pass")
-
-    st.write("📅 Fecha de nacimiento")
-    col_d, col_m, col_y = st.columns(3)
-    with col_d:
-      r_day = st.selectbox("Día", list(range(1, 32)), key="r_day")
-    with col_m:
-      r_month = st.selectbox("Mes", list(range(1, 13)), key="r_month")
-    with col_y:
-      r_year = st.selectbox("Año", list(range(2026, 1939, -1)), key="r_year")
+    r_dob = st.date_input(
+        "Fecha de nacimiento",
+        min_value=date(1900, 1, 1),
+        max_value=date.today(),
+        key="r_dob",
+    )
 
     codigo_secreto_invitacion = "noxvibe2026"
     r_invite = st.text_input(
@@ -266,27 +263,17 @@ if not st.session_state.logged_in:
     r_adult = st.checkbox("Confirmo que soy mayor de 18 anos.")
 
     if st.button("Crear cuenta"):
-      try:
-        r_dob = date(r_year, r_month, r_day)
-      except ValueError:
-        r_dob = None
-
       today = date.today()
-      if r_dob:
-        age = (
-            today.year
-            - r_dob.year
-            - ((today.month, today.day) < (r_dob.month, r_dob.day))
-        )
-      else:
-        age = 0
+      age = (
+          today.year
+          - r_dob.year
+          - ((today.month, today.day) < (r_dob.month, r_dob.day))
+      )
 
       if not r_email or "@" not in r_email or "." not in r_email:
         st.error("Introduce un correo electronico valido.")
       elif not r_user or not r_pass:
         st.warning("Rellena el usuario y la contrasena.")
-      elif not r_dob:
-        st.error("La fecha de nacimiento no es válida.")
       elif age < 18:
         st.error("Debes ser mayor de 18 anos.")
       elif r_invite != codigo_secreto_invitacion:
@@ -638,4 +625,15 @@ else:
     )
     current_privacy = (
         u_settings[3]
-      
+        if u_settings and len(u_settings) > 3 and u_settings[3] is not None
+        else "Publico"
+    )
+
+    with st.form("settings_form"):
+      new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
+
+      temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
+      if current_db_theme in temas_disponibles:
+        current_theme_index = temas_disponibles.index(current_db_theme)
+      else:
+        current_theme_
