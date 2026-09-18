@@ -39,7 +39,6 @@ st.markdown("""
 conn = sqlite3.connect('noxvibe.db', check_same_thread=False)
 c = conn.cursor()
 
-# Añadimos la columna email a la tabla de usuarios si no existe
 c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
@@ -128,8 +127,8 @@ if 'logged_in' not in st.session_state:
     st.session_state.username = ""
     st.session_state.profile_tab = "Fotos"
 
-st.sidebar.title("🧭 Menú")
-menu_option = st.sidebar.radio("Navegación", ["Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
+st.sidebar.title("🧭 Menú NoxVibe")
+menu_option = st.sidebar.radio("Navegación", ["🔥 Reels / Vídeos Activos", "Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
 
 if st.session_state.logged_in:
     c.execute("SELECT coins FROM users WHERE username = ?", (st.session_state.username,))
@@ -168,10 +167,8 @@ if not st.session_state.logged_in:
         r_pass = st.text_input("Nueva Contraseña", type="password", key="r_pass")
         r_dob = st.date_input("Fecha de nacimiento", min_value=date(1900, 1, 1), max_value=date.today(), key="r_dob")
         
-        # Código secreto de invitación (cámbialo aquí por el que tú quieras dar a tus amigos)
         codigo_secreto_invitacion = "noxvibe2026"
         r_invite = st.text_input("Código de Invitación / Acceso", type="password", key="r_invite", placeholder="Pide el código al administrador")
-        
         r_adult = st.checkbox("Confirmo bajo mi responsabilidad que soy mayor de 18 años.")
         
         if st.button("Crear cuenta"):
@@ -200,7 +197,36 @@ if not st.session_state.logged_in:
 else:
     cur = st.session_state.username
     
-    if menu_option == "Mi Perfil":
+    if menu_option == "🔥 Reels / Vídeos Activos":
+        st.title("🔥 NoxVibe Reels")
+        st.write("Contenido en vídeo de la comunidad para mantener la actividad a tope.")
+        
+        c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE file_type = 'video' ORDER BY id DESC")
+        videos = c.fetchall()
+        
+        if not videos:
+            st.info("Todavía no hay vídeos publicados. ¡Sube el primero desde tu perfil!")
+        else:
+            for post in videos:
+                p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+                st.markdown(f"### @{p_user} · `{p_tag}`")
+                if p_cap: st.write(p_cap)
+                if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+                    st.video(p_file)
+                
+                col_r1, col_r2, col_r3 = st.columns(3)
+                with col_r1:
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"reel_fire_{p_id}", use_container_width=True):
+                        handle_reaction(p_id, cur, 'fire')
+                with col_r2:
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"reel_like_{p_id}", use_container_width=True):
+                        handle_reaction(p_id, cur, 'thumb')
+                with col_r3:
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"reel_heart_{p_id}", use_container_width=True):
+                        handle_reaction(p_id, cur, 'heart')
+                st.markdown("---")
+
+    elif menu_option == "Mi Perfil":
         c.execute("SELECT xp, bio, avatar, account_privacy, coins FROM users WHERE username = ?", (cur,))
         user_data = c.fetchone()
         xp = user_data[0] if user_data else 0
