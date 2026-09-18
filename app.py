@@ -106,7 +106,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         with col_m3:
             st.button("↗️ Compartir", key=f"sha_{p_id}")
             
-        # Opción para eliminar si la publicación es del usuario actual
         if st.session_state.get('logged_in') and st.session_state['username'] == p_user:
             st.markdown("---")
             if st.button("🗑️ Eliminar esta publicación", key=f"del_post_{p_id}"):
@@ -282,9 +281,25 @@ if menu == "👤 Mi Perfil":
                 
         st.markdown("---")
         st.subheader("Tus publicaciones:")
-        my_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (cur,)).fetchall()
-        for p in my_posts:
-            render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
+        
+        # Pestañas para separar fotos y vídeos en tu perfil
+        tab_mi_fotos, tab_mi_videos = st.tabs(["📸 Fotos", "🎥 Vídeos"])
+        
+        with tab_mi_fotos:
+            my_photos = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND (file_type != 'video' OR file_type = '') ORDER BY id DESC", (cur,)).fetchall()
+            if not my_photos:
+                st.info("No tienes fotos publicadas.")
+            else:
+                for p in my_photos:
+                    render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
+                    
+        with tab_mi_videos:
+            my_vids = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,)).fetchall()
+            if not my_vids:
+                st.info("No tienes vídeos publicados.")
+            else:
+                for p in my_vids:
+                    render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
     else:
         st.warning("Inicia sesión en el menú lateral para gestionar tu perfil y publicar.")
 
@@ -361,12 +376,24 @@ elif menu == "🔍 Explorar Canales":
                             
             st.markdown("---")
             
-            user_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (target_user,)).fetchall()
-            if not user_posts:
-                st.info("Este usuario aún no ha publicado nada.")
-            else:
-                for p in user_posts:
-                    render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
+            # Pestañas para separar fotos y vídeos en canales explorados
+            tab_ex_fotos, tab_ex_videos = st.tabs(["📸 Fotos", "🎥 Vídeos"])
+            
+            with tab_ex_fotos:
+                ex_photos = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND (file_type != 'video' OR file_type = '') ORDER BY id DESC", (target_user,)).fetchall()
+                if not ex_photos:
+                    st.info("Este usuario no tiene fotos publicadas.")
+                else:
+                    for p in ex_photos:
+                        render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
+                        
+            with tab_ex_videos:
+                ex_vids = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (target_user,)).fetchall()
+                if not ex_vids:
+                    st.info("Este usuario no tiene vídeos publicados.")
+                else:
+                    for p in ex_vids:
+                        render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
         else:
             st.info("Selecciona un usuario para ver su perfil.")
     else:
@@ -415,17 +442,4 @@ elif menu == "💬 Mensajes Privados":
                         if txt.strip():
                             chat_c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                            chat_conn.commit()
-                            chat_conn.close()
-                            st.rerun()
-                            
-        chat_conn.close()
-    else:
-        st.warning("Inicia sesión para chatear.")
-
-elif menu == "⚙️ Ajustes":
-    st.subheader("⚙️ Ajustes y Configuración")
-    st.info("🛠️ Esta sección está lista para que empieces a añadir tus propias opciones y configuraciones nuevas.")
-    
+           
