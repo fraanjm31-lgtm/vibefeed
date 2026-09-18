@@ -1,10 +1,48 @@
 import streamlit as st
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import hashlib
 
 st.set_page_config(page_title="NoxVibe", page_icon="⚡", layout="centered")
+
+# --- INYECCIÓN DE ESTILOS CSS (CIBERPUNK / NEÓN) ---
+st.markdown("""
+    <style>
+    .stApp {
+        background-color: #0b0f19;
+        color: #e2e8f0;
+    }
+    .stButton>button {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        box-shadow: 0 4px 14px rgba(168, 85, 247, 0.4);
+        transition: 0.3s;
+    }
+    .stButton>button:hover {
+        opacity: 0.9;
+        transform: translateY(-1px);
+    }
+    div.stTextInput>div>div>input, div.stTextArea>div>div>textarea {
+        background-color: #1e293b;
+        color: white;
+        border: 1px solid #334155;
+        border-radius: 8px;
+    }
+    .vibe-badge {
+        background: rgba(168, 85, 247, 0.15);
+        border: 1px solid #a855f7;
+        padding: 4px 10px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+        color: #d8b4fe;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
@@ -14,6 +52,7 @@ def check_hashes(password, hashed_text):
         return hashlib.sha256(str.encode(password)).hexdigest()
     return False
 
+# --- BASE DE DATOS Y NUEVAS COLUMNAS ---
 conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
 c = conn.cursor()
 
@@ -24,14 +63,17 @@ c.execute('''
         bio TEXT DEFAULT 'Hola, uso NoxVibe.',
         city TEXT DEFAULT 'Madrid',
         xp INTEGER DEFAULT 0,
-        profile_pic TEXT DEFAULT ''
+        profile_pic TEXT DEFAULT '',
+        music_link TEXT DEFAULT ''
     )
 ''')
 
+# Añadir columna music_link si no existe en bases de datos antiguas
 try:
-    c.execute("SELECT username, likes, vibe_tag FROM posts LIMIT 1")
+    c.execute("ALTER TABLE users ADD COLUMN music_link TEXT DEFAULT ''")
+    conn.commit()
 except sqlite3.OperationalError:
-    c.execute("DROP TABLE IF EXISTS posts")
+    pass
 
 c.execute('''
     CREATE TABLE IF NOT EXISTS posts (
@@ -41,9 +83,17 @@ c.execute('''
         file TEXT,
         file_type TEXT,
         likes INTEGER DEFAULT 0,
-        vibe_tag TEXT
+        vibe_tag TEXT,
+        timestamp TEXT
     )
 ''')
+
+# Añadir columna timestamp si no existe
+try:
+    c.execute("ALTER TABLE posts ADD COLUMN timestamp TEXT")
+    conn.commit()
+except sqlite3.OperationalError:
+    pass
 
 c.execute('''
     CREATE TABLE IF NOT EXISTS messages (
@@ -61,6 +111,13 @@ c.execute('''
         followed TEXT
     )
 ''')
+
+c.execute('''
+    CREATE TABLE IF NOT EXISTS favorites (
+        username TEXT,
+        post_id INTEGER
+    )
+''')
 conn.commit()
 
 if 'logged_in' not in st.session_state:
@@ -76,8 +133,20 @@ def get_badge(xp):
     else:
         return "🌱 Novato", "badge-novato"
 
-def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
-    st.markdown(f"**@{p_user}** · *Tema: {p_tag}*")
+# --- FUNCIÓN DE IA: VIBE CHECK AUTOMÁTICO ---
+def ai_vibe_checker(text):
+    text_lower = text.lower()
+    if any(word in text_lower for word in ['fiesta', 'noche', 'alcohol', 'bailar', 'DJ', 'top', 'fuego', 'energy', 'brillar']):
+        return "🎉 Fiesta", "¡Ambiente de fiesta total detectado por IA!"
+    elif any(word in text_lower for word in ['triste', 'solo', 'gris', 'llorar', 'mal', 'oscuro', 'dolor', 'cansado']):
+        return "🌧️ Melancólico", "IA detecta tono reflexivo o melancólico."
+    elif any(word in text_lower for word in ['aprender', 'mente', 'pensar', 'futuro', 'filosofía', 'razón', 'idea', 'vida']):
+        return "🧠 Filósofo", "IA detecta contenido profundo o intelectual."
+    else:
+        return "🔥 Hype", "IA detecta energía general positiva."
+
+def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag, p_time=""):
+    st.markdown(f"**@{p_user}** · <span class='vibe-badge'>{p_tag}</span> {f'· *{p_time}*' if p_time else ''}", unsafe_allow_html=True)
     if p_cap:
         st.write(p_cap)
     if p_file and os.path.exists(p_file):
@@ -86,10 +155,32 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    if st.button("❤️ Me gusta", key=f"like_{p_id}"):
-        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
-        conn.commit()
-        st.rerun()
+    col_act1, col_act2 = st.columns([3, 1])
+    with col_act1:
+        if st.button("❤️ Me gusta", key=f"like_{p_id}"):
+            c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+            conn.commit()
+            st.rerun()
+    with col_act2:
+        current_user = st.session_state.get('username', '')
+        is_fav = False
+        if current_user:
+            is_fav = c.execute("SELECT 1 FROM favorites WHERE username = ? AND post_id = ?", (current_user, p_id)).fetchone()
+        
+        fav_label = "🔖 Guardado" if is_fav else "📌 Guardar"
+        if st.button(fav_label, key=f"fav_{p_id}"):
+            if not current_user:
+                st.warning("Inicia sesión para guardar favoritos.")
+            else:
+                if is_fav:
+                    c.execute("DELETE FROM favorites WHERE username = ? AND post_id = ?", (current_user, p_id))
+                    conn.commit()
+                    st.success("Eliminado de guardados.")
+                else:
+                    c.execute("INSERT INTO favorites (username, post_id) VALUES (?, ?)", (current_user, p_id))
+                    conn.commit()
+                    st.success("¡Guardado en favoritos!")
+                st.rerun()
         
     if p_likes > 0:
         st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
@@ -97,46 +188,35 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         st.markdown("❤️ *Sé el primero en darle Me gusta*")
         
     with st.expander("📌 Más opciones y comentarios"):
-        col_m1, col_m2, col_m3 = st.columns(3)
-        with col_m1:
-            if st.button("💬 Comentar", key=f"com_{p_id}"):
-                st.session_state[f"show_comments_{p_id}"] = not st.session_state.get(f"show_comments_{p_id}", False)
-        with col_m2:
-            st.button("🔄 Repost", key=f"rep_{p_id}")
-        with col_m3:
-            st.button("↗️ Compartir", key=f"sha_{p_id}")
-            
         if st.session_state.get('logged_in') and st.session_state['username'] == p_user:
-            st.markdown("---")
             if st.button("🗑️ Eliminar esta publicación", key=f"del_post_{p_id}"):
                 c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
+                c.execute("DELETE FROM favorites WHERE post_id = ?", (p_id,))
                 conn.commit()
                 st.success("¡Publicación eliminada!")
                 st.rerun()
         
-        if st.session_state.get(f"show_comments_{p_id}", False):
-            st.markdown("---")
-            st.markdown("💬 **Comentarios:**")
-            new_comment = st.text_input("Añade un comentario...", key=f"input_comm_{p_id}")
-            if st.button("Publicar comentario", key=f"send_comm_{p_id}"):
-                if new_comment.strip():
-                    st.success("¡Comentario añadido!")
-                    st.rerun()
+        st.markdown("💬 **Comentarios:**")
+        new_comment = st.text_input("Añade un comentario...", key=f"input_comm_{p_id}")
+        if st.button("Publicar comentario", key=f"send_comm_{p_id}"):
+            if new_comment.strip():
+                st.success("¡Comentario añadido!")
+                st.rerun()
                 
     st.markdown("---")
 
 st.title("⚡ NoxVibe")
-st.caption("✨ Red social completa con XP, Canales y Perfiles.")
+st.caption("✨ Red social inteligente con IA, Historias 24h y Banda Sonora.")
 
 menu_options = [
     "👤 Mi Perfil", 
     "👥 Siguiendo", 
+    "⏳ Muro 24h",
     "🔍 Explorar Canales", 
     "💬 Mensajes",
     "⚙️ Ajustes"
 ]
 
-# Menú lateral con la navegación principal
 with st.sidebar:
     st.subheader("🧭 Menú Principal")
     selected_tab = st.radio("Ir a:", menu_options, label_visibility="collapsed")
@@ -197,7 +277,7 @@ with st.sidebar:
         exists = c.execute("SELECT 1 FROM users WHERE username = ?", (clean_q,)).fetchone()
         if exists:
             st.session_state['viewing_user'] = clean_q
-            st.success(f"¡Canal de @{clean_q} encontrado! Ve a 'Explorar Canales'.")
+            st.success(f"¡Canal de @{clean_q} encontrado!")
         else:
             st.error("Usuario no encontrado.")
 
@@ -207,13 +287,13 @@ if selected_tab == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
+        u_info = c.execute("SELECT bio, city, xp, profile_pic, music_link FROM users WHERE username = ?", (cur,)).fetchone()
         
-        u_info = c.execute("SELECT bio, city, xp, profile_pic FROM users WHERE username = ?", (cur,)).fetchone()
-        
-        with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
+        with st.expander("⚙️ Editar mi Perfil, Foto y Banda Sonora", expanded=False):
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
                 new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
+                new_music = st.text_input("Enlace de Spotify / YouTube (Tu Banda Sonora)", value=u_info[4] if u_info and len(u_info) > 4 and u_info[4] else "")
                 new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
                 
                 if st.form_submit_button("Guardar Cambios 💾"):
@@ -224,8 +304,8 @@ if selected_tab == "👤 Mi Perfil":
                         with open(pic_path, "wb") as f:
                             f.write(new_pic.getbuffer())
                     
-                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ? WHERE username = ?", 
-                              (new_bio, new_city, pic_path, cur))
+                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, music_link = ? WHERE username = ?", 
+                              (new_bio, new_city, pic_path, new_music, cur))
                     conn.commit()
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
@@ -241,33 +321,23 @@ if selected_tab == "👤 Mi Perfil":
             
         st.markdown(f"### @{cur}")
         
-        st.markdown(f"""
-            <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
-                <div style="text-align: center; margin-right: 15px;">
-                    <strong>{num_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
-                </div>
-                <div style="text-align: center; margin-right: 15px;">
-                    <strong>{num_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
-                </div>
-                <div style="text-align: center;">
-                    <strong>{num_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        
+        # Reproductor de banda sonora si tiene enlace
+        if u_info and len(u_info) > 4 and u_info[4]:
+            st.markdown("🎵 **Banda sonora del perfil:**")
+            st.audio(u_info[4]) if "http" in u_info[4] and (".mp3" in u_info[4] or "audio" in u_info[4]) else st.markdown(f"🔗 [Escuchar música del usuario]({u_info[4]})")
+
         if u_info:
             st.markdown(f"**Bio:** {u_info[0]}")
             st.markdown(f"**Ciudad:** {u_info[1]}")
             st.markdown(f"**XP:** {u_info[2]}")
             
         st.markdown("---")
-        st.subheader("📝 Publicar Contenido en tu Canal")
+        st.subheader("📝 Publicar Contenido (Con IA Vibe Check)")
         with st.form("new_post_form", clear_on_submit=True):
             cap = st.text_area("¿Qué estás pensando?")
-            tag = st.selectbox("Vibe / Categoría", ["General", "Música", "Tecnología", "Amor", "Viajes"])
             uploaded_file = st.file_uploader("Sube foto o vídeo", type=["jpg", "png", "mp4", "mov"])
             
-            if st.form_submit_button("Publicar 🚀"):
+            if st.form_submit_button("Publicar con IA 🚀"):
                 path_to_save = ""
                 f_type = ""
                 if uploaded_file is not None:
@@ -277,33 +347,48 @@ if selected_tab == "👤 Mi Perfil":
                         f.write(uploaded_file.getbuffer())
                     f_type = "video" if uploaded_file.type.startswith("video") else "image"
                 
-                c.execute("INSERT INTO posts (username, caption, file, file_type, likes, vibe_tag) VALUES (?, ?, ?, ?, ?, ?)",
-                          (cur, cap, path_to_save, f_type, 0, tag))
-                c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (cur,))
+                # Análisis automático de IA
+                auto_tag, ai_msg = ai_vibe_checker(cap)
+                now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+                
+                c.execute("INSERT INTO posts (username, caption, file, file_type, likes, vibe_tag, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                          (cur, cap, path_to_save, f_type, 0, auto_tag, now_str))
+                c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,))
                 conn.commit()
-                st.success("¡Publicado con éxito! (+10 XP)")
+                st.success(f"¡Publicado con éxito! {ai_msg} (+15 XP)")
                 st.rerun()
                 
         st.markdown("---")
-        st.subheader("Tus publicaciones:")
         
-        tab_mi_fotos, tab_mi_videos = st.tabs(["📸 Fotos", "🎥 Vídeos"])
+        tab_mi_fotos, tab_mi_videos, tab_mi_favs = st.tabs(["📸 Fotos", "🎥 Vídeos", "🔖 Guardados"])
         
         with tab_mi_fotos:
-            my_photos = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND (file_type != 'video' OR file_type = '') ORDER BY id DESC", (cur,)).fetchall()
+            my_photos = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type != 'video' OR file_type = '') ORDER BY id DESC", (cur,)).fetchall()
             if not my_photos:
                 st.info("No tienes fotos publicadas.")
             else:
                 for p in my_photos:
-                    render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
+                    render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5], p[6])
                     
         with tab_mi_videos:
-            my_vids = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,)).fetchall()
+            my_vids = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,)).fetchall()
             if not my_vids:
                 st.info("No tienes vídeos publicados.")
             else:
                 for p in my_vids:
-                    render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
+                    render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5], p[6])
+
+        with tab_mi_favs:
+            fav_posts = c.execute("""
+                SELECT p.id, p.username, p.caption, p.file, p.file_type, p.likes, p.vibe_tag, p.timestamp 
+                FROM posts p JOIN favorites f ON p.id = f.post_id 
+                WHERE f.username = ? ORDER BY p.id DESC
+            """, (cur,)).fetchall()
+            if not fav_posts:
+                st.info("No tienes publicaciones guardadas como favoritas.")
+            else:
+                for p in fav_posts:
+                    render_post(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])
     else:
         st.warning("Inicia sesión para gestionar tu perfil y publicar.")
 
@@ -313,14 +398,40 @@ elif selected_tab == "👥 Siguiendo":
         cur = st.session_state['username']
         following = [row[0] for row in c.execute("SELECT followed FROM follows WHERE follower = ?", (cur,)).fetchall()]
         if not following:
-            st.info("Aún no sigues a nadie. Usa 'Explorar Canales' o busca perfiles para ver contenido aquí.")
+            st.info("Aún no sigues a nadie.")
         else:
             for f_user in following:
-                f_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (f_user,)).fetchall()
+                f_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (f_user,)).fetchall()
                 for p in f_posts:
-                    render_post(p[0], f_user, p[1], p[2], p[3], p[4], p[5])
+                    render_post(p[0], f_user, p[1], p[2], p[3], p[4], p[5], p[6])
     else:
         st.warning("Inicia sesión para ver la actividad de tus seguidos.")
+
+elif selected_tab == "⏳ Muro 24h":
+    st.subheader("⏳ Muro Efímero (Historias de 24 horas)")
+    st.markdown("*Contenido exclusivo que desaparece automáticamente transcurridas 24 horas.*")
+    
+    all_posts = c.execute("SELECT id, username, caption, file, file_type, likes, vibe_tag, timestamp FROM posts ORDER BY id DESC").fetchall()
+    active_stories = []
+    now = datetime.now()
+    
+    for p in all_posts:
+        p_time_str = p[7]
+        if p_time_str:
+            try:
+                p_dt = datetime.strptime(p_time_str, "%Y-%m-%d %H:%M")
+                if now - p_dt <= timedelta(hours=24):
+                    active_stories.append(p)
+            except ValueError:
+                active_stories.append(p) # Por si hay posts antiguos sin formato fecha exacto
+        else:
+            active_stories.append(p)
+            
+    if not active_stories:
+        st.info("No hay historias activas en las últimas 24 horas. ¡Sé el primero en publicar!")
+    else:
+        for p in active_stories:
+            render_post(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])
 
 elif selected_tab == "🔍 Explorar Canales":
     st.subheader("🔍 Explorar Canales y Perfiles")
@@ -333,7 +444,7 @@ elif selected_tab == "🔍 Explorar Canales":
         target_user = st.session_state.get('viewing_user')
     
     if target_user:
-        u_data = c.execute("SELECT username, bio, city, xp, profile_pic FROM users WHERE username = ?", (target_user,)).fetchone()
+        u_data = c.execute("SELECT username, bio, city, xp, profile_pic, music_link FROM users WHERE username = ?", (target_user,)).fetchone()
         if u_data:
             b_name, b_class = get_badge(u_data[3])
             
@@ -349,20 +460,12 @@ elif selected_tab == "🔍 Explorar Canales":
                 st.markdown("📷")
                 
             st.markdown(f"### @{u_data[0]} [{b_name}]")
-            st.markdown(f"""
-                <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
-                    <div style="text-align: center; margin-right: 15px;">
-                        <strong>{t_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
-                    </div>
-                    <div style="text-align: center; margin-right: 15px;">
-                        <strong>{t_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
-                    </div>
-                    <div style="text-align: center;">
-                        <strong>{t_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
-                    </div>
-                </div>
-            """, unsafe_allow_html=True)
-                    
+            
+            # Banda sonora del usuario visitado
+            if len(u_data) > 5 and u_data[5]:
+                st.markdown(f"🎵 **Música de @{target_user}:**")
+                st.markdown(f"🔗 [Escuchar enlace musical]({u_data[5]})")
+
             st.markdown(f"**Bio:** {u_data[1]} | **Ciudad:** {u_data[2]} | **XP:** {u_data[3]}")
                 
             if current_user and current_user != target_user:
@@ -373,73 +476,4 @@ elif selected_tab == "🔍 Explorar Canales":
                         conn.commit()
                         st.rerun()
                 else:
-                    if st.button("➕ Seguir"):
-                        c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (current_user, target_user))
-                        conn.commit()
-                        st.rerun()
-                            
-            st.markdown("---")
-            
-            tab_ex_fotos, tab_ex_videos = st.tabs(["📸 Fotos", "🎥 Vídeos"])
-            
-            with tab_ex_fotos:
-                ex_photos = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND (file_type != 'video' OR file_type = '') ORDER BY id DESC", (target_user,)).fetchall()
-                if not ex_photos:
-                    st.info("Este usuario no tiene fotos publicadas.")
-                else:
-                    for p in ex_photos:
-                        render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
-                        
-            with tab_ex_videos:
-                ex_vids = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (target_user,)).fetchall()
-                if not ex_vids:
-                    st.info("Este usuario no tiene vídeos publicados.")
-                else:
-                    for p in ex_vids:
-                        render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
-        else:
-            st.info("Selecciona un usuario para ver su perfil.")
-    else:
-        st.info("No hay usuarios registrados todavía.")
-
-elif selected_tab == "💬 Mensajes":
-    st.subheader("💬 Mensajes Privados")
-    if st.session_state['logged_in']:
-        cur = st.session_state['username']
-        users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
-        
-        if not users_list:
-            st.info("No hay más usuarios registrados para chatear.")
-        else:
-            partner = st.selectbox("Para:", users_list, key="chat_partner_simple")
-            if partner:
-                st.markdown(f"**Chat con @{partner}**")
-                
-                msgs = c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur, partner, partner, cur)).fetchall()
-                
-                if not msgs:
-                    st.info("No hay mensajes aún. ¡Escribe el primero!")
-                else:
-                    for s, m, t in msgs:
-                        if s == cur:
-                            st.markdown(f"**Tú:** {m} *({t})*")
-                        else:
-                            st.markdown(f"**@{s}:** {m} *({t})*")
-
-                with st.form(key=f"chat_form_{partner}", clear_on_submit=True):
-                    txt_msg = st.text_input("Escribe tu mensaje...", key="input_msg_simple")
-                    if st.form_submit_button("Enviar 🚀"):
-                        if txt_msg.strip():
-                            c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt_msg.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                            conn.commit()
-                            st.rerun()
-    else:
-        st.warning("Inicia sesión para chatear.")
-
-elif selected_tab == "⚙️ Ajustes":
-    st.subheader("⚙️ Ajustes y Configuración")
-    st.info("🛠️ Esta sección está lista para que empieces a añadir tus propias opciones y configuraciones nuevas.")
-    
+                    if st.
