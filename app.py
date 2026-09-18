@@ -17,7 +17,6 @@ def check_hashes(password, hashed_text):
 conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
 c = conn.cursor()
 
-# Asegurar tabla de usuarios intacta
 c.execute('''
     CREATE TABLE IF NOT EXISTS users (
         username TEXT PRIMARY KEY,
@@ -29,7 +28,6 @@ c.execute('''
     )
 ''')
 
-# Si la tabla posts antigua da error por columnas corruptas, la recreamos limpia pero conservamos users
 try:
     c.execute("SELECT username, likes, vibe_tag FROM posts LIMIT 1")
 except sqlite3.OperationalError:
@@ -282,16 +280,6 @@ with tabs[3]:
         else:
             partner = st.selectbox("Para:", users_list, key="chat_partner_final_definitivo")
             if partner:
-                unread_count = c.execute("""
-                    SELECT COUNT(*) FROM messages 
-                    WHERE sender = ? AND receiver = ?
-                """, (partner, cur)).fetchone()[0]
-                
-                if unread_count > 0:
-                    st.markdown(f"🔴 **¡Tienes {unread_count} mensajes de @{partner}!**")
-
-                st.markdown(f"**Chat con @{partner}**")
-                
                 msgs = c.execute("""
                     SELECT sender, message, timestamp 
                     FROM messages 
