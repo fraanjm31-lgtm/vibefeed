@@ -5,77 +5,6 @@ from datetime import datetime, date
 
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
-# Gestionar el tema visual guardado en la sesión
-if 'theme' not in st.session_state:
-    st.session_state.theme = "Oscuro (Por defecto)"
-
-# Definir colores según el tema elegido
-if st.session_state.theme == "Claro":
-    bg_color = "#ffffff"
-    text_color = "#000000"
-    box_bg = "#f0f2f6"
-    sub_text = "#555555"
-elif st.session_state.theme == "Neón / Cyber":
-    bg_color = "#05050a"
-    text_color = "#00ffcc"
-    box_bg = "#121224"
-    sub_text = "#ff007f"
-else:  # Oscuro
-    bg_color = "#0e1117"
-    text_color = "#ffffff"
-    box_bg = "#161b22"
-    sub_text = "#8b949e"
-
-st.markdown(f"""
-    <style>
-    header [data-testid="stToolbar"] a[href*="github"],
-    header [data-testid="stToolbar"] button[kind="header"],
-    header [data-testid="stToolbar"] [title*="Edit"],
-    header [data-testid="stToolbar"] [title*="Share"],
-    header [data-testid="stToolbar"] button[aria-label*="Share"],
-    header [data-testid="stToolbar"] button[aria-label="Edit"],
-    header [data-testid="stToolbar"] [data-testid="stDecoration"],
-    header [data-testid="collapsedControl"] {{
-        display: none !important;
-    }}
-    
-    .stApp {{
-        background-color: {bg_color};
-        color: {text_color};
-    }}
-    .profile-stats {{
-        display: flex;
-        justify-content: space-around;
-        text-align: center;
-        background: {box_bg};
-        padding: 10px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }}
-    .stat-box {{
-        display: inline-block;
-        margin: 0 8px;
-    }}
-    .stat-num {{
-        font-size: 18px;
-        font-weight: bold;
-        color: {text_color};
-    }}
-    .stat-label {{
-        font-size: 12px;
-        color: {sub_text};
-    }}
-    .video-container {{
-        position: relative;
-        background: {box_bg};
-        border-radius: 15px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }}
-    </style>
-""", unsafe_allow_html=True)
-
 conn = sqlite3.connect('noxvibe.db', check_same_thread=False)
 c = conn.cursor()
 
@@ -84,8 +13,13 @@ c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREM
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)''')
 
+# Añadir columnas necesarias de forma segura
 try:
     c.execute("ALTER TABLE users ADD COLUMN email TEXT")
+except:
+    pass
+try:
+    c.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'Oscuro (Por defecto)'")
 except:
     pass
 try:
@@ -127,6 +61,86 @@ c.execute('''CREATE TABLE IF NOT EXISTS gifts (
              timestamp TEXT)''')
 conn.commit()
 
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
+    st.session_state.username = ""
+    st.session_state.profile_tab = "Fotos"
+    st.session_state.theme = "Oscuro (Por defecto)"
+
+# Si hay sesión iniciada, cargamos el tema desde la base de datos
+if st.session_state.logged_in and st.session_state.username:
+    c.execute("SELECT theme FROM users WHERE username = ?", (st.session_state.username,))
+    res_theme = c.fetchone()
+    if res_theme and res_theme[0]:
+        st.session_state.theme = res_theme[0]
+
+# Definir colores según el tema elegido
+if st.session_state.theme == "Claro":
+    bg_color = "#ffffff"
+    text_color = "#000000"
+    box_bg = "#f0f2f6"
+    sub_text = "#555555"
+elif st.session_state.theme == "Neón / Cyber":
+    bg_color = "#05050a"
+    text_color = "#00ffcc"
+    box_bg = "#121224"
+    sub_text = "#ff007f"
+else:  # Oscuro
+    bg_color = "#0e1117"
+    text_color = "#ffffff"
+    box_bg = "#161b22"
+    sub_text = "#8b949e"
+
+st.markdown(f"""
+    <style>
+    header [data-testid="stToolbar"] a[href*="github"],
+    header [data-testid="stToolbar"] button[kind="header"],
+    header [data-testid="stToolbar"] [title*="Edit"],
+    header [data-testid="stToolbar"] [title*="Share"],
+    header [data-testid="stToolbar"] button[aria-label*="Share"],
+    header [data-testid="stToolbar"] button[aria-label="Edit"],
+    header [data-testid="stToolbar"] [data-testid="stDecoration"],
+    header [data-testid="collapsedControl"] {{
+        display: none !important;
+    }}
+    
+    .stApp {{
+        background-color: {bg_color} !important;
+        color: {text_color} !important;
+    }}
+    .profile-stats {{
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+        background: {box_bg};
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }}
+    .stat-box {{
+        display: inline-block;
+        margin: 0 8px;
+    }}
+    .stat-num {{
+        font-size: 18px;
+        font-weight: bold;
+        color: {text_color};
+    }}
+    .stat-label {{
+        font-size: 12px;
+        color: {sub_text};
+    }}
+    .video-container {{
+        position: relative;
+        background: {box_bg};
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }}
+    </style>
+""", unsafe_allow_html=True)
+
 def ai_vibe_checker(text):
     if not text:
         return "✨ Chill", "Ambiente tranquilo y relajado detectado."
@@ -154,11 +168,6 @@ def handle_reaction(p_id, user, r_type):
         st.rerun()
     else:
         st.toast("¡Ya has dado esta reacción!", icon="⚠️")
-
-if 'logged_in' not in st.session_state:
-    st.session_state.logged_in = False
-    st.session_state.username = ""
-    st.session_state.profile_tab = "Fotos"
 
 st.sidebar.title("🧭 Menú NoxVibe")
 menu_option = st.sidebar.radio("Navegación", ["🔥 Feed de Vídeos", "Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Explorar Canales", "Mensajes", "Ajustes"])
@@ -220,8 +229,8 @@ if not st.session_state.logged_in:
                 st.warning("⚠️ Debes marcar la casilla de confirmación de mayoría de edad.")
             else:
                 try:
-                    c.execute("INSERT INTO users (username, password, email, xp, bio, avatar, account_privacy, coins) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                              (r_user, r_pass, r_email, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público", 100))
+                    c.execute("INSERT INTO users (username, password, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                              (r_user, r_pass, r_email, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público", 100, "Oscuro (Por defecto)"))
                     conn.commit()
                     st.success("¡Cuenta creada con éxito y verificada! Ya puedes iniciar sesión.")
                 except:
@@ -422,18 +431,11 @@ else:
     elif menu_option == "Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
-        c.execute("SELECT bio, avatar, account_privacy FROM users WHERE username = ?", (cur,))
+        c.execute("SELECT bio, avatar, account_privacy, theme FROM users WHERE username = ?", (cur,))
         u_settings = c.fetchone()
         current_bio = u_settings[0] if u_settings and u_settings[0] else ""
         current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Público"
+        current_db_theme = u_settings[3] if u_settings and u_settings[3] else "Oscuro (Por defecto)"
         
         with st.form("settings_form"):
-            new_bio = st.text_area("Actualizar tu biografía", value=current_bio)
-            priv_index = 0 if current_acc_priv == "Público" else 1
-            priv_choice = st.selectbox("Privacidad del Perfil", ["Público", "Privado"], index=priv_index)
-            
-            temas_disponibles = ["Oscuro (Por defecto)", "Claro", "Neón / Cyber"]
-            current_theme_index = temas_disponibles.index(st.session_state.theme) if st.session_state.theme in temas_disponibles else 0
-            new_theme = st.selectbox("🎨 Tema de Colores de la App", temas_disponibles, index=current_theme_index)
-            
-        
+            new_bio = st.text_area("Actualizar tu biografía"
