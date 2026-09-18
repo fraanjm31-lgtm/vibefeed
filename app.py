@@ -163,15 +163,15 @@ with st.sidebar:
         exists = c.execute("SELECT 1 FROM users WHERE username = ?", (clean_q,)).fetchone()
         if exists:
             st.session_state['viewing_user'] = clean_q
-            st.session_state['active_tab_idx'] = 1
+            st.session_state['active_tab_idx'] = 2
             st.rerun()
         else:
             st.error("Usuario no encontrado.")
 
 tabs = st.tabs([
-    "👤 Perfil / Canal", 
+    "👤 Mi Perfil", 
     "👥 Siguiendo", 
-    "📺 Canal / Perfil", 
+    "🔍 Explorar Canales", 
     "💬 Mensajes", 
     "⚙️ Ajustes"
 ])
@@ -194,7 +194,6 @@ with tabs[0]:
                 st.markdown(f"**Ciudad:** {u_info[1]}")
                 st.markdown(f"**XP:** {u_info[2]}")
         
-        # Formulario para editar perfil y subir foto de perfil
         with st.expander("⚙️ Editar mi Perfil y Foto"):
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
@@ -264,7 +263,7 @@ with tabs[1]:
         st.warning("Inicia sesión para ver la actividad de tus seguidos.")
 
 with tabs[2]:
-    st.subheader("🔍 Canal y Perfil del Creador")
+    st.subheader("🔍 Explorar Canales y Perfiles")
     target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
     
     if target_user:
