@@ -1,5 +1,8 @@
 from datetime import date, datetime
+from email.message import EmailMessage
 import os
+import random
+import smtplib
 import sqlite3
 import streamlit as st
 
@@ -72,6 +75,11 @@ if "logged_in" not in st.session_state:
   st.session_state.profile_tab = "Fotos"
   st.session_state.theme = "Oscuro"
 
+if "codigo_enviado" not in st.session_state:
+  st.session_state.codigo_enviado = False
+if "codigo_generado" not in st.session_state:
+  st.session_state.codigo_generado = ""
+
 if st.session_state.logged_in and st.session_state.username:
   c.execute(
       "SELECT theme FROM users WHERE username = ?", (st.session_state.username,)
@@ -99,7 +107,6 @@ else:
 st.markdown(
     f"""
     <style>
-    /* Ocultar específicamente el icono del gato de GitHub en la barra superior */
     [data-testid="stToolbar"] a[href*="github"],
     header a[href*="github"] {{
         display: none !important;
@@ -152,6 +159,32 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
+
+
+def enviar_codigo_correo(destinatario, codigo):
+  remitente = "tu_correo@gmail.com"  # <--- Cambia por tu correo de Gmail
+  password = (
+      "tu_contraseña_de_aplicacion"  # <--- Cambia por tu contraseña de aplicación
+  )
+
+  msg = EmailMessage()
+  msg.set_content(
+      f"¡Hola!\n\nTu código de verificación profesional para registrarte en"
+      f" NoxVibe es: {codigo}\n\nIntroduce este código en la aplicación para"
+      f" completar tu registro."
+  )
+  msg["Subject"] = "Código de verificación - NoxVibe"
+  msg["From"] = remitente
+  msg["To"] = destinatario
+
+  try:
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
+      smtp.login(remitente, password)
+      smtp.send_message(msg)
+    return True
+  except Exception as e:
+    print(f"Error al enviar correo: {e}")
+    return False
 
 
 def ai_vibe_checker(text):
@@ -223,7 +256,7 @@ if st.session_state.logged_in:
 
 if not st.session_state.logged_in:
   st.title("Bienvenido a NoxVibe 🚀")
-  st.info("🔒 Acceso exclusivo para mayores de edad con invitacion y correo.")
+  st.info("🔒 Registro seguro con verificación automática por correo.")
 
   tab_login, tab_reg = st.tabs(["🔑 Iniciar Sesion", "📝 Registrarse"])
 
@@ -252,56 +285,81 @@ if not st.session_state.logged_in:
         max_value=date.today(),
         key="r_dob",
     )
-
-    codigo_secreto_invitacion = "noxvibe2026"
-    r_invite = st.text_input(
-        "Codigo de Invitacion",
-        type="password",
-        key="r_invite",
-        placeholder="Pide el codigo al admin",
+    r_adult = st.checkbox(
+        "Confirmo que soy mayor de 18 anos.", key="r_adult_check"
     )
-    r_adult = st.checkbox("Confirmo que soy mayor de 18 anos.")
 
-    if st.button("Crear cuenta"):
-      today = date.today()
-      age = (
-          today.year
-          - r_dob.year
-          - ((today.month, today.day) < (r_dob.month, r_dob.day))
+    if not st.session_state.codigo_enviado:
+      if st.button("Enviar código de verificación al correo"):
+        today = date.today()
+        age = (
+            today.year
+            - r_dob.year
+            - ((today.month, today.day) < (r_dob.month, r_dob.day))
+        )
+
+        if not r_email or "@" not in r_email or "." not in r_email:
+          st.error("Introduce un correo electronico valido.")
+        elif not r_user or not r_pass:
+          st.warning("Rellena el usuario y la contrasena.")
+        elif age < 18:
+          st.error("Debes ser mayor de 18 anos.")
+        elif not r_adult:
+          st.warning("Debes marcar la casilla de mayoria de edad.")
+        else:
+          # Verificar si el usuario ya existe
+          c.execute("SELECT * FROM users WHERE username = ?", (r_user,))
+          if c.fetchone():
+            st.error("El nombre de usuario ya esta en uso.")
+          else:
+            codigo = str(random.randint(100000, 999999))
+            st.session_state.codigo_generado = codigo
+            exito = enviar_codigo_correo(r_email, codigo)
+            if exito:
+              st.session_state.codigo_enviado = True
+              st.success(
+                  "¡Código enviado! Revisa tu bandeja de entrada o spam."
+              )
+              st.rerun()
+            else:
+              st.error(
+                  "Error al enviar el correo. Revisa la configuración SMTP."
+              )
+
+    if st.session_state.codigo_enviado:
+      codigo_ingresado = st.text_input(
+          "Introduce el Código recibido en tu correo", key="code_input_field"
       )
-
-      if not r_email or "@" not in r_email or "." not in r_email:
-        st.error("Introduce un correo electronico valido.")
-      elif not r_user or not r_pass:
-        st.warning("Rellena el usuario y la contrasena.")
-      elif age < 18:
-        st.error("Debes ser mayor de 18 anos.")
-      elif r_invite != codigo_secreto_invitacion:
-        st.error("Codigo de invitacion incorrecto.")
-      elif not r_adult:
-        st.warning("Debes marcar la casilla de mayoria de edad.")
-      else:
-        try:
-          c.execute(
-              "INSERT INTO users (username, password, email, xp, bio, avatar,"
-              " account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?,"
-              " ?)",
-              (
-                  r_user,
-                  r_pass,
-                  r_email,
-                  10,
-                  "Hola! Uso NoxVibe.",
-                  "",
-                  "Publico",
-                  100,
-                  "Oscuro",
-              ),
-          )
-          conn.commit()
-          st.success("Cuenta creada con exito. Ya puedes iniciar sesion.")
-        except:
-          st.error("El nombre de usuario ya esta en uso.")
+      if st.button("Validar y Crear Cuenta"):
+        if codigo_ingresado == st.session_state.codigo_generado:
+          try:
+            c.execute(
+                "INSERT INTO users (username, password, email, xp, bio, avatar,"
+                " account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?,"
+                " ?, ?)",
+                (
+                    r_user,
+                    r_pass,
+                    r_email,
+                    10,
+                    "Hola! Uso NoxVibe.",
+                    "",
+                    "Publico",
+                    100,
+                    "Oscuro",
+                ),
+            )
+            conn.commit()
+            st.success(
+                "¡Cuenta creada con exito! Ya puedes iniciar sesion arriba."
+            )
+            st.session_state.codigo_enviado = False
+            st.session_state.codigo_generado = ""
+            st.rerun()
+          except Exception as ex:
+            st.error(f"Error al registrar: {ex}")
+        else:
+          st.error("El código de verificación es incorrecto.")
 
 else:
   cur = st.session_state.username
@@ -568,118 +626,4 @@ else:
             handle_reaction(p_id, cur, "thumb")
         with col_r3:
           if st.button(
-              f"❤️ {p_hearts if p_hearts is not None else 0}",
-              key=f"pv_heart_{p_id}",
-              use_container_width=True,
-          ):
-            handle_reaction(p_id, cur, "heart")
-        st.markdown("---")
-
-  elif menu_option == "🔍 Buscar Perfiles":
-    st.title("🔍 Buscar Perfiles")
-    search_user = st.text_input("Escribe el nombre de usuario:")
-    if search_user:
-      c.execute(
-          "SELECT username, bio, avatar, account_privacy FROM users WHERE"
-          " username = ?",
-          (search_user,),
-      )
-      target_user = c.fetchone()
-      if target_user:
-        t_user, t_bio, t_avatar, t_privacy = target_user
-        st.markdown(f"### @{t_user}")
-        st.write(t_bio)
-        st.info(f"Tipo de cuenta: {t_privacy}")
-
-  elif menu_option == "👥 Siguiendo":
-    st.title("👥 Siguiendo")
-    st.write("Videos de la gente a la que sigues.")
-
-  elif menu_option == "📺 Explorar Canales":
-    st.title("📺 Explorar Canales")
-    st.write("Tendencias y canales tematicos.")
-
-  elif menu_option == "💬 Mensajes":
-    st.title("💬 Mensajes Directos")
-    st.write("Tus chats privados.")
-
-  elif menu_option == "⚙️ Ajustes":
-    st.title("⚙️ Ajustes de la cuenta")
-
-    c.execute(
-        "SELECT bio, avatar, theme, account_privacy FROM users WHERE username ="
-        " ?",
-        (cur,),
-    )
-    u_settings = c.fetchone()
-
-    current_bio = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else ""
-    )
-    current_db_theme = (
-        u_settings[2]
-        if u_settings and len(u_settings) > 2 and u_settings[2] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[3]
-        if u_settings and len(u_settings) > 3 and u_settings[3] is not None
-        else "Publico"
-    )
-
-    # 1. Formulario para la biografía
-    with st.form("settings_bio_form"):
-      new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
-      submit_bio = st.form_submit_button("Guardar Biografia")
-
-    if submit_bio:
-      c.execute("UPDATE users SET bio = ? WHERE username = ?", (new_bio, cur))
-      conn.commit()
-      st.success("¡Biografía actualizada con éxito!")
-      st.rerun()
-
-    st.markdown("---")
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    # 2. Selector de tema fuera del form para evitar bloqueos visuales
-    temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
-    current_theme_index = (
-        temas_disponibles.index(current_db_theme)
-        if current_db_theme in temas_disponibles
-        else 0
-    )
-
-    new_theme = st.selectbox(
-        "Tema de Colores", temas_disponibles, index=current_theme_index
-    )
-    if new_theme != current_db_theme:
-      c.execute(
-          "UPDATE users SET theme = ? WHERE username = ?", (new_theme, cur)
-      )
-      conn.commit()
-      st.session_state.theme = new_theme
-      st.success(f"Tema cambiado a {new_theme}")
-      st.rerun()
-
-    # 3. Interruptor de cuenta privada fuera del form
-    is_private_checked = st.toggle(
-        "🔒 Cuenta Privada",
-        value=(current_privacy == "Privado"),
-        help=(
-            "Actívalo para que tu cuenta sea privada o desactívalo para que"
-            " sea pública."
-        ),
-    )
-
-    new_privacy_value = "Privado" if is_private_checked else "Publico"
-    if new_privacy_value != current_privacy:
-      c.execute(
-          "UPDATE users SET account_privacy = ? WHERE username = ?",
-          (new_privacy_value, cur),
-      )
-      conn.commit()
-      st.success(f"Configuración de cuenta actualizada a: {new_privacy_value}")
-      st.rerun()
-        
+              f"❤️ {p_hearts if 
