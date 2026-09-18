@@ -24,9 +24,16 @@ c.execute('''
         bio TEXT DEFAULT 'Hola, uso NoxVibe.',
         city TEXT DEFAULT 'Madrid',
         xp INTEGER DEFAULT 0,
-        profile_pic TEXT DEFAULT ''
+        profile_pic TEXT DEFAULT '',
+        is_private INTEGER DEFAULT 0
     )
 ''')
+
+# Asegurar compatibilidad si la tabla users ya existía sin la columna is_private
+try:
+    c.execute("SELECT is_private FROM users LIMIT 1")
+except sqlite3.OperationalError:
+    c.execute("ALTER TABLE users ADD COLUMN is_private INTEGER DEFAULT 0")
 
 try:
     c.execute("SELECT username, likes, vibe_tag FROM posts LIMIT 1")
@@ -196,7 +203,7 @@ if menu == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
-        u_info = c.execute("SELECT bio, city, xp, profile_pic FROM users WHERE username = ?", (cur,)).fetchone()
+        u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
         num_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,)).fetchone()[0]
@@ -207,7 +214,8 @@ if menu == "👤 Mi Perfil":
         else:
             st.markdown("📷 *Sin foto*")
             
-        st.markdown(f"### @{cur}")
+        priv_status = "🔒 Privado" if u_info and u_info[4] == 1 else "🌐 Público"
+        st.markdown(f"### @{cur} ({priv_status})")
         
         st.markdown(f"""
             <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
@@ -232,6 +240,8 @@ if menu == "👤 Mi Perfil":
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
                 new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
+                current_priv = True if (u_info and u_info[4] == 1) else False
+                new_priv = st.checkbox("🔒 Hacer mi canal privado (Solo visible para quienes me siguen)", value=current_priv)
                 new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
                 
                 if st.form_submit_button("Guardar Cambios 💾"):
@@ -242,8 +252,9 @@ if menu == "👤 Mi Perfil":
                         with open(pic_path, "wb") as f:
                             f.write(new_pic.getbuffer())
                     
-                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ? WHERE username = ?", 
-                              (new_bio, new_city, pic_path, cur))
+                    priv_val = 1 if new_priv else 0
+                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, is_private = ? WHERE username = ?", 
+                              (new_bio, new_city, pic_path, priv_val, cur))
                     conn.commit()
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
@@ -306,7 +317,7 @@ elif menu == "🔍 Explorar Canales":
         target_user = st.session_state.get('viewing_user')
     
     if target_user:
-        u_data = c.execute("SELECT username, bio, city, xp, profile_pic FROM users WHERE username = ?", (target_user,)).fetchone()
+        u_data = c.execute("SELECT username, bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (target_user,)).fetchone()
         if u_data:
             b_name, b_class = get_badge(u_data[3])
             
@@ -314,12 +325,26 @@ elif menu == "🔍 Explorar Canales":
             t_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (target_user,)).fetchone()[0]
             t_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (target_user,)).fetchone()[0]
             
+            is_priv = (u_data[5] == 1)
+            current_user = st.session_state.get('username', '')
+            
+            # Comprobar si el usuario actual es amigo/seguidor o es el dueño del canal
+            is_friend_or_owner = False
+            if current_user == target_user:
+                is_friend_or_owner = True
+            elif is_priv and current_user:
+                following_check = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (current_user, target_user)).fetchone()
+                if following_check:
+                    is_friend_or_owner = True
+            elif not is_priv:
+                is_friend_or_owner = True
+
             if u_data[4] and os.path.exists(u_data[4]):
                 st.image(u_data[4], width=110)
             else:
                 st.markdown("📷")
                 
-            st.markdown(f"### @{u_data[0]} [{b_name}]")
+            st.markdown(f"### @{u_data[0]} [{b_name}]" + (" 🔒 (Privado)" if is_priv else ""))
             st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
                     <div style="text-align: center; margin-right: 15px;">
@@ -336,26 +361,30 @@ elif menu == "🔍 Explorar Canales":
                     
             st.markdown(f"**Bio:** {u_data[1]} | **Ciudad:** {u_data[2]} | **XP:** {u_data[3]}")
                 
-            if st.session_state['logged_in'] and st.session_state['username'] != target_user:
-                is_following = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], target_user)).fetchone()
+            if current_user and current_user != target_user:
+                is_following = c.execute("SELECT 1 FROM follows WHERE follower = ? AND followed = ?", (current_user, target_user)).fetchone()
                 if is_following:
                     if st.button("❌ Dejar de seguir"):
-                        c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (st.session_state['username'], target_user))
+                        c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (current_user, target_user))
                         conn.commit()
                         st.rerun()
                 else:
                     if st.button("➕ Seguir"):
-                        c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (st.session_state['username'], target_user))
+                        c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (current_user, target_user))
                         conn.commit()
                         st.rerun()
                             
             st.markdown("---")
-            user_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (target_user,)).fetchall()
-            if not user_posts:
-                st.info("Este usuario aún no ha publicado nada.")
+            
+            if is_friend_or_owner:
+                user_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (target_user,)).fetchall()
+                if not user_posts:
+                    st.info("Este usuario aún no ha publicado nada.")
+                else:
+                    for p in user_posts:
+                        render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
             else:
-                for p in user_posts:
-                    render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
+                st.warning("🔒 **Este canal es privado.** Debes seguir a este usuario para poder ver sus publicaciones.")
         else:
             st.info("Selecciona un usuario para ver su perfil.")
     else:
@@ -413,17 +442,4 @@ elif menu == "💬 Mensajes Privados":
                                 (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
                             )
                             chat_conn.commit()
-                            chat_conn.close()
-                            st.rerun()
-                            
-        chat_conn.close()
-    else:
-        st.warning("Inicia sesión para chatear.")
-
-elif menu == "⚙️ Ajustes":
-    st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
-    if sel_theme != st.session_state['theme']:
-        st.session_state['theme'] = sel_theme
-        st.rerun()
-        
+                    
