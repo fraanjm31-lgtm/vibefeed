@@ -5,6 +5,9 @@ from datetime import datetime, date
 
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
+# Forzar modo visualizador limpio para quitar la barra superior innecesaria
+st.set_option("client.toolbarMode", "viewer")
+
 conn = sqlite3.connect('noxvibe.db', check_same_thread=False)
 c = conn.cursor()
 
@@ -90,12 +93,6 @@ else:
 
 st.markdown(f"""
     <style>
-    /* Ocultar elementos de la barra superior */
-    header [data-testid="stToolbar"] {{
-        visibility: visible !important;
-    }}
-    /* Ocultar botones específicos de la barra de herramientas y dejar solo la estrella si es posible */
-    #MainMenu {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     .stDeployButton {{display: none !important;}}
     
@@ -142,7 +139,6 @@ st.markdown(f"""
     }}
     </style>
 """, unsafe_allow_html=True)
-
 
 def ai_vibe_checker(text):
     if not text:
@@ -454,6 +450,4 @@ else:
             c.execute("UPDATE users SET bio = ?, theme = ? WHERE username = ?", (new_bio, new_theme, cur))
             conn.commit()
             st.session_state.theme = new_theme
-            st.success("Ajustes actualizados correctamente!")
-            st.rerun()
-            
+            st.success("Ajustes actualizados correc
