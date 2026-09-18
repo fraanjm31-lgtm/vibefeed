@@ -90,15 +90,19 @@ else:
 
 st.markdown(f"""
     <style>
-    /* Ocultar elementos de Streamlit y el botón flotante Manage app */
-    header [data-testid="stToolbar"],
-    [data-testid="stStatusWidget"],
-    div.viewerBadge_container__1QSob,
-    #MainMenu,
-    footer,
-    .stDeployButton {{
+    /* Ocultar botón flotante de Manage app y elementos de Streamlit */
+    [data-testid="stStatusWidget"] {{
         display: none !important;
+        visibility: hidden !important;
     }}
+    div[class*="viewerBadge"] {{
+        display: none !important;
+        visibility: hidden !important;
+    }}
+    #MainMenu {{visibility: hidden !important;}}
+    footer {{visibility: hidden !important;}}
+    .stDeployButton {{display: none !important;}}
+    header [data-testid="stToolbar"] {{display: none !important;}}
     
     .stApp {{
         background-color: {bg_color} !important;
@@ -448,9 +452,4 @@ else:
             current_theme_index = temas_disponibles.index(current_db_theme) if current_db_theme in temas_disponibles else 0
             new_theme = st.selectbox("🎨 Tema de Colores", temas_disponibles, index=current_theme_index)
             
-            submit_settings = st.form_submit_button("Guardar cambios")
-            
-        if submit_settings:
-            c.execute("UPDATE users SET bio = ?, theme = ? WHERE username = ?", (new_bio, new_theme, cur))
-            conn.commit()
-            st.session_state.theme = new_t
+            submit_settings = st.form_submit_bu
