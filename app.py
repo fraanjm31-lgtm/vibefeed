@@ -88,7 +88,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Botón principal de Me gusta
     if st.button("❤️ Me gusta", key=f"like_{p_id}"):
         c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
         conn.commit()
@@ -99,7 +98,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
     else:
         st.markdown("❤️ *Sé el primero en darle Me gusta*")
         
-    # Menú desplegable estilo "flecha" para más opciones (sin guardar)
     with st.expander("📌 Más opciones y comentarios"):
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
@@ -110,7 +108,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         with col_m3:
             st.button("↗️ Compartir", key=f"sha_{p_id}")
         
-        # Apartado de comentarios si está activo
         if st.session_state.get(f"show_comments_{p_id}", False):
             st.markdown("---")
             st.markdown("💬 **Comentarios:**")
@@ -201,6 +198,11 @@ if menu == "👤 Mi Perfil":
         cur = st.session_state['username']
         u_info = c.execute("SELECT bio, city, xp, profile_pic FROM users WHERE username = ?", (cur,)).fetchone()
         
+        # Calcular estadísticas estilo Instagram
+        num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
+        num_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,)).fetchone()[0]
+        num_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,)).fetchone()[0]
+        
         col_p1, col_p2 = st.columns([1, 2])
         with col_p1:
             if u_info and u_info[3] and os.path.exists(u_info[3]):
@@ -208,6 +210,16 @@ if menu == "👤 Mi Perfil":
             else:
                 st.write("📷 Sin foto")
         with col_p2:
+            st.markdown(f"### @{cur}")
+            # Estadísticas estilo Instagram en columnas
+            st1, st2, st3 = st.columns(3)
+            with st1:
+                st.metric("Publicaciones", num_posts)
+            with st2:
+                st.metric("Seguidores", num_followers)
+            with st3:
+                st.metric("Seguidos", num_following)
+                
             if u_info:
                 st.markdown(f"**Bio:** {u_info[0]}")
                 st.markdown(f"**Ciudad:** {u_info[1]}")
@@ -294,6 +306,12 @@ elif menu == "🔍 Explorar Canales":
         u_data = c.execute("SELECT username, bio, city, xp, profile_pic FROM users WHERE username = ?", (target_user,)).fetchone()
         if u_data:
             b_name, b_class = get_badge(u_data[3])
+            
+            # Estadísticas estilo Instagram para el usuario explorado
+            t_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (target_user,)).fetchone()[0]
+            t_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (target_user,)).fetchone()[0]
+            t_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (target_user,)).fetchone()[0]
+            
             col_ping1, col_ping2 = st.columns([1, 2])
             with col_ping1:
                 if u_data[4] and os.path.exists(u_data[4]):
@@ -302,6 +320,15 @@ elif menu == "🔍 Explorar Canales":
                     st.write("📷")
             with col_ping2:
                 st.markdown(f"### @{u_data[0]} [{b_name}]")
+                
+                st1, st2, st3 = st.columns(3)
+                with st1:
+                    st.metric("Publicaciones", t_posts)
+                with st2:
+                    st.metric("Seguidores", t_followers)
+                with st3:
+                    st.metric("Seguidos", t_following)
+                    
                 st.markdown(f"**Bio:** {u_data[1]} | **Ciudad:** {u_data[2]} | **XP:** {u_data[3]}")
                 
                 if st.session_state['logged_in'] and st.session_state['username'] != target_user:
@@ -394,4 +421,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-        
+                
