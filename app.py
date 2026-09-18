@@ -105,6 +105,15 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
             st.button("🔄 Repost", key=f"rep_{p_id}")
         with col_m3:
             st.button("↗️ Compartir", key=f"sha_{p_id}")
+            
+        # Opción para eliminar si la publicación es del usuario actual
+        if st.session_state.get('logged_in') and st.session_state['username'] == p_user:
+            st.markdown("---")
+            if st.button("🗑️ Eliminar esta publicación", key=f"del_post_{p_id}"):
+                c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
+                conn.commit()
+                st.success("¡Publicación eliminada!")
+                st.rerun()
         
         if st.session_state.get(f"show_comments_{p_id}", False):
             st.markdown("---")
