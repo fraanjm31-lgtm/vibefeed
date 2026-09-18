@@ -33,16 +33,6 @@ st.markdown("""
         font-size: 12px;
         color: #8b949e;
     }
-    /* Estilo para las reacciones en horizontal estilo perfil */
-    .reactions-bar {
-        display: flex;
-        justify-content: space-around;
-        background: #161b22;
-        padding: 8px;
-        border-radius: 10px;
-        margin-top: 5px;
-        margin-bottom: 10px;
-    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -52,6 +42,12 @@ c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
+
+# Tabla para controlar qué usuarios ya han reaccionado a qué posts
+c.execute('''CREATE TABLE IF NOT EXISTS post_reactions (
+             post_id INTEGER, 
+             username TEXT, 
+             reaction_type TEXT)''')
 
 try:
     c.execute("ALTER TABLE posts ADD COLUMN fires INTEGER DEFAULT 0")
@@ -110,6 +106,22 @@ def ai_vibe_checker(text):
         return "🌧️ Melancólico", "Momento de reflexión detectado por el sistema."
     else:
         return "🚀 Inspirador", "¡Pensamiento innovador detectado!"
+
+# Función para gestionar reacciones únicas por usuario
+def handle_reaction(p_id, user, r_type):
+    c.execute("SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND reaction_type = ?", (p_id, user, r_type))
+    if not c.fetchone():
+        c.execute("INSERT INTO post_reactions (post_id, username, reaction_type) VALUES (?, ?, ?)", (p_id, user, r_type))
+        if r_type == 'fire':
+            c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
+        elif r_type == 'thumb':
+            c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
+        elif r_type == 'heart':
+            c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
+        conn.commit()
+        st.rerun()
+    else:
+        st.toast("¡Ya has dado esta reacción!", icon="⚠️")
 
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
@@ -260,23 +272,16 @@ else:
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
-                # Reacciones ordenadas perfectamente en horizontal estilo perfil
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
                     if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}", use_container_width=True):
-                        c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
-                        conn.commit()
-                        st.rerun()
+                        handle_reaction(p_id, cur, 'fire')
                 with col_r2:
                     if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}", use_container_width=True):
-                        c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
-                        conn.commit()
-                        st.rerun()
+                        handle_reaction(p_id, cur, 'thumb')
                 with col_r3:
                     if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}", use_container_width=True):
-                        c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
-                        conn.commit()
-                        st.rerun()
+                        handle_reaction(p_id, cur, 'heart')
                 st.markdown("---")
         else:
             st.markdown("### 🎬 Tus Vídeos")
@@ -291,19 +296,13 @@ else:
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
                     if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}", use_container_width=True):
-                        c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
-                        conn.commit()
-                        st.rerun()
+                        handle_reaction(p_id, cur, 'fire')
                 with col_r2:
                     if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}", use_container_width=True):
-                        c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
-                        conn.commit()
-                        st.rerun()
+                        handle_reaction(p_id, cur, 'thumb')
                 with col_r3:
                     if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}", use_container_width=True):
-                        c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
-                        conn.commit()
-                        st.rerun()
+                        handle_reaction(p_id, cur, 'heart')
                 st.markdown("---")
 
     elif menu_option == "Buscar / Ver Perfiles":
@@ -332,19 +331,13 @@ else:
             col_r1, col_r2, col_r3 = st.columns(3)
             with col_r1:
                 if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"muro_fire_{p_id}", use_container_width=True):
-                    c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
-                    conn.commit()
-                    st.rerun()
+                    handle_reaction(p_id, cur, 'fire')
             with col_r2:
                 if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"muro_like_{p_id}", use_container_width=True):
-                    c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
-                    conn.commit()
-                    st.rerun()
+                    handle_reaction(p_id, cur, 'thumb')
             with col_r3:
                 if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"muro_heart_{p_id}", use_container_width=True):
-                    c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
-                    conn.commit()
-                    st.rerun()
+                    handle_reaction(p_id, cur, 'heart')
             st.markdown("---")
 
     elif menu_option == "Siguiendo":
