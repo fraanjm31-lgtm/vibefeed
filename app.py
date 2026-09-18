@@ -88,8 +88,17 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Usamos columnas con proporciones iguales para forzar que vayan de izquierda a derecha en una sola línea
-    col_l, col_c, col_r, col_s, col_b, col_empty = st.columns([0.8, 0.8, 0.8, 0.8, 0.8, 2.5])
+    # Forzamos mediante HTML/CSS que los botones de acción vayan estrictamente en horizontal
+    st.markdown("""
+        <style>
+            .row-widget.stButton {
+                display: inline-block;
+                margin-right: 5px;
+            }
+        </style>
+    """, unsafe_allow_html=True)
+
+    col_l, col_c, col_r, col_s, col_b = st.columns(5)
     with col_l:
         if st.button("❤️", key=f"like_btn_{p_id}"):
             c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
@@ -393,4 +402,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-        
+                    
