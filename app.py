@@ -1,7 +1,7 @@
 import streamlit as st
 import sqlite3
 import os
-from datetime import datetime
+from datetime import datetime, date
 
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
@@ -42,12 +42,7 @@ c = conn.cursor()
 c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
-
-# Tabla para controlar qué usuarios ya han reaccionado a qué posts
-c.execute('''CREATE TABLE IF NOT EXISTS post_reactions (
-             post_id INTEGER, 
-             username TEXT, 
-             reaction_type TEXT)''')
+c.execute('''CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)''')
 
 try:
     c.execute("ALTER TABLE posts ADD COLUMN fires INTEGER DEFAULT 0")
@@ -107,7 +102,6 @@ def ai_vibe_checker(text):
     else:
         return "🚀 Inspirador", "¡Pensamiento innovador detectado!"
 
-# Función para gestionar reacciones únicas por usuario
 def handle_reaction(p_id, user, r_type):
     c.execute("SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND reaction_type = ?", (p_id, user, r_type))
     if not c.fetchone():
@@ -146,6 +140,8 @@ if st.session_state.logged_in:
 
 if not st.session_state.logged_in:
     st.title("Bienvenido a NoxVibe 🚀")
+    st.info("🔒 **Comunidad exclusiva para mayores de 18 años.**")
+    
     tab_login, tab_reg = st.tabs(["Iniciar Sesión", "Registrarse"])
     
     with tab_login:
@@ -163,15 +159,27 @@ if not st.session_state.logged_in:
     with tab_reg:
         r_user = st.text_input("Nuevo Usuario", key="r_user")
         r_pass = st.text_input("Nueva Contraseña", type="password", key="r_pass")
+        r_dob = st.date_input("Fecha de nacimiento", min_value=date(1900, 1, 1), max_value=date.today(), key="r_dob")
+        r_adult = st.checkbox("Confirmo que soy mayor de 18 años y acepto las normas de privacidad.")
+        
         if st.button("Crear cuenta"):
             if r_user and r_pass:
-                try:
-                    c.execute("INSERT INTO users (username, password, xp, bio, avatar, account_privacy, coins) VALUES (?, ?, ?, ?, ?, ?, ?)", 
-                              (r_user, r_pass, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público", 100))
-                    conn.commit()
-                    st.success("¡Cuenta creada con éxito! Tienes 100 NoxCoins de regalo.")
-                except:
-                    st.error("El nombre de usuario ya existe.")
+                # Calcular edad exacta
+                today = date.today()
+                age = today.year - r_dob.year - ((today.month, today.day) < (r_dob.month, r_dob.day))
+                
+                if age < 18:
+                    st.error("❌ Lo sentimos mucho, debes ser mayor de 18 años para registrarte en NoxVibe.")
+                elif not r_adult:
+                    st.warning("⚠️ Debes confirmar que eres mayor de edad marcando la casilla.")
+                else:
+                    try:
+                        c.execute("INSERT INTO users (username, password, xp, bio, avatar, account_privacy, coins) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                                  (r_user, r_pass, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público", 100))
+                        conn.commit()
+                        st.success("¡Cuenta creada con éxito! Tienes 100 NoxCoins de regalo. Ya puedes iniciar sesión.")
+                    except:
+                        st.error("El nombre de usuario ya existe.")
             else:
                 st.warning("Rellena todos los campos.")
 
