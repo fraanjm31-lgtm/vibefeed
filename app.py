@@ -99,9 +99,8 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
     else:
         st.markdown("❤️ *Sé el primero en darle Me gusta*")
         
-    # Menú desplegable estilo "flecha" para más opciones
+    # Menú desplegable estilo "flecha" para más opciones (sin guardar)
     with st.expander("📌 Más opciones y comentarios"):
-        # Opciones secundarias ordenadas
         col_m1, col_m2, col_m3 = st.columns(3)
         with col_m1:
             if st.button("💬 Comentar", key=f"com_{p_id}"):
@@ -110,8 +109,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
             st.button("🔄 Repost", key=f"rep_{p_id}")
         with col_m3:
             st.button("↗️ Compartir", key=f"sha_{p_id}")
-            
-        st.button("🔖 Guardar publicación", key=f"sav_{p_id}")
         
         # Apartado de comentarios si está activo
         if st.session_state.get(f"show_comments_{p_id}", False):
@@ -397,4 +394,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-                
+        
