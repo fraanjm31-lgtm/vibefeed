@@ -75,6 +75,21 @@ try:
 except:
     pass
 
+try:
+    c.execute("ALTER TABLE users ADD COLUMN coins INTEGER DEFAULT 100")
+except:
+    pass
+
+# Tabla para registrar los regalos enviados
+c.execute('''CREATE TABLE IF NOT EXISTS gifts (
+             id INTEGER PRIMARY KEY AUTOINCREMENT, 
+             sender TEXT, 
+             receiver TEXT, 
+             post_id INTEGER, 
+             gift_name TEXT, 
+             coins_cost INTEGER, 
+             timestamp TEXT)''')
+
 conn.commit()
 
 # Función de la IA para etiquetar vibraciones
@@ -102,8 +117,14 @@ st.sidebar.title("🧭 Menú")
 menu_option = st.sidebar.radio("Navegación", ["Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
 
 if st.session_state.logged_in:
+    # Mostrar saldo de NoxCoins en el menú lateral
+    c.execute("SELECT coins FROM users WHERE username = ?", (st.session_state.username,))
+    res_coins = c.fetchone()
+    user_coins = res_coins[0] if res_coins else 100
+    
     st.sidebar.markdown(f"---")
     st.sidebar.success(f"Sesión: @{st.session_state.username}")
+    st.sidebar.info(f"🪙 NoxCoins: **{user_coins} 🪙**")
     if st.sidebar.button("Cerrar Sesión"):
         st.session_state.logged_in = False
         st.session_state.username = ""
@@ -132,10 +153,11 @@ if not st.session_state.logged_in:
         if st.button("Crear cuenta"):
             if r_user and r_pass:
                 try:
-                    c.execute("INSERT INTO users (username, password, xp, bio, avatar, account_privacy) VALUES (?, ?, ?, ?, ?, ?)", 
-                              (r_user, r_pass, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público"))
+                    # Se registran con 100 NoxCoins iniciales de regalo
+                    c.execute("INSERT INTO users (username, password, xp, bio, avatar, account_privacy, coins) VALUES (?, ?, ?, ?, ?, ?, ?)", 
+                              (r_user, r_pass, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público", 100))
                     conn.commit()
-                    st.success("¡Cuenta creada con éxito! Ya puedes iniciar sesión.")
+                    st.success("¡Cuenta creada con éxito! Tienes 100 NoxCoins de regalo. Ya puedes iniciar sesión.")
                 except:
                     st.error("El nombre de usuario ya existe.")
             else:
@@ -147,12 +169,13 @@ else:
     
     if menu_option == "Mi Perfil":
         # Obtener datos del usuario actual
-        c.execute("SELECT xp, bio, avatar, account_privacy FROM users WHERE username = ?", (cur,))
+        c.execute("SELECT xp, bio, avatar, account_privacy, coins FROM users WHERE username = ?", (cur,))
         user_data = c.fetchone()
         xp = user_data[0] if user_data else 0
         bio = user_data[1] if user_data else ""
         avatar = user_data[2] if user_data else ""
         account_privacy = user_data[3] if user_data else "Público"
+        coins = user_data[4] if user_data else 100
 
         priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Pública"
         st.title(f"@{cur} ({priv_badge})")
@@ -191,7 +214,7 @@ else:
                 </div>
             """, unsafe_allow_html=True)
             
-            st.markdown(f"**Tus XP:** {xp}")
+            st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
             
         st.write(bio)
             
@@ -261,37 +284,53 @@ else:
         # Mostrar contenido según la pestaña seleccionada
         if st.session_state.profile_tab == "Fotos":
             st.markdown("### 🖼️ Tus Fotos")
-            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
+            c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
             photo_posts = c.fetchall()
             
             if not photo_posts:
                 st.info("No tienes fotos publicadas todavía.")
             
             for post in photo_posts:
-                p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                p_id, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap:
                     st.write(p_cap)
                 if p_file and os.path.exists(p_file):
                     st.image(p_file, use_column_width=True)
+                
+                # Mostrar regalos recibidos en este post
+                c.execute("SELECT gift_name, COUNT(*) FROM gifts WHERE post_id = ? GROUP BY gift_name", (p_id,))
+                post_gifts = c.fetchall()
+                if post_gifts:
+                    gift_summary = " · ".join([f"{g[0]} (x{g[1]})" for g in post_gifts])
+                    st.markdown(f"🎁 **Regalos recibidos:** {gift_summary}")
+
                 st.markdown(f"❤️ {p_likes} Me gusta")
                 st.markdown("---")
                 
         else:
             st.markdown("### 🎬 Tus Vídeos")
-            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
+            c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
             video_posts = c.fetchall()
             
             if not video_posts:
                 st.info("No tienes vídeos publicados todavía.")
                 
             for post in video_posts:
-                p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                p_id, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap:
                     st.write(p_cap)
                 if p_file and os.path.exists(p_file):
                     st.video(p_file)
+
+                # Mostrar regalos recibidos en este video
+                c.execute("SELECT gift_name, COUNT(*) FROM gifts WHERE post_id = ? GROUP BY gift_name", (p_id,))
+                post_gifts = c.fetchall()
+                if post_gifts:
+                    gift_summary = " · ".join([f"{g[0]} (x{g[1]})" for g in post_gifts])
+                    st.markdown(f"🎁 **Regalos recibidos:** {gift_summary}")
+
                 st.markdown(f"❤️ {p_likes} Me gusta")
                 st.markdown("---")
 
@@ -318,7 +357,7 @@ else:
                 with col_u2:
                     st.write(t_bio)
                     
-                # Comprobar estado de seguimiento (aceptado o pendiente)
+                # Comprobar estado de seguimiento
                 c.execute("SELECT status FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
                 row_follow = c.fetchone()
                 follow_status = row_follow[0] if row_follow else None
@@ -349,14 +388,14 @@ else:
                     st.warning("🔒 **Esta cuenta es privada.** Envía una solicitud de seguimiento para ver sus fotos y vídeos.")
                 else:
                     st.markdown("#### Publicaciones:")
-                    c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (t_user,))
+                    c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (t_user,))
                     user_posts = c.fetchall()
                     
                     if not user_posts:
                         st.info("Este usuario no tiene publicaciones.")
                     
                     for post in user_posts:
-                        p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                        p_id, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
                         st.markdown(f"**@{t_user}** · `{p_tag}` · {p_time}")
                         if p_cap:
                             st.write(p_cap)
@@ -365,77 +404,33 @@ else:
                                 st.video(p_file)
                             else:
                                 st.image(p_file, use_column_width=True)
+                        
+                        # Mostrar regalos recibidos
+                        c.execute("SELECT gift_name, COUNT(*) FROM gifts WHERE post_id = ? GROUP BY gift_name", (p_id,))
+                        post_gifts = c.fetchall()
+                        if post_gifts:
+                            gift_summary = " · ".join([f"{g[0]} (x{g[1]})" for g in post_gifts])
+                            st.markdown(f"🎁 **Regalos recibidos:** {gift_summary}")
+
                         st.markdown(f"❤️ {p_likes} Me gusta")
-                        st.markdown("---")
-
-    elif menu_option == "Muro 24h":
-        st.title("🌐 Muro Global 24h")
-        st.write("Explora lo que comparte la comunidad:")
-        
-        c.execute("SELECT username, caption, file, file_type, likes, vibe_tag, timestamp FROM posts ORDER BY id DESC")
-        all_posts = c.fetchall()
-        
-        for post in all_posts:
-            p_user, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
-            
-            c.execute("SELECT account_privacy FROM users WHERE username = ?", (p_user,))
-            res_priv = c.fetchone()
-            u_priv = res_priv[0] if res_priv else "Público"
-            
-            # Verificar si el usuario actual lo sigue con estado 'accepted'
-            c.execute("SELECT status FROM follows WHERE follower = ? AND followed = ?", (cur, p_user))
-            f_row = c.fetchone()
-            is_accepted = f_row and f_row[0] == 'accepted'
-            
-            if u_priv == "Privado" and p_user != cur and not is_accepted:
-                continue
-                
-            st.markdown(f"**@{p_user}** · `{p_tag}` · {p_time}")
-            if p_cap:
-                st.write(p_cap)
-            if p_file and os.path.exists(p_file):
-                if p_type == "video":
-                    st.video(p_file)
-                else:
-                    st.image(p_file, use_column_width=True)
-            st.markdown(f"❤️ {p_likes} Me gusta")
-            st.markdown("---")
-
-    elif menu_option == "Siguiendo":
-        st.title("👥 Siguiendo")
-        st.write("Aquí verás las publicaciones de la gente que sigues.")
-
-    elif menu_option == "Explorar Canales":
-        st.title("🔍 Explorar Canales")
-        st.write("Descubre temáticas, música y tendencias.")
-
-    elif menu_option == "Mensajes":
-        st.title("💬 Mensajes Directos")
-        st.write("Tus chats privados aparecerán aquí.")
-
-    elif menu_option == "Ajustes":
-        st.title("⚙️ Ajustes de la cuenta")
-        
-        c.execute("SELECT bio, avatar, account_privacy FROM users WHERE username = ?", (cur,))
-        u_settings = c.fetchone()
-        current_bio = u_settings[0] if u_settings and u_settings[0] else ""
-        current_avatar = u_settings[1] if u_settings else ""
-        current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Público"
-        
-        new_bio = st.text_area("Actualizar tu biografía", value=current_bio)
-        new_avatar = st.file_uploader("Sube tu nueva foto de perfil", type=["jpg", "png", "jpeg"])
-        priv_choice = st.selectbox("Privacidad del Perfil", ["Público", "Privado"], index=0 if current_acc_priv == "Público" else 1)
-        
-        if st.button("Guardar cambios"):
-            avatar_path = current_avatar
-            if new_avatar is not None:
-                os.makedirs("uploads", exist_ok=True)
-                avatar_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
-                with open(avatar_path, "wb") as f:
-                    f.write(new_avatar.getbuffer())
-            
-            c.execute("UPDATE users SET bio = ?, avatar = ?, account_privacy = ? WHERE username = ?", (new_bio, avatar_path, priv_choice, cur))
-            conn.commit()
-            st.success("¡Perfil y ajustes de privacidad actualizados con éxito!")
-            st.rerun()
-            
+                        
+                        # SISTEMA DE REGALOS (Enviar regalo al creador del post)
+                        if t_user != cur:
+                            col_g1, col_g2, col_g3 = st.columns(3)
+                            with col_g1:
+                                if st.button("🔥 Fuego (10 🪙)", key=f"fire_{p_id}"):
+                                    # Verificar monedas del usuario actual
+                                    c.execute("SELECT coins FROM users WHERE username = ?", (cur,))
+                                    my_coins = c.fetchone()[0]
+                                    if my_coins >= 10:
+                                        c.execute("UPDATE users SET coins = coins - 10 WHERE username = ?", (cur,))
+                                        c.execute("UPDATE users SET coins = coins + 10 WHERE username = ?", (t_user,))
+                                        c.execute("INSERT INTO gifts (sender, receiver, post_id, gift_name, coins_cost, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+                                                  (cur, t_user, p_id, "🔥 Fuego", 10, datetime.now().strftime("%Y-%m-%d %H:%M")))
+                                        conn.commit()
+                                        st.success("¡Has enviado 🔥 Fuego!")
+                                        st.rerun()
+                                    else:
+                                        st.error("No tienes suficientes NoxCoins.")
+                            with col_g2:
+                 
