@@ -74,8 +74,6 @@ if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
     st.session_state['username'] = ''
-if 'theme' not in st.session_state:
-    st.session_state['theme'] = 'Modo Oscuro 🌙'
 if 'viewing_user' not in st.session_state:
     st.session_state['viewing_user'] = ''
 
@@ -447,6 +445,11 @@ elif menu == "💬 Mensajes Privados":
         st.warning("Inicia sesión para chatear.")
 
 elif menu == "⚙️ Ajustes":
-    st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
-    if sel_theme != st.session_state.get('theme', 'Modo Oscuro 🌙')
+    st.subheader("⚙️ Ajustes y Privacidad")
+    
+    is_logged = st.session_state.get('logged_in', False)
+    username = st.session_state.get('username', '')
+    
+    if is_logged and username:
+        try:
+            res_priv = c.execute("SELECT is_private FROM users WHERE username = ?",
