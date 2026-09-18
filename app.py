@@ -117,7 +117,6 @@ st.sidebar.title("🧭 Menú")
 menu_option = st.sidebar.radio("Navegación", ["Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
 
 if st.session_state.logged_in:
-    # Mostrar saldo de NoxCoins en el menú lateral
     c.execute("SELECT coins FROM users WHERE username = ?", (st.session_state.username,))
     res_coins = c.fetchone()
     user_coins = res_coins[0] if res_coins else 100
@@ -153,7 +152,6 @@ if not st.session_state.logged_in:
         if st.button("Crear cuenta"):
             if r_user and r_pass:
                 try:
-                    # Se registran con 100 NoxCoins iniciales de regalo
                     c.execute("INSERT INTO users (username, password, xp, bio, avatar, account_privacy, coins) VALUES (?, ?, ?, ?, ?, ?, ?)", 
                               (r_user, r_pass, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público", 100))
                     conn.commit()
@@ -168,7 +166,6 @@ else:
     cur = st.session_state.username
     
     if menu_option == "Mi Perfil":
-        # Obtener datos del usuario actual
         c.execute("SELECT xp, bio, avatar, account_privacy, coins FROM users WHERE username = ?", (cur,))
         user_data = c.fetchone()
         xp = user_data[0] if user_data else 0
@@ -180,7 +177,6 @@ else:
         priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Pública"
         st.title(f"@{cur} ({priv_badge})")
         
-        # Calcular estadísticas reales (solo seguidores aceptados)
         c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
         total_posts = c.fetchone()[0]
 
@@ -218,7 +214,6 @@ else:
             
         st.write(bio)
             
-        # GESTIÓN DE SOLICITUDES PENDIENTES SI LA CUENTA ES PRIVADA
         c.execute("SELECT follower FROM follows WHERE followed = ? AND status = 'pending'", (cur,))
         pending_requests = c.fetchall()
         
@@ -244,7 +239,6 @@ else:
 
         st.markdown("---")
         
-        # Formulario desplegable para publicar contenido
         with st.expander("✏️ Publicar Contenido", expanded=False):
             with st.form("new_post_form", clear_on_submit=True):
                 cap = st.text_input("¿Qué estás pensando?")
@@ -270,7 +264,6 @@ else:
                     st.success(f"¡Publicado! {ai_msg} (+15 XP)")
                     st.rerun()
 
-        # Botones de separación estilo barra de perfil (Fotos / Vídeos)
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button("🖼️ Fotos", use_container_width=True):
@@ -281,7 +274,6 @@ else:
 
         st.markdown("---")
 
-        # Mostrar contenido según la pestaña seleccionada
         if st.session_state.profile_tab == "Fotos":
             st.markdown("### 🖼️ Tus Fotos")
             c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
@@ -298,7 +290,6 @@ else:
                 if p_file and os.path.exists(p_file):
                     st.image(p_file, use_column_width=True)
                 
-                # Mostrar regalos recibidos en este post
                 c.execute("SELECT gift_name, COUNT(*) FROM gifts WHERE post_id = ? GROUP BY gift_name", (p_id,))
                 post_gifts = c.fetchall()
                 if post_gifts:
@@ -324,7 +315,6 @@ else:
                 if p_file and os.path.exists(p_file):
                     st.video(p_file)
 
-                # Mostrar regalos recibidos en este video
                 c.execute("SELECT gift_name, COUNT(*) FROM gifts WHERE post_id = ? GROUP BY gift_name", (p_id,))
                 post_gifts = c.fetchall()
                 if post_gifts:
@@ -357,7 +347,6 @@ else:
                 with col_u2:
                     st.write(t_bio)
                     
-                # Comprobar estado de seguimiento
                 c.execute("SELECT status FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
                 row_follow = c.fetchone()
                 follow_status = row_follow[0] if row_follow else None
@@ -383,7 +372,6 @@ else:
 
                 st.markdown("---")
                 
-                # REGLA DE VISIBILIDAD DE CONTENIDO
                 if t_privacy == "Privado" and t_user != cur and follow_status != 'accepted':
                     st.warning("🔒 **Esta cuenta es privada.** Envía una solicitud de seguimiento para ver sus fotos y vídeos.")
                 else:
@@ -405,7 +393,6 @@ else:
                             else:
                                 st.image(p_file, use_column_width=True)
                         
-                        # Mostrar regalos recibidos
                         c.execute("SELECT gift_name, COUNT(*) FROM gifts WHERE post_id = ? GROUP BY gift_name", (p_id,))
                         post_gifts = c.fetchall()
                         if post_gifts:
@@ -414,12 +401,10 @@ else:
 
                         st.markdown(f"❤️ {p_likes} Me gusta")
                         
-                        # SISTEMA DE REGALOS (Enviar regalo al creador del post)
                         if t_user != cur:
                             col_g1, col_g2, col_g3 = st.columns(3)
                             with col_g1:
                                 if st.button("🔥 Fuego (10 🪙)", key=f"fire_{p_id}"):
-                                    # Verificar monedas del usuario actual
                                     c.execute("SELECT coins FROM users WHERE username = ?", (cur,))
                                     my_coins = c.fetchone()[0]
                                     if my_coins >= 10:
@@ -433,4 +418,13 @@ else:
                                     else:
                                         st.error("No tienes suficientes NoxCoins.")
                             with col_g2:
-                 
+                                if st.button("⭐ Estrella (50 🪙)", key=f"star_{p_id}"):
+                                    c.execute("SELECT coins FROM users WHERE username = ?", (cur,))
+                                    my_coins = c.fetchone()[0]
+                                    if my_coins >= 50:
+                                        c.execute("UPDATE users SET coins = coins - 50 WHERE username = ?", (cur,))
+                                        c.execute("UPDATE users SET coins = coins + 50 WHERE username = ?", (t_user,))
+                                        c.execute("INSERT INTO gifts (sender, receiver, post_id, gift_name, coins_cost, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
+                                                  (cur, t_user, p_id, "⭐ Estrella", 50, datetime.now().strftime("%Y-%m-%d %H:%M")))
+                                        conn.commit()
+                                        st.s
