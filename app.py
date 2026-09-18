@@ -51,6 +51,22 @@ c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, passwo
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
 
+# Añadir columnas independientes para las distintas reacciones si no existen
+try:
+    c.execute("ALTER TABLE posts ADD COLUMN fires INTEGER DEFAULT 0")
+except:
+    pass
+
+try:
+    c.execute("ALTER TABLE posts ADD COLUMN thumbs INTEGER DEFAULT 0")
+except:
+    pass
+
+try:
+    c.execute("ALTER TABLE posts ADD COLUMN hearts INTEGER DEFAULT 0")
+except:
+    pass
+
 try:
     c.execute("ALTER TABLE posts ADD COLUMN privacy TEXT DEFAULT 'Público'")
 except:
@@ -216,8 +232,8 @@ else:
                     auto_tag, ai_msg = ai_vibe_checker(cap)
                     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
                     
-                    c.execute("INSERT INTO posts (username, caption, file, file_type, likes, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                              (cur, cap, path_to_save, f_type, 0, auto_tag, now_str, "Público"))
+                    c.execute("INSERT INTO posts (username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
+                              (cur, cap, path_to_save, f_type, 0, 0, 0, 0, auto_tag, now_str, "Público"))
                     c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,))
                     conn.commit()
                     st.success(f"¡Publicado! {ai_msg}")
@@ -235,37 +251,37 @@ else:
 
         if st.session_state.profile_tab == "Fotos":
             st.markdown("### 🖼️ Tus Fotos")
-            c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
+            c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
             for post in c.fetchall():
-                p_id, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
-                # Fila con Fuego, Me gusta y Corazón
+                # Fila independiente para Fuego, Me gusta y Corazón
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"🔥 {p_likes}", key=f"p_fire_{p_id}"):
-                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}"):
+                        c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r2:
-                    if st.button("👍", key=f"p_like_{p_id}"):
-                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}"):
+                        c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r3:
-                    if st.button("❤️", key=f"p_heart_{p_id}"):
-                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}"):
+                        c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 st.markdown("---")
         else:
             st.markdown("### 🎬 Tus Vídeos")
-            c.execute("SELECT id, caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
+            c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
             for post in c.fetchall():
-                p_id, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
@@ -273,18 +289,18 @@ else:
                 
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"🔥 {p_likes}", key=f"pv_fire_{p_id}"):
-                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}"):
+                        c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r2:
-                    if st.button("👍", key=f"pv_like_{p_id}"):
-                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}"):
+                        c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 with col_r3:
-                    if st.button("❤️", key=f"pv_heart_{p_id}"):
-                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}"):
+                        c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
                         conn.commit()
                         st.rerun()
                 st.markdown("---")
@@ -303,9 +319,9 @@ else:
 
     elif menu_option == "Muro 24h":
         st.title("🌐 Muro Global 24h")
-        c.execute("SELECT id, username, caption, file, file_type, likes, vibe_tag, timestamp FROM posts ORDER BY id DESC")
+        c.execute("SELECT id, username, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts ORDER BY id DESC")
         for post in c.fetchall():
-            p_id, p_user, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+            p_id, p_user, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
             st.markdown(f"**@{p_user}** · `{p_tag}` · {p_time}")
             if p_cap: st.write(p_cap)
             if p_file and isinstance(p_file, str) and os.path.exists(p_file):
@@ -314,18 +330,18 @@ else:
             
             col_r1, col_r2, col_r3 = st.columns(3)
             with col_r1:
-                if st.button(f"🔥 {p_likes}", key=f"muro_fire_{p_id}"):
-                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"muro_fire_{p_id}"):
+                    c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
                     conn.commit()
                     st.rerun()
             with col_r2:
-                if st.button("👍", key=f"muro_like_{p_id}"):
-                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"muro_like_{p_id}"):
+                    c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
                     conn.commit()
                     st.rerun()
             with col_r3:
-                if st.button("❤️", key=f"muro_heart_{p_id}"):
-                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"muro_heart_{p_id}"):
+                    c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
                     conn.commit()
                     st.rerun()
             st.markdown("---")
