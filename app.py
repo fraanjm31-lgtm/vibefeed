@@ -273,40 +273,58 @@ with tabs[3]:
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
-        users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
+        
+        chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
+        chat_c = chat_conn.cursor()
+        
+        users_list = [u[0] for u in chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
         if not users_list:
             st.info("No hay más usuarios registrados.")
         else:
             partner = st.selectbox("Para:", users_list, key="chat_partner_final_definitivo")
             if partner:
-                msgs = c.execute("""
-                    SELECT sender, message, timestamp 
-                    FROM messages 
-                    WHERE (sender = ? AND receiver = ?) 
-                       OR (sender = ? AND receiver = ?) 
-                    ORDER BY id ASC
-                """, (cur, partner, partner, cur)).fetchall()
+                st.markdown(f"**Chat con @{partner}**")
                 
-                if not msgs:
-                    st.info("No hay mensajes aún. ¡Escribe el primero!")
-                else:
-                    for s, m, t in msgs:
-                        if s == cur:
-                            st.markdown(f"**Tú:** {m} *({t})*")
-                        else:
-                            st.markdown(f"**@{s}:** {m} *({t})*")
+                @st.fragment(run_every=3)
+                def mostrar_mensajes_en_tiempo_real():
+                    inner_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
+                    inner_c = inner_conn.cursor()
+                    
+                    msgs = inner_c.execute("""
+                        SELECT sender, message, timestamp 
+                        FROM messages 
+                        WHERE (sender = ? AND receiver = ?) 
+                           OR (sender = ? AND receiver = ?) 
+                        ORDER BY id ASC
+                    """, (cur, partner, partner, cur)).fetchall()
+                    
+                    inner_conn.close()
+                    
+                    if not msgs:
+                        st.info("No hay mensajes aún. ¡Escribe el primero!")
+                    else:
+                        for s, m, t in msgs:
+                            if s == cur:
+                                st.markdown(f"**Tú:** {m} *({t})*")
+                            else:
+                                st.markdown(f"**@{s}:** {m} *({t})*")
+
+                mostrar_mensajes_en_tiempo_real()
                 
                 with st.form(key=f"chat_form_final_{partner}", clear_on_submit=True):
                     txt = st.text_input("Escribe tu mensaje...", key="input_msg_final")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
-                            c.execute(
+                            chat_c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
                                 (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
                             )
-                            conn.commit()
+                            chat_conn.commit()
+                            chat_conn.close()
                             st.rerun()
+                            
+        chat_conn.close()
     else:
         st.warning("Inicia sesión para chatear.")
 
