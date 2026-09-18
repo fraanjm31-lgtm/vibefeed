@@ -11,6 +11,7 @@ st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 conn = sqlite3.connect("noxvibe.db", check_same_thread=False)
 c = conn.cursor()
 
+# Tablas base
 c.execute(
     """CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)"""
 )
@@ -22,51 +23,31 @@ c.execute(
     """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
 )
 
-try:
-  c.execute("ALTER TABLE users ADD COLUMN email TEXT")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'Oscuro'")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE posts ADD COLUMN fires INTEGER DEFAULT 0")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE posts ADD COLUMN thumbs INTEGER DEFAULT 0")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE posts ADD COLUMN hearts INTEGER DEFAULT 0")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE posts ADD COLUMN privacy TEXT DEFAULT 'Publico'")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE users ADD COLUMN account_privacy TEXT DEFAULT 'Publico'")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE follows ADD COLUMN status TEXT DEFAULT 'accepted'")
-except:
-  pass
-try:
-  c.execute("ALTER TABLE users ADD COLUMN coins INTEGER DEFAULT 100")
-except:
-  pass
+# Añadir columnas de forma segura para que no dé errores de pantalla negra
+columnas_usuarios = [
+    ("email", "TEXT"),
+    ("theme", "TEXT DEFAULT 'Oscuro'"),
+    ("account_privacy", "TEXT DEFAULT 'Publico'"),
+    ("coins", "INTEGER DEFAULT 100"),
+]
+for col_nombre, col_tipo in columnas_usuarios:
+  try:
+    c.execute(f"ALTER TABLE users ADD COLUMN {col_nombre} {col_tipo}")
+  except:
+    pass
 
-c.execute("""CREATE TABLE IF NOT EXISTS gifts (
-             id INTEGER PRIMARY KEY AUTOINCREMENT, 
-             sender TEXT, 
-             receiver TEXT, 
-             post_id INTEGER, 
-             gift_name TEXT, 
-             coins_cost INTEGER, 
-             timestamp TEXT)""")
+columnas_posts = [
+    ("fires", "INTEGER DEFAULT 0"),
+    ("thumbs", "INTEGER DEFAULT 0"),
+    ("hearts", "INTEGER DEFAULT 0"),
+    ("privacy", "TEXT DEFAULT 'Publico'"),
+]
+for col_nombre, col_tipo in columnas_posts:
+  try:
+    c.execute(f"ALTER TABLE posts ADD COLUMN {col_nombre} {col_tipo}")
+  except:
+    pass
+
 conn.commit()
 
 if "logged_in" not in st.session_state:
@@ -111,20 +92,16 @@ st.markdown(
     header a[href*="github"] {{
         display: none !important;
     }}
-    
     footer {{visibility: hidden !important;}}
-    
     .stApp {{
         background-color: {bg_color} !important;
         color: {text_color} !important;
     }}
-    
     div.stButton > button {{
         background-color: {box_bg} !important;
         color: {text_color} !important;
         border: 1px solid {sub_text} !important;
     }}
-
     .profile-stats {{
         display: flex;
         justify-content: space-around;
@@ -169,9 +146,9 @@ def enviar_codigo_correo(destinatario, codigo):
 
   msg = EmailMessage()
   msg.set_content(
-      f"¡Hola!\n\nTu código de verificación profesional para registrarte en"
-      f" NoxVibe es: {codigo}\n\nIntroduce este código en la aplicación para"
-      f" completar tu registro."
+      f"¡Hola!\n\nTu código de verificación para registrarte en NoxVibe es:"
+      f" {codigo}\n\nIntroduce este código en la aplicación para completar tu"
+      f" registro."
   )
   msg["Subject"] = "Código de verificación - NoxVibe"
   msg["From"] = remitente
@@ -624,4 +601,16 @@ else:
               f"👍 {val_t}", key=f"pv_like_{p_id}", use_container_width=True
           ):
             handle_reaction(p_id, cur, "thumb")
-      
+        with col_r3:
+          if st.button(
+              f"❤️ {val_h}", key=f"pv_heart_{p_id}", use_container_width=True
+          ):
+            handle_reaction(p_id, cur, "heart")
+        st.markdown("---")
+
+  elif menu_option == "🔍 Buscar Perfiles":
+    st.title("🔍 Buscar Perfiles")
+    search_user = st.text_input("Escribe el nombre de usuario:")
+    if search_user:
+      c.execute(
+          "SELECT 
