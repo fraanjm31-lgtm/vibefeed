@@ -203,18 +203,21 @@ if menu == "👤 Mi Perfil":
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         
-        u_info_form = c.execute("SELECT bio, city, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
+        # Leemos los datos directamente primero
+        u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
+            # Forzamos una clave dinámica para que el checkbox lea siempre el valor fresco de la base de datos
+            current_priv = True if (u_info and u_info[4] == 1) else False
+            
             with st.form("edit_profile_form"):
-                new_bio = st.text_area("Biografía", value=u_info_form[0] if u_info_form else "")
-                new_city = st.text_input("Ciudad", value=u_info_form[1] if u_info_form else "")
-                current_priv = True if (u_info_form and u_info_form[3] == 1) else False
+                new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
+                new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
                 new_priv = st.checkbox("🔒 Hacer mi canal privado (Solo visible para quienes me siguen)", value=current_priv)
                 new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
                 
                 if st.form_submit_button("Guardar Cambios 💾"):
-                    pic_path = u_info_form[2] if u_info_form else ""
+                    pic_path = u_info[3] if u_info else ""
                     if new_pic is not None:
                         os.makedirs("uploads", exist_ok=True)
                         pic_path = os.path.join("uploads", f"profile_{cur}_{new_pic.name}")
@@ -228,6 +231,7 @@ if menu == "👤 Mi Perfil":
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
 
+        # Volvemos a consultar por si acaban de guardar cambios
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
@@ -439,7 +443,4 @@ elif menu == "💬 Mensajes Privados":
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
                             chat_c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                            chat_conn.com
+                                "INSERT INTO messages (sender, receiver, message, timestam
