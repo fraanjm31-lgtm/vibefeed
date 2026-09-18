@@ -166,6 +166,7 @@ menu_options = [
     "⚙️ Ajustes"
 ]
 
+# Menú lateral (Intacto como pediste)
 with st.sidebar:
     st.subheader("🧭 Menú Principal")
     selected_tab = st.radio("Ir a:", menu_options, label_visibility="collapsed")
@@ -451,6 +452,4 @@ elif selected_tab == "💬 Mensajes":
         if not users_list:
             st.info("No hay más usuarios registrados para chatear.")
         else:
-            partner = st.selectbox("Para:", users_list)
-            if partner:
-               
+            partner = st.selectbox("Para:", users_list, k
