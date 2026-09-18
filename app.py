@@ -93,7 +93,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Botones de acción principales (Me gusta y Favorito/Guardar)
     col_act1, col_act2 = st.columns([3, 1])
     with col_act1:
         if st.button("❤️ Me gusta", key=f"like_{p_id}"):
@@ -167,7 +166,7 @@ menu_options = [
     "⚙️ Ajustes"
 ]
 
-# Menú lateral (INTACTO como pediste)
+# Menú lateral (Intacto como pediste)
 with st.sidebar:
     st.subheader("🧭 Menú Principal")
     selected_tab = st.radio("Ir a:", menu_options, label_visibility="collapsed")
@@ -317,7 +316,6 @@ if selected_tab == "👤 Mi Perfil":
                 
         st.markdown("---")
         
-        # Pestañas de perfil incluyento Guardados / Favoritos
         tab_mi_fotos, tab_mi_videos, tab_mi_favs = st.tabs(["📸 Fotos", "🎥 Vídeos", "🔖 Guardados"])
         
         with tab_mi_fotos:
@@ -338,7 +336,7 @@ if selected_tab == "👤 Mi Perfil":
 
         with tab_mi_favs:
             fav_posts = c.execute("""
-                p.id, p.username, p.caption, p.file, p.file_type, p.likes, p.vibe_tag 
+                SELECT p.id, p.username, p.caption, p.file, p.file_type, p.likes, p.vibe_tag 
                 FROM posts p JOIN favorites f ON p.id = f.post_id 
                 WHERE f.username = ? ORDER BY p.id DESC
             """, (cur,)).fetchall()
@@ -452,4 +450,6 @@ elif selected_tab == "💬 Mensajes":
         users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
         if not users_list:
-            st.info
+            st.info("No hay más usuarios registrados para chatear.")
+        else:
+            partner = st.selectbox("Para:", users_list, k
