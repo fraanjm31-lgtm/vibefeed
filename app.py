@@ -34,6 +34,7 @@ c = conn.cursor()
 # Crear tablas si no existen
 c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
+c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
 conn.commit()
 
 # Función de la IA para etiquetar vibraciones
@@ -113,11 +114,17 @@ else:
     if menu_option == "Mi Perfil":
         st.title(f"@{cur}")
         
-        # Calcular número de publicaciones del usuario
+        # Calcular estadísticas reales de la base de datos
         c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
         total_posts = c.fetchone()[0]
 
-        # Perfil con foto, contadores y biografía
+        c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,))
+        total_followers = c.fetchone()[0]
+
+        c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,))
+        total_following = c.fetchone()[0]
+
+        # Perfil con foto, métricas reales y biografía
         col1, col2 = st.columns([1, 2])
         with col1:
             if avatar and os.path.exists(avatar):
@@ -125,11 +132,11 @@ else:
             else:
                 st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=100)
         with col2:
-            # Métricas / Contadores estilo red social
+            # Métricas reales conectadas a SQLite
             m1, m2, m3 = st.columns(3)
             m1.metric("Posts", total_posts)
-            m2.metric("Seguidores", "142")
-            m3.metric("Siguiendo", "89")
+            m2.metric("Seguidores", total_followers)
+            m3.metric("Siguiendo", total_following)
             
             st.markdown(f"**Tus XP:** {xp}")
             st.write(bio)
