@@ -61,6 +61,13 @@ c.execute('''
         followed TEXT
     )
 ''')
+
+c.execute('''
+    CREATE TABLE IF NOT EXISTS favorites (
+        username TEXT,
+        post_id INTEGER
+    )
+''')
 conn.commit()
 
 if 'logged_in' not in st.session_state:
@@ -86,10 +93,33 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    if st.button("❤️ Me gusta", key=f"like_{p_id}"):
-        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
-        conn.commit()
-        st.rerun()
+    # Botones de acción principales (Me gusta y Favorito/Guardar)
+    col_act1, col_act2 = st.columns([3, 1])
+    with col_act1:
+        if st.button("❤️ Me gusta", key=f"like_{p_id}"):
+            c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+            conn.commit()
+            st.rerun()
+    with col_act2:
+        current_user = st.session_state.get('username', '')
+        is_fav = False
+        if current_user:
+            is_fav = c.execute("SELECT 1 FROM favorites WHERE username = ? AND post_id = ?", (current_user, p_id)).fetchone()
+        
+        fav_label = "🔖 Guardado" if is_fav else "📌 Guardar"
+        if st.button(fav_label, key=f"fav_{p_id}"):
+            if not current_user:
+                st.warning("Inicia sesión para guardar favoritos.")
+            else:
+                if is_fav:
+                    c.execute("DELETE FROM favorites WHERE username = ? AND post_id = ?", (current_user, p_id))
+                    conn.commit()
+                    st.success("Eliminado de guardados.")
+                else:
+                    c.execute("INSERT INTO favorites (username, post_id) VALUES (?, ?)", (current_user, p_id))
+                    conn.commit()
+                    st.success("¡Guardado en favoritos!")
+                st.rerun()
         
     if p_likes > 0:
         st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
@@ -110,6 +140,7 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
             st.markdown("---")
             if st.button("🗑️ Eliminar esta publicación", key=f"del_post_{p_id}"):
                 c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
+                c.execute("DELETE FROM favorites WHERE post_id = ?", (p_id,))
                 conn.commit()
                 st.success("¡Publicación eliminada!")
                 st.rerun()
@@ -136,7 +167,7 @@ menu_options = [
     "⚙️ Ajustes"
 ]
 
-# Menú lateral con la navegación principal
+# Menú lateral (INTACTO como pediste)
 with st.sidebar:
     st.subheader("🧭 Menú Principal")
     selected_tab = st.radio("Ir a:", menu_options, label_visibility="collapsed")
@@ -285,9 +316,9 @@ if selected_tab == "👤 Mi Perfil":
                 st.rerun()
                 
         st.markdown("---")
-        st.subheader("Tus publicaciones:")
         
-        tab_mi_fotos, tab_mi_videos = st.tabs(["📸 Fotos", "🎥 Vídeos"])
+        # Pestañas de perfil incluyento Guardados / Favoritos
+        tab_mi_fotos, tab_mi_videos, tab_mi_favs = st.tabs(["📸 Fotos", "🎥 Vídeos", "🔖 Guardados"])
         
         with tab_mi_fotos:
             my_photos = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? AND (file_type != 'video' OR file_type = '') ORDER BY id DESC", (cur,)).fetchall()
@@ -304,6 +335,18 @@ if selected_tab == "👤 Mi Perfil":
             else:
                 for p in my_vids:
                     render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
+
+        with tab_mi_favs:
+            fav_posts = c.execute("""
+                p.id, p.username, p.caption, p.file, p.file_type, p.likes, p.vibe_tag 
+                FROM posts p JOIN favorites f ON p.id = f.post_id 
+                WHERE f.username = ? ORDER BY p.id DESC
+            """, (cur,)).fetchall()
+            if not fav_posts:
+                st.info("No tienes publicaciones guardadas como favoritas.")
+            else:
+                for p in fav_posts:
+                    render_post(p[0], p[1], p[2], p[3], p[4], p[5], p[6])
     else:
         st.warning("Inicia sesión para gestionar tu perfil y publicar.")
 
@@ -409,37 +452,4 @@ elif selected_tab == "💬 Mensajes":
         users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
         if not users_list:
-            st.info("No hay más usuarios registrados para chatear.")
-        else:
-            partner = st.selectbox("Para:", users_list, key="chat_partner_simple")
-            if partner:
-                st.markdown(f"**Chat con @{partner}**")
-                
-                msgs = c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur, partner, partner, cur)).fetchall()
-                
-                if not msgs:
-                    st.info("No hay mensajes aún. ¡Escribe el primero!")
-                else:
-                    for s, m, t in msgs:
-                        if s == cur:
-                            st.markdown(f"**Tú:** {m} *({t})*")
-                        else:
-                            st.markdown(f"**@{s}:** {m} *({t})*")
-
-                with st.form(key=f"chat_form_{partner}", clear_on_submit=True):
-                    txt_msg = st.text_input("Escribe tu mensaje...", key="input_msg_simple")
-                    if st.form_submit_button("Enviar 🚀"):
-                        if txt_msg.strip():
-                            c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt_msg.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                            conn.commit()
-                            st.rerun()
-    else:
-        st.warning("Inicia sesión para chatear.")
-
-elif selected_tab == "⚙️ Ajustes":
-    st.subheader("⚙️ Ajustes y Configuración")
-    st.info("🛠️ Esta sección está lista para que empieces a añadir tus propias opciones y configuraciones nuevas.")
-    
+            st.info
