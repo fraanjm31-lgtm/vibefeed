@@ -465,7 +465,7 @@ with tabs[9]:
         if not users_list:
             st.info("No hay más usuarios registrados.")
         else:
-            partner = st.selectbox("Para:", users_list, key="chat_partner_unico")
+            partner = st.selectbox("Para:", users_list, key="chat_partner_final_definitivo")
             if partner:
                 unread_count = chat_c.execute("""
                     SELECT COUNT(*) FROM messages 
@@ -503,8 +503,8 @@ with tabs[9]:
 
                 mostrar_mensajes_en_tiempo_real()
                 
-                with st.form(key=f"chat_form_unico_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_unico")
+                with st.form(key=f"chat_form_final_{partner}", clear_on_submit=True):
+                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_final")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
                             chat_c.execute(
@@ -522,7 +522,7 @@ with tabs[9]:
 # 11. Ajustes
 with tabs[10]:
     st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_unico")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
