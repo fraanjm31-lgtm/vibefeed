@@ -436,5 +436,7 @@ else:
         
         with st.form("settings_form"):
             new_bio = st.text_area("Actualizar tu biografía", value=current_bio)
+            
             priv_index = 0 if current_acc_priv == "Público" else 1
-            priv_choice = st.selectbox("Privacidad del Perfil", ["Público
+            priv_options = ["Público", "Privado"]
+          
