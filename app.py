@@ -28,7 +28,6 @@ else:  # Oscuro
 
 st.markdown(f"""
     <style>
-    /* Ocultar elementos sobrantes de la barra superior */
     header [data-testid="stToolbar"] a[href*="github"],
     header [data-testid="stToolbar"] button[kind="header"],
     header [data-testid="stToolbar"] [title*="Edit"],
@@ -73,7 +72,7 @@ st.markdown(f"""
         padding: 15px;
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }
+    }}
     </style>
 """, unsafe_allow_html=True)
 
@@ -433,7 +432,8 @@ else:
             priv_index = 0 if current_acc_priv == "Público" else 1
             priv_choice = st.selectbox("Privacidad del Perfil", ["Público", "Privado"], index=priv_index)
             
-            # Selector de tema de colores para que el usuario elija
             temas_disponibles = ["Oscuro (Por defecto)", "Claro", "Neón / Cyber"]
             current_theme_index = temas_disponibles.index(st.session_state.theme) if st.session_state.theme in temas_disponibles else 0
-          
+            new_theme = st.selectbox("🎨 Tema de Colores de la App", temas_disponibles, index=current_theme_index)
+            
+        
