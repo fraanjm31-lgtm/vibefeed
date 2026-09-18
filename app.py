@@ -241,7 +241,7 @@ else:
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
-                    st.image(p_file, use_column_width=True)
+                    st.image(p_file, use_container_width=True)
                 st.markdown(f"❤️ {p_likes} Me gusta")
                 st.markdown("---")
         else:
@@ -277,7 +277,7 @@ else:
             if p_cap: st.write(p_cap)
             if p_file and isinstance(p_file, str) and os.path.exists(p_file):
                 if p_type == "video": st.video(p_file)
-                else: st.image(p_file, use_column_width=True)
+                else: st.image(p_file, use_container_width=True)
             st.markdown("---")
 
     elif menu_option == "Siguiendo":
