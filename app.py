@@ -630,11 +630,40 @@ else:
     )
 
     with st.form("settings_form"):
-      new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
+      new_bio = st.text_area("Actualizar tu biografía", value=current_bio)
 
       temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
-      current_theme_index = (
-          temas_disponibles.index(current_db_theme)
-          if current_db_theme in temas_disponibles
-          else 0
+      if current_db_theme in temas_disponibles:
+        current_theme_index = temas_disponibles.index(current_db_theme)
+      else:
+        current_theme_index = 0
+
+      new_theme = st.selectbox(
+          "🎨 Tema de Colores", temas_disponibles, index=current_theme_index
+      )
+
+      # Interruptor para cuenta privada / pública
+      is_private_checked = st.toggle(
+          "🔒 Cuenta Privada",
+          value=(current_privacy == "Privado"),
+          help=(
+              "Actívalo para que tu cuenta sea privada o desactívalo para que"
+              " sea pública."
+          ),
+      )
+
+      submit_settings = st.form_submit_button("Guardar cambios")
+
+    if submit_settings:
+      new_privacy_value = "Privado" if is_private_checked else "Publico"
+      c.execute(
+          "UPDATE users SET bio = ?, theme = ?, account_privacy = ? WHERE"
+          " username = ?",
+          (new_bio, new_theme, new_privacy_value, cur),
+      )
+      conn.commit()
+      st.session_state.theme = new_theme
+      st.success("¡Cambios guardados correctamente!")
+      st.rerun()
+        
     
