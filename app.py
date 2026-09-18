@@ -136,16 +136,10 @@ menu_options = [
     "⚙️ Ajustes"
 ]
 
-selected_tab = st.radio("Navegación rápida:", menu_options, horizontal=True, label_visibility="collapsed")
-
-st.markdown("---")
-
+# Menú lateral con la navegación principal
 with st.sidebar:
-    st.subheader("🧭 Menú Lateral")
-    menu_sidebar = st.radio("Ir a (Sidebar):", menu_options, index=menu_options.index(selected_tab))
-    
-    if menu_sidebar != selected_tab:
-        selected_tab = menu_sidebar
+    st.subheader("🧭 Menú Principal")
+    selected_tab = st.radio("Ir a:", menu_options, label_visibility="collapsed")
 
     st.markdown("---")
     st.subheader("🔑 Tu Cuenta")
@@ -206,6 +200,8 @@ with st.sidebar:
             st.success(f"¡Canal de @{clean_q} encontrado! Ve a 'Explorar Canales'.")
         else:
             st.error("Usuario no encontrado.")
+
+st.markdown("---")
 
 if selected_tab == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
