@@ -6,7 +6,7 @@ from datetime import datetime
 # Configuración de la página
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
-# Estilos CSS personalizados (Modo Oscuro / Neón)
+# Estilos CSS personalizados (Modo Oscuro / Neón y diseño de perfil en línea)
 st.markdown("""
     <style>
     .stApp {
@@ -23,6 +23,29 @@ st.markdown("""
     }
     .stButton>button:hover {
         opacity: 0.9;
+    }
+    /* Estilo para alinear contadores de perfil de forma compacta */
+    .profile-stats {
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+        background: #161b22;
+        padding: 10px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+    }
+    .stat-box {
+        display: inline-block;
+        margin: 0 8px;
+    }
+    .stat-num {
+        font-size: 18px;
+        font-weight: bold;
+        color: #ffffff;
+    }
+    .stat-label {
+        font-size: 12px;
+        color: #8b949e;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -124,22 +147,36 @@ else:
         c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,))
         total_following = c.fetchone()[0]
 
-        # Perfil con foto, métricas reales y biografía
+        # Perfil con foto a la izquierda y contadores + bio ordenados a la derecha
         col1, col2 = st.columns([1, 2])
         with col1:
             if avatar and os.path.exists(avatar):
-                st.image(avatar, width=100)
+                st.image(avatar, width=110)
             else:
-                st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=100)
+                st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=110)
         with col2:
-            # Métricas reales conectadas a SQLite
-            m1, m2, m3 = st.columns(3)
-            m1.metric("Posts", total_posts)
-            m2.metric("Seguidores", total_followers)
-            m3.metric("Siguiendo", total_following)
+            # Contadores perfectamente colocados de lado con HTML/CSS
+            st.markdown(f"""
+                <div class="profile-stats">
+                    <div class="stat-box">
+                        <div class="stat-num">{total_posts}</div>
+                        <div class="stat-label">Posts</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num">{total_followers}</div>
+                        <div class="stat-label">Seguidores</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-num">{total_following}</div>
+                        <div class="stat-label">Siguiendo</div>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
             
             st.markdown(f"**Tus XP:** {xp}")
-            st.write(bio)
+            
+        # Biografía debajo ocupando todo el ancho de forma limpia
+        st.write(bio)
             
         st.markdown("---")
         
