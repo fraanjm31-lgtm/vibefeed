@@ -433,7 +433,11 @@ else:
         st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
-        elif menu_option == "⚙️ Ajustes":
+            elif menu_option == "💬 Mensajes":
+        st.title("💬 Mensajes Directos")
+        st.write("Tus chats privados.")
+
+    elif menu_option == "⚙️ Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
         c.execute("SELECT bio, avatar, account_privacy, theme FROM users WHERE username = ?", (cur,))
@@ -462,4 +466,5 @@ else:
             st.session_state.theme = new_theme
             st.success("Ajustes actualizados correctamente!")
             st.rerun()
+            
             
