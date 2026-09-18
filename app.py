@@ -434,28 +434,7 @@ with tabs[8]:
                 st.markdown("---")
     else:
         st.info("Escribe un usuario en el menú lateral o pincha en 'Perfil' desde el feed para ver los canales.")
-# 10. Mensajes Privados
-with tabs[9]:
-    st.subheader("💬 Mensajes Privados")
-    if st.session_state['logged_in']:
-        cur = st.session_state['username']
-        
-        # Buscar otros usuarios para chatear
-        users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
-        
-        if not users_list:
-            st.info("No hay más usuarios registrados para chatear.")
-        else:
-            partner = st.selectbox("Para:", users_list, key="chat_partner_select")
-            if partner:
-                st.markdown(f"**Chat con @{partner}**")
-                
-                # CONSULTA CORREGIDA: Trae exactamente los mensajes mutuos entre tú y tu pareja, sin errores
-                # 10. Mensajes Privados
-with tabs[9]:
-    st.subheader("💬 Mensajes Privados")
-    if st.session_state['logged_in']:
-        cur = st.session_state['username']
+
         
         chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
         chat_c = chat_conn.cursor()
