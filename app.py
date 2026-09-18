@@ -307,7 +307,6 @@ else:
 
                 st.markdown("---")
                 
-                # REGLA DE PRIVACIDAD: Si el perfil es privado y no eres tú, se bloquea la vista de publicaciones
                 if t_privacy == "Privado" and t_user != cur and not is_following:
                     st.warning("🔒 **Esta cuenta es privada.** Solo sus seguidores pueden ver sus fotos y vídeos.")
                 else:
@@ -341,12 +340,10 @@ else:
         for post in all_posts:
             p_user, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
             
-            # Verificar si el usuario dueño del post tiene el perfil privado
             c.execute("SELECT account_privacy FROM users WHERE username = ?", (p_user,))
             res_priv = c.fetchone()
             u_priv = res_priv[0] if res_priv else "Público"
             
-            # Si es privado y no eres tú, no sale en el muro global
             if u_priv == "Privado" and p_user != cur:
                 continue
                 
@@ -376,15 +373,19 @@ else:
     elif menu_option == "Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
-        new_bio = st.text_area("Actualizar tu biografía", value=bio)
-        new_avatar = st.file_uploader("Sube tu nueva foto de perfil", type=["jpg", "png", "jpeg"])
+        # Cargar datos actuales del usuario para los campos de ajustes
+        c.execute("SELECT bio, avatar, account_privacy FROM users WHERE username = ?", (cur,))
+        u_settings = c.fetchone()
+        current_bio = u_settings[0] if u_settings and u_settings[0] else ""
+        current_avatar = u_settings[1] if u_settings else ""
+        current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Público"
         
-        c.execute("SELECT account_privacy FROM users WHERE username = ?", (cur,))
-        current_acc_priv = c.fetchone()[0]
+        new_bio = st.text_area("Actualizar tu biografía", value=current_bio)
+        new_avatar = st.file_uploader("Sube tu nueva foto de perfil", type=["jpg", "png", "jpeg"])
         priv_choice = st.selectbox("Privacidad del Perfil", ["Público", "Privado"], index=0 if current_acc_priv == "Público" else 1)
         
         if st.button("Guardar cambios"):
-            avatar_path = avatar
+            avatar_path = current_avatar
             if new_avatar is not None:
                 os.makedirs("uploads", exist_ok=True)
                 avatar_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
