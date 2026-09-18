@@ -476,4 +476,13 @@ elif selected_tab == "🔍 Explorar Canales":
                         conn.commit()
                         st.rerun()
                 else:
-                    if st.
+                                    if st.button("❌ Dejar de seguir"):
+                        c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (current_user, target_user))
+                        conn.commit()
+                        st.rerun()
+                else:
+                    if st.button("➕ Seguir"):
+                        c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (current_user, target_user))
+                        conn.commit()
+                        st.rerun()
+                        
