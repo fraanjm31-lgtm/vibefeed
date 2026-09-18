@@ -204,6 +204,28 @@ if menu == "👤 Mi Perfil":
         
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
+        # --- NUEVO: BOTÓN RÁPIDO DE PRIVACIDAD EN EL PERFIL ---
+        current_priv = u_info[4] if u_info else 0
+        col_p1, col_p2 = st.columns([2, 1])
+        with col_p1:
+            new_priv_state = st.selectbox(
+                "🔒 Estado de tu Canal:", 
+                ["🌐 Público", "🔒 Privado"], 
+                index=1 if current_priv == 1 else 0,
+                key="quick_priv_select"
+            )
+        with col_p2:
+            st.write("") # Espaciado vertical
+            st.write("")
+            if st.button("Cambiar Privacidad"):
+                val_to_set = 1 if new_priv_state == "🔒 Privado" else 0
+                c.execute("UPDATE users SET is_private = ? WHERE username = ?", (val_to_set, cur))
+                conn.commit()
+                st.success("¡Actualizado!")
+                st.rerun()
+        st.markdown("---")
+        # -----------------------------------------------------
+        
         with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
@@ -427,27 +449,4 @@ elif menu == "💬 Mensajes Privados":
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
                             chat_c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                            chat_conn.commit()
-                            chat_conn.close()
-                            st.rerun()
-                            
-        chat_conn.close()
-    else:
-        st.warning("Inicia sesión para chatear.")
-
-elif menu == "⚙️ Ajustes":
-    st.subheader("⚙️ Ajustes y Privacidad")
-    
-    is_logged = st.session_state.get('logged_in', False)
-    username = st.session_state.get('username', '')
-    
-    if is_logged and username:
-        try:
-            row_p = c.execute("SELECT is_private FROM users WHERE username = ?", (username,)).fetchone()
-            cur_val = row_p[0] if row_p and row_p[0] is not None else 0
-        except Exception:
-            cur_val = 0
-         
+                          
