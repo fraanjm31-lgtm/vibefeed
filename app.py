@@ -18,6 +18,7 @@ def check_hashes(password, hashed_text):
 
 # Inicializar base de datos
 conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
+
 c = conn.cursor()
 
 c.execute('''
