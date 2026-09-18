@@ -147,16 +147,16 @@ st.markdown(f"""
 
 def ai_vibe_checker(text):
     if not text:
-        return "Chill", "Ambiente tranquilo detectado."
+        return "✨ Chill", "Ambiente tranquilo detectado."
     t = text.lower()
     if any(w in t for w in ["fiesta", "noche", "baila", "dj", "alcohol", "musica"]):
-        return "Fiesta", "Energia de fiesta detectada por la IA."
+        return "🎉 Fiesta", "Energia de fiesta detectada por la IA."
     elif any(w in t for w in ["amor", "corazon", "te amo", "feliz", "lindo"]):
-        return "Hype / Amor", "Vibra positiva detectada."
+        return "❤️ Hype / Amor", "Vibra positiva detectada."
     elif any(w in t for w in ["triste", "solo", "mal", "duro", "llorar"]):
-        return "Melancolico", "Momento de reflexion detectado."
+        return "🌧️ Melancolico", "Momento de reflexion detectado."
     else:
-        return "Inspirador", "Pensamiento innovador detectado."
+        return "🚀 Inspirador", "Pensamiento innovador detectado."
 
 def handle_reaction(p_id, user, r_type):
     c.execute("SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND reaction_type = ?", (p_id, user, r_type))
@@ -173,8 +173,8 @@ def handle_reaction(p_id, user, r_type):
     else:
         st.toast("Ya habias dado esta reacción", icon="⚠️")
 
-st.sidebar.title("Menu NoxVibe")
-menu_option = st.sidebar.radio("Navegacion", ["Feed de Videos", "Mi Perfil", "Buscar Perfiles", "Siguiendo", "Explorar Canales", "Mensajes", "Ajustes"])
+st.sidebar.title("🧭 Menu NoxVibe")
+menu_option = st.sidebar.radio("Navegacion", ["🔥 Feed de Videos", "👤 Mi Perfil", "🔍 Buscar Perfiles", "👥 Siguiendo", "📺 Explorar Canales", "💬 Mensajes", "⚙️ Ajustes"])
 
 if st.session_state.logged_in:
     c.execute("SELECT coins FROM users WHERE username = ?", (st.session_state.username,))
@@ -183,17 +183,17 @@ if st.session_state.logged_in:
     
     st.sidebar.markdown(f"---")
     st.sidebar.success(f"Sesion: @{st.session_state.username}")
-    st.sidebar.info(f"NoxCoins: **{user_coins}**")
+    st.sidebar.info(f"🪙 NoxCoins: **{user_coins}**")
     if st.sidebar.button("Cerrar Sesion"):
         st.session_state.logged_in = False
         st.session_state.username = ""
         st.rerun()
 
 if not st.session_state.logged_in:
-    st.title("Bienvenido a NoxVibe")
-    st.info("Acceso exclusivo para mayores de edad con invitacion y correo.")
+    st.title("Bienvenido a NoxVibe 🚀")
+    st.info("🔒 Acceso exclusivo para mayores de edad con invitacion y correo.")
     
-    tab_login, tab_reg = st.tabs(["Iniciar Sesion", "Registrarse"])
+    tab_login, tab_reg = st.tabs(["🔑 Iniciar Sesion", "📝 Registrarse"])
     
     with tab_login:
         l_user = st.text_input("Usuario", key="l_user")
@@ -243,8 +243,8 @@ if not st.session_state.logged_in:
 else:
     cur = st.session_state.username
     
-    if menu_option == "Feed de Videos":
-        st.title("NoxVibe Feed")
+    if menu_option == "🔥 Feed de Videos":
+        st.title("🔥 NoxVibe Feed")
         st.write("Videos publicos de la comunidad.")
         
         c.execute("""
@@ -266,24 +266,24 @@ else:
                 col_vid, col_act = st.columns([4, 1])
                 
                 with col_vid:
-                    st.markdown(f"### @{p_user} - {p_tag}")
+                    st.markdown(f"### @{p_user} · `{p_tag}`")
                     if p_cap: st.write(p_cap)
                     if p_file and isinstance(p_file, str) and os.path.exists(p_file):
                         st.video(p_file)
                 
                 with col_act:
                     st.markdown("<br><br>", unsafe_allow_html=True)
-                    if st.button(f"Fuego {p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
-                    if st.button(f"Ok {p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
-                    if st.button(f"Amor {p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 
                 st.markdown('</div>', unsafe_allow_html=True)
                 st.markdown("---")
 
-    elif menu_option == "Mi Perfil":
+    elif menu_option == "👤 Mi Perfil":
         c.execute("SELECT xp, bio, avatar, account_privacy, coins FROM users WHERE username = ?", (cur,))
         user_data = c.fetchone()
         xp = user_data[0] if user_data else 0
@@ -292,7 +292,7 @@ else:
         account_privacy = user_data[3] if user_data else "Publico"
         coins = user_data[4] if user_data else 100
 
-        priv_badge = "Cuenta Privada" if account_privacy == "Privado" else "Cuenta Publica"
+        priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Publica"
         st.title(f"@{cur}")
         st.caption(priv_badge)
         
@@ -326,17 +326,17 @@ else:
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-            st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins}")
+            st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
             
         st.write(bio)
         st.markdown("---")
         
-        with st.expander("Publicar Contenido", expanded=False):
+        with st.expander("✏️ Publicar Contenido", expanded=False):
             with st.form("new_post_form", clear_on_submit=True):
                 cap = st.text_input("Que estas pensando?")
                 uploaded_file = st.file_uploader("Sube foto o video", type=["jpg", "png", "mp4", "mov"])
                 
-                if st.form_submit_button("Publicar"):
+                if st.form_submit_button("Publicar 🚀"):
                     path_to_save = ""
                     f_type = ""
                     if uploaded_file is not None:
@@ -358,59 +358,59 @@ else:
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("Ver Fotos", use_container_width=True):
+            if st.button("🖼️ Ver Fotos", use_container_width=True):
                 st.session_state.profile_tab = "Fotos"
         with col_btn2:
-            if st.button("Ver Videos", use_container_width=True):
+            if st.button("🎬 Ver Videos", use_container_width=True):
                 st.session_state.profile_tab = "Videos"
 
         st.markdown("---")
 
         if st.session_state.profile_tab == "Fotos":
-            st.markdown("### Tus Fotos")
+            st.markdown("### 🖼️ Tus Fotos")
             c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
             for post in c.fetchall():
                 p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                st.markdown(f"**@{cur}** - {p_tag} - {p_time}")
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"Fuego {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}", use_container_width=True):
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
                 with col_r2:
-                    if st.button(f"Ok {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}", use_container_width=True):
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
                 with col_r3:
-                    if st.button(f"Amor {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}", use_container_width=True):
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 st.markdown("---")
         else:
-            st.markdown("### Tus Videos")
+            st.markdown("### 🎬 Tus Videos")
             c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
             for post in c.fetchall():
                 p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                st.markdown(f"**@{cur}** - {p_tag} - {p_time}")
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.video(p_file)
                 
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"Fuego {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}", use_container_width=True):
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
                 with col_r2:
-                    if st.button(f"Ok {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}", use_container_width=True):
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
                 with col_r3:
-                    if st.button(f"Amor {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}", use_container_width=True):
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 st.markdown("---")
 
-    elif menu_option == "Buscar Perfiles":
-        st.title("Buscar Perfiles")
+    elif menu_option == "🔍 Buscar Perfiles":
+        st.title("🔍 Buscar Perfiles")
         search_user = st.text_input("Escribe el nombre de usuario:")
         if search_user:
             c.execute("SELECT username, bio, avatar, account_privacy FROM users WHERE username = ?", (search_user,))
@@ -421,20 +421,20 @@ else:
                 st.write(t_bio)
                 st.info(f"Tipo de cuenta: {t_privacy}")
 
-    elif menu_option == "Siguiendo":
-        st.title("Siguiendo")
+    elif menu_option == "👥 Siguiendo":
+        st.title("👥 Siguiendo")
         st.write("Videos de la gente a la que sigues.")
 
-    elif menu_option == "Explorar Canales":
-        st.title("Explorar Canales")
+    elif menu_option == "📺 Explorar Canales":
+        st.title("📺 Explorar Canales")
         st.write("Tendencias y canales tematicos.")
 
-    elif menu_option == "Mensajes":
-        st.title("Mensajes Directos")
+    elif menu_option == "💬 Mensajes":
+        st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
-    elif menu_option == "Ajustes":
-        st.title("Ajustes de la cuenta")
+    elif menu_option == "⚙️ Ajustes":
+        st.title("⚙️ Ajustes de la cuenta")
         
         c.execute("SELECT bio, avatar, account_privacy, theme FROM users WHERE username = ?", (cur,))
         u_settings = c.fetchone()
@@ -450,5 +450,4 @@ else:
             priv_choice = st.selectbox("Privacidad del Perfil", priv_options, index=priv_index)
             
             temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
-            current_theme_index = temas_disponibles.index(current_db_theme) if current_db_theme in temas_disponibles else 0
-         
+            current_
