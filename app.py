@@ -90,6 +90,12 @@ else:
 
 st.markdown(f"""
     <style>
+    /* Ocultar elementos de la barra superior */
+    header [data-testid="stToolbar"] {{
+        visibility: visible !important;
+    }}
+    /* Ocultar botones específicos de la barra de herramientas y dejar solo la estrella si es posible */
+    #MainMenu {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     .stDeployButton {{display: none !important;}}
     
@@ -136,6 +142,7 @@ st.markdown(f"""
     }}
     </style>
 """, unsafe_allow_html=True)
+
 
 def ai_vibe_checker(text):
     if not text:
