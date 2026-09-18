@@ -616,3 +616,67 @@ else:
       target_user = c.fetchone()
       if target_user:
         t_use
+  elif menu_option == "⚙️ Ajustes":
+    st.title("⚙️ Ajustes de la cuenta")
+
+    # Intentamos leer los datos de ajustes de forma segura
+    try:
+      c.execute(
+          "SELECT bio, avatar, theme, account_privacy FROM users WHERE"
+          " username = ?",
+          (cur,),
+      )
+      u_settings = c.fetchone()
+    except:
+      u_settings = None
+
+    current_bio = u_settings[0] if u_settings and u_settings[0] else ""
+    current_db_theme = (
+        u_settings[2]
+        if u_settings and len(u_settings) > 2 and u_settings[2]
+        else "Oscuro"
+    )
+    current_privacy = (
+        u_settings[3]
+        if u_settings and len(u_settings) > 3 and u_settings[3]
+        else "Publico"
+    )
+
+    with st.form("settings_bio_form"):
+      new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
+      submit_bio = st.form_submit_button("Guardar Biografia")
+
+    if submit_bio:
+      c.execute("UPDATE users SET bio = ? WHERE username = ?", (new_bio, cur))
+      conn.commit()
+      st.success("¡Biografía actualizada con éxito!")
+      st.rerun()
+
+    st.markdown("---")
+    st.subheader("🎨 Apariencia y Privacidad")
+
+    new_theme = st.selectbox(
+        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
+    )
+    if new_theme != current_db_theme:
+      c.execute(
+          "UPDATE users SET theme = ? WHERE username = ?", (new_theme, cur)
+      )
+      conn.commit()
+      st.session_state.theme = new_theme
+      st.success(f"Tema cambiado a {new_theme}")
+      st.rerun()
+
+    is_private = st.checkbox(
+        "🔒 Cuenta Privada", value=(current_privacy == "Privado")
+    )
+    new_priv = "Privado" if is_private else "Publico"
+    if new_priv != current_privacy:
+      c.execute(
+          "UPDATE users SET account_privacy = ? WHERE username = ?",
+          (new_priv, cur),
+      )
+      conn.commit()
+      st.success(f"Privacidad actualizada a: {new_priv}")
+      st.rerun()
+        
