@@ -16,7 +16,7 @@ st.markdown("""
         color: white;
         border: none;
         border-radius: 8px;
-        padding: 0.5rem 1rem;
+        padding: 0.4rem 0.8rem;
         font-weight: bold;
     }
     .profile-stats {
@@ -243,11 +243,23 @@ else:
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
-                # Botón interactivo de Like
-                if st.button(f"🔥 Dar Vibe ({p_likes})", key=f"profile_like_{p_id}"):
-                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
-                    conn.commit()
-                    st.rerun()
+                # Fila con Fuego, Me gusta y Corazón
+                col_r1, col_r2, col_r3 = st.columns(3)
+                with col_r1:
+                    if st.button(f"🔥 {p_likes}", key=f"p_fire_{p_id}"):
+                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                        conn.commit()
+                        st.rerun()
+                with col_r2:
+                    if st.button("👍", key=f"p_like_{p_id}"):
+                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                        conn.commit()
+                        st.rerun()
+                with col_r3:
+                    if st.button("❤️", key=f"p_heart_{p_id}"):
+                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                        conn.commit()
+                        st.rerun()
                 st.markdown("---")
         else:
             st.markdown("### 🎬 Tus Vídeos")
@@ -259,10 +271,22 @@ else:
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.video(p_file)
                 
-                if st.button(f"🔥 Dar Vibe ({p_likes})", key=f"profile_video_like_{p_id}"):
-                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
-                    conn.commit()
-                    st.rerun()
+                col_r1, col_r2, col_r3 = st.columns(3)
+                with col_r1:
+                    if st.button(f"🔥 {p_likes}", key=f"pv_fire_{p_id}"):
+                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                        conn.commit()
+                        st.rerun()
+                with col_r2:
+                    if st.button("👍", key=f"pv_like_{p_id}"):
+                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                        conn.commit()
+                        st.rerun()
+                with col_r3:
+                    if st.button("❤️", key=f"pv_heart_{p_id}"):
+                        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                        conn.commit()
+                        st.rerun()
                 st.markdown("---")
 
     elif menu_option == "Buscar / Ver Perfiles":
@@ -288,10 +312,22 @@ else:
                 if p_type == "video": st.video(p_file)
                 else: st.image(p_file, width=320)
             
-            if st.button(f"🔥 Dar Vibe ({p_likes})", key=f"muro_like_{p_id}"):
-                c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
-                conn.commit()
-                st.rerun()
+            col_r1, col_r2, col_r3 = st.columns(3)
+            with col_r1:
+                if st.button(f"🔥 {p_likes}", key=f"muro_fire_{p_id}"):
+                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    conn.commit()
+                    st.rerun()
+            with col_r2:
+                if st.button("👍", key=f"muro_like_{p_id}"):
+                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    conn.commit()
+                    st.rerun()
+            with col_r3:
+                if st.button("❤️", key=f"muro_heart_{p_id}"):
+                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    conn.commit()
+                    st.rerun()
             st.markdown("---")
 
     elif menu_option == "Siguiendo":
