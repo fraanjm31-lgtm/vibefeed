@@ -202,60 +202,48 @@ if menu == "👤 Mi Perfil":
         num_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,)).fetchone()[0]
         num_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,)).fetchone()[0]
         
-        bio_text = u_info[0] if u_info else ""
-        city_text = u_info[1] if u_info else ""
-        xp_text = u_info[2] if u_info else 0
-        pic_path = u_info[3] if (u_info and u_info[3] and os.path.exists(u_info[3])) else ""
-
-        # Cabecera de perfil unida con flex para que la foto y los datos salgan siempre al lado
-        if pic_path:
-            import base64
-            with open(pic_path, "rb") as image_file:
-                encoded_string = base64.b64encode(image_file.read()).decode()
-            img_html = f'<img src="data:image/jpeg;base64,{encoded_string}" style="width: 75px; height: 75px; border-radius: 50%; object-fit: cover;" />'
+        if u_info and u_info[3] and os.path.exists(u_info[3]):
+            st.image(u_info[3], width=110)
         else:
-            img_html = '<div style="width: 75px; height: 75px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">📷</div>'
-
+            st.markdown("📷 *Sin foto*")
+            
+        st.markdown(f"### @{cur}")
+        
         st.markdown(f"""
-            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-                <div>{img_html}</div>
-                <div style="flex-grow: 1;">
-                    <div style="font-weight: bold; font-size: 18px; margin-bottom: 5px;">@{cur}</div>
-                    <div style="display: flex; gap: 15px;">
-                        <div style="text-align: center;">
-                            <strong>{num_posts}</strong><br><span style="font-size: 11px; color: gray;">publicaciones</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <strong>{num_followers}</strong><br><span style="font-size: 11px; color: gray;">seguidores</span>
-                        </div>
-                        <div style="text-align: center;">
-                            <strong>{num_following}</strong><br><span style="font-size: 11px; color: gray;">seguidos</span>
-                        </div>
-                    </div>
+            <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
+                <div style="text-align: center; margin-right: 15px;">
+                    <strong>{num_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
+                </div>
+                <div style="text-align: center; margin-right: 15px;">
+                    <strong>{num_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
+                </div>
+                <div style="text-align: center;">
+                    <strong>{num_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
-
-        st.markdown(f"**Bio:** {bio_text}")
-        st.markdown(f"**Ciudad:** {city_text}")
-        st.markdown(f"**XP:** {xp_text}")
+        
+        if u_info:
+            st.markdown(f"**Bio:** {u_info[0]}")
+            st.markdown(f"**Ciudad:** {u_info[1]}")
+            st.markdown(f"**XP:** {u_info[2]}")
         
         with st.expander("⚙️ Editar mi Perfil y Foto"):
             with st.form("edit_profile_form"):
-                new_bio = st.text_area("Biografía", value=bio_text)
-                new_city = st.text_input("Ciudad", value=city_text)
+                new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
+                new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
                 new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
                 
                 if st.form_submit_button("Guardar Cambios 💾"):
-                    final_pic_path = u_info[3] if u_info else ""
+                    pic_path = u_info[3] if u_info else ""
                     if new_pic is not None:
                         os.makedirs("uploads", exist_ok=True)
-                        final_pic_path = os.path.join("uploads", f"profile_{cur}_{new_pic.name}")
-                        with open(final_pic_path, "wb") as f:
+                        pic_path = os.path.join("uploads", f"profile_{cur}_{new_pic.name}")
+                        with open(pic_path, "wb") as f:
                             f.write(new_pic.getbuffer())
                     
                     c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ? WHERE username = ?", 
-                              (new_bio, new_city, final_pic_path, cur))
+                              (new_bio, new_city, pic_path, cur))
                     conn.commit()
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
@@ -326,31 +314,22 @@ elif menu == "🔍 Explorar Canales":
             t_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (target_user,)).fetchone()[0]
             t_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (target_user,)).fetchone()[0]
             
-            t_pic = u_data[4] if (u_data[4] and os.path.exists(u_data[4])) else ""
-            if t_pic:
-                import base64
-                with open(t_pic, "rb") as image_file:
-                    t_encoded = base64.b64encode(image_file.read()).decode()
-                t_img_html = f'<img src="data:image/jpeg;base64,{t_encoded}" style="width: 75px; height: 75px; border-radius: 50%; object-fit: cover;" />'
+            if u_data[4] and os.path.exists(u_data[4]):
+                st.image(u_data[4], width=110)
             else:
-                t_img_html = '<div style="width: 75px; height: 75px; background: #e0e0e0; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">📷</div>'
-
+                st.markdown("📷")
+                
+            st.markdown(f"### @{u_data[0]} [{b_name}]")
             st.markdown(f"""
-                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
-                    <div>{t_img_html}</div>
-                    <div style="flex-grow: 1;">
-                        <div style="font-weight: bold; font-size: 18px; margin-bottom: 5px;">@{u_data[0]} [{b_name}]</div>
-                        <div style="display: flex; gap: 15px;">
-                            <div style="text-align: center;">
-                                <strong>{t_posts}</strong><br><span style="font-size: 11px; color: gray;">publicaciones</span>
-                            </div>
-                            <div style="text-align: center;">
-                                <strong>{t_followers}</strong><br><span style="font-size: 11px; color: gray;">seguidores</span>
-                            </div>
-                            <div style="text-align: center;">
-                                <strong>{t_following}</strong><br><span style="font-size: 11px; color: gray;">seguidos</span>
-                            </div>
-                        </div>
+                <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
+                    <div style="text-align: center; margin-right: 15px;">
+                        <strong>{t_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
+                    </div>
+                    <div style="text-align: center; margin-right: 15px;">
+                        <strong>{t_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <strong>{t_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
@@ -431,4 +410,20 @@ elif menu == "💬 Mensajes Privados":
                         if txt.strip():
                             chat_c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt.strip
+                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
+                            )
+                            chat_conn.commit()
+                            chat_conn.close()
+                            st.rerun()
+                            
+        chat_conn.close()
+    else:
+        st.warning("Inicia sesión para chatear.")
+
+elif menu == "⚙️ Ajustes":
+    st.subheader("⚙️ Ajustes")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
+    if sel_theme != st.session_state['theme']:
+        st.session_state['theme'] = sel_theme
+        st.rerun()
+        
