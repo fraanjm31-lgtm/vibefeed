@@ -104,18 +104,22 @@ else:
     cur = st.session_state.username
     
     # Obtener datos del usuario
-    c.execute("SELECT xp, bio FROM users WHERE username = ?", (cur,))
+    c.execute("SELECT xp, bio, avatar FROM users WHERE username = ?", (cur,))
     user_data = c.fetchone()
     xp = user_data[0] if user_data else 0
     bio = user_data[1] if user_data else ""
+    avatar = user_data[2] if user_data else ""
 
     if menu_option == "Mi Perfil":
         st.title(f"@{cur}")
         
-        # Estadísticas y perfil
+        # Estadísticas y perfil con foto personalizada
         col1, col2 = st.columns([1, 2])
         with col1:
-            st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=100)
+            if avatar and os.path.exists(avatar):
+                st.image(avatar, width=100)
+            else:
+                st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=100)
         with col2:
             st.markdown(f"**Tus XP:** {xp}")
             st.write(bio)
@@ -205,10 +209,20 @@ else:
 
     elif menu_option == "Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
+        
         new_bio = st.text_area("Actualizar tu biografía", value=bio)
+        new_avatar = st.file_uploader("Sube tu nueva foto de perfil", type=["jpg", "png", "jpeg"])
+        
         if st.button("Guardar cambios"):
-            c.execute("UPDATE users SET bio = ? WHERE username = ?", (new_bio, cur))
+            avatar_path = avatar
+            if new_avatar is not None:
+                os.makedirs("uploads", exist_ok=True)
+                avatar_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
+                with open(avatar_path, "wb") as f:
+                    f.write(new_avatar.getbuffer())
+            
+            c.execute("UPDATE users SET bio = ?, avatar = ? WHERE username = ?", (new_bio, avatar_path, cur))
             conn.commit()
-            st.success("¡Perfil actualizado con éxito!")
+            st.success("¡Perfil y foto actualizados con éxito!")
             st.rerun()
             
