@@ -460,24 +460,13 @@ with tabs[9]:
         chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
         chat_c = chat_conn.cursor()
         
-        # Obtener lista de usuarios y calcular si hay mensajes pendientes de cada uno
-        users_raw = chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()
+        users_list = [u[0] for u in chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
-        if not users_raw:
+        if not users_list:
             st.info("No hay más usuarios registrados.")
         else:
-            # Creamos un diccionario o lista con formato que muestre un aviso si tiene mensajes suyos
-            user_options = {}
-            for u in users_raw:
-                uname = u[0]
-                # Contamos cuántos mensajes nos ha enviado este usuario en total (o podríamos filtrar por no leídos)
-                # Para hacerlo sencillo y efectivo, mostramos el nombre
-                user_options[uname] = uname
-
-            partner = st.selectbox("Para:", list(user_options.keys()), key="chat_partner_notif")
-            
+            partner = st.selectbox("Para:", users_list, key="chat_partner_unico")
             if partner:
-                # Comprobamos si hay actividad reciente de ese usuario para darle un aviso visual
                 unread_count = chat_c.execute("""
                     SELECT COUNT(*) FROM messages 
                     WHERE sender = ? AND receiver = ?
@@ -514,8 +503,8 @@ with tabs[9]:
 
                 mostrar_mensajes_en_tiempo_real()
                 
-                with st.form(key=f"chat_form_notif_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_notif")
+                with st.form(key=f"chat_form_unico_{partner}", clear_on_submit=True):
+                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_unico")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
                             chat_c.execute(
@@ -529,5 +518,14 @@ with tabs[9]:
         chat_conn.close()
     else:
         st.warning("Inicia sesión para chatear.")
+
+# 11. Ajustes
+with tabs[10]:
+    st.subheader("⚙️ Ajustes")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_unico")
+    if sel_theme != st.session_state['theme']:
+        st.session_state['theme'] = sel_theme
+        st.rerun()
         
+
 
