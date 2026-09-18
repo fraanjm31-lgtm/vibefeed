@@ -90,6 +90,8 @@ else:
 
 st.markdown(f"""
     <style>
+    /* Ocultar la barra superior de Streamlit por completo */
+    header {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     .stDeployButton {{display: none !important;}}
     
@@ -448,5 +450,4 @@ else:
             conn.commit()
             st.session_state.theme = new_theme
             st.success("¡Cambios guardados!")
-            st.rerun()
-            
+            st.rerun
