@@ -128,16 +128,28 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
+# --- BARRA DE NAVEGACIÓN ESTILO APP MÓVIL ---
+menu_options = [
+    "👤 Mi Perfil", 
+    "👥 Siguiendo", 
+    "🔍 Explorar Canales", 
+    "💬 Mensajes",
+    "⚙️ Ajustes"
+]
+
+# Creamos una barra horizontal de opciones usando radio con formato en columnas o un selectbox limpio
+selected_tab = st.radio("Navegación rápida:", menu_options, horizontal=True, label_visibility="collapsed")
+
+st.markdown("---")
+
 with st.sidebar:
-    st.subheader("🧭 Menú NoxVibe")
-    menu = st.radio("Ir a:", [
-        "👤 Mi Perfil", 
-        "👥 Siguiendo", 
-        "🔍 Explorar Canales", 
-        "💬 Mensajes Privados",
-        "⚙️ Ajustes"
-    ])
+    st.subheader("🧭 Menú Lateral")
+    menu_sidebar = st.radio("Ir a (Sidebar):", menu_options, index=menu_options.index(selected_tab))
     
+    # Sincronizamos por si cambia el sidebar
+    if menu_sidebar != selected_tab:
+        selected_tab = menu_sidebar
+
     st.markdown("---")
     st.subheader("🔑 Tu Cuenta")
     if not st.session_state['logged_in']:
@@ -198,7 +210,9 @@ with st.sidebar:
         else:
             st.error("Usuario no encontrado.")
 
-if menu == "👤 Mi Perfil":
+# --- LÓGICA DE LAS SECCIONES SEGÚN LA BARRA SUPERIOR ---
+
+if selected_tab == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -300,15 +314,15 @@ if menu == "👤 Mi Perfil":
                 for p in my_vids:
                     render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
     else:
-        st.warning("Inicia sesión en el menú lateral para gestionar tu perfil y publicar.")
+        st.warning("Inicia sesión en el menú lateral o superior para gestionar tu perfil y publicar.")
 
-elif menu == "👥 Siguiendo":
+elif selected_tab == "👥 Siguiendo":
     st.subheader("👥 Actividad de Seguidos")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         following = [row[0] for row in c.execute("SELECT followed FROM follows WHERE follower = ?", (cur,)).fetchall()]
         if not following:
-            st.info("Aún no sigues a nadie. Usa 'Explorar Canales' o busca perfiles en el menú lateral para ver contenido aquí.")
+            st.info("Aún no sigues a nadie. Usa 'Explorar Canales' o busca perfiles para ver contenido aquí.")
         else:
             for f_user in following:
                 f_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (f_user,)).fetchall()
@@ -317,7 +331,7 @@ elif menu == "👥 Siguiendo":
     else:
         st.warning("Inicia sesión para ver la actividad de tus seguidos.")
 
-elif menu == "🔍 Explorar Canales":
+elif selected_tab == "🔍 Explorar Canales":
     st.subheader("🔍 Explorar Canales y Perfiles")
     
     all_users = [u[0] for u in c.execute("SELECT username FROM users").fetchall()]
@@ -397,7 +411,7 @@ elif menu == "🔍 Explorar Canales":
     else:
         st.info("No hay usuarios registrados todavía.")
 
-elif menu == "💬 Mensajes Privados":
+elif selected_tab == "💬 Mensajes":
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -434,12 +448,4 @@ elif menu == "💬 Mensajes Privados":
 
                 mostrar_mensajes_en_tiempo_real()
                 
-                with st.form(key=f"chat_form_final_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_final")
-                    if st.form_submit_button("Enviar 🚀"):
-                        if txt.strip():
-                            chat_c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                    
+                with st.form(key=f"chat_form_final_{p
