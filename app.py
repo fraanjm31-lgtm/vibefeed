@@ -452,4 +452,4 @@ elif menu == "⚙️ Ajustes":
     
     if is_logged and username:
         try:
-            res_priv = c.execute("SELECT is_private FROM users WHERE username = ?",
+            row_p = c.execute("SELECT is_private FROM users WHERE username = ?", (u
