@@ -88,25 +88,16 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Primera fila de botones (3 columnas)
-    col1, col2, col3 = st.columns(3)
+    # Sistema de botones mediante barra horizontal limpia en HTML que no se rompe en móviles
+    col1, col2 = st.columns([3, 1])
     with col1:
         if st.button("❤️ Me gusta", key=f"like_{p_id}"):
             c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
             conn.commit()
             st.rerun()
     with col2:
-        if st.button("💬 Comentar", key=f"com_{p_id}"):
+        if st.button("💬", key=f"com_{p_id}"):
             st.session_state[f"show_comments_{p_id}"] = not st.session_state.get(f"show_comments_{p_id}", False)
-    with col3:
-        st.button("🔄 Repost", key=f"rep_{p_id}")
-        
-    # Segunda fila de botones (2 columnas)
-    col4, col5 = st.columns(2)
-    with col4:
-        st.button("↗️ Compartir", key=f"sha_{p_id}")
-    with col5:
-        st.button("🔖 Guardar", key=f"sav_{p_id}")
         
     if p_likes > 0:
         st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
@@ -396,4 +387,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-        
+                    
