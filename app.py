@@ -18,7 +18,7 @@ try:
 except:
     pass
 try:
-    c.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'Oscuro (Por defecto)'")
+    c.execute("ALTER TABLE users ADD COLUMN theme TEXT DEFAULT 'Oscuro'")
 except:
     pass
 try:
@@ -34,11 +34,11 @@ try:
 except:
     pass
 try:
-    c.execute("ALTER TABLE posts ADD COLUMN privacy TEXT DEFAULT 'Público'")
+    c.execute("ALTER TABLE posts ADD COLUMN privacy TEXT DEFAULT 'Publico'")
 except:
     pass
 try:
-    c.execute("ALTER TABLE users ADD COLUMN account_privacy TEXT DEFAULT 'Público'")
+    c.execute("ALTER TABLE users ADD COLUMN account_privacy TEXT DEFAULT 'Publico'")
 except:
     pass
 try:
@@ -64,7 +64,7 @@ if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.profile_tab = "Fotos"
-    st.session_state.theme = "Oscuro (Por defecto)"
+    st.session_state.theme = "Oscuro"
 
 if st.session_state.logged_in and st.session_state.username:
     c.execute("SELECT theme FROM users WHERE username = ?", (st.session_state.username,))
@@ -77,7 +77,7 @@ if st.session_state.theme == "Claro":
     text_color = "#000000"
     box_bg = "#f0f2f6"
     sub_text = "#555555"
-elif st.session_state.theme == "Neón / Cyber":
+elif st.session_state.theme == "Neon / Cyber":
     bg_color = "#05050a"
     text_color = "#00ffcc"
     box_bg = "#121224"
@@ -147,16 +147,16 @@ st.markdown(f"""
 
 def ai_vibe_checker(text):
     if not text:
-        return "✨ Chill", "Ambiente tranquilo y relajado detectado."
+        return "Chill", "Ambiente tranquilo detectado."
     t = text.lower()
     if any(w in t for w in ["fiesta", "noche", "baila", "dj", "alcohol", "musica"]):
-        return "🎉 Fiesta", "¡Energía de fiesta a tope detectada por la IA!"
+        return "Fiesta", "Energia de fiesta detectada por la IA."
     elif any(w in t for w in ["amor", "corazon", "te amo", "feliz", "lindo"]):
-        return "❤️ Hype / Amor", "¡Vibra muy positiva y afectuosa detectada!"
+        return "Hype / Amor", "Vibra positiva detectada."
     elif any(w in t for w in ["triste", "solo", "mal", "duro", "llorar"]):
-        return "🌧️ Melancólico", "Momento de reflexión detectado por el sistema."
+        return "Melancolico", "Momento de reflexion detectado."
     else:
-        return "🚀 Inspirador", "¡Pensamiento innovador detectado!"
+        return "Inspirador", "Pensamiento innovador detectado."
 
 def handle_reaction(p_id, user, r_type):
     c.execute("SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND reaction_type = ?", (p_id, user, r_type))
@@ -171,10 +171,10 @@ def handle_reaction(p_id, user, r_type):
         conn.commit()
         st.rerun()
     else:
-        st.toast("¡Ya habías dado esta reacción!", icon="⚠️")
+        st.toast("Ya habias dado esta reacción", icon="⚠️")
 
-st.sidebar.title("🧭 Menú NoxVibe")
-menu_option = st.sidebar.radio("Navegación", ["🔥 Feed de Vídeos", "Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Explorar Canales", "Mensajes", "Ajustes"])
+st.sidebar.title("Menu NoxVibe")
+menu_option = st.sidebar.radio("Navegacion", ["Feed de Videos", "Mi Perfil", "Buscar Perfiles", "Siguiendo", "Explorar Canales", "Mensajes", "Ajustes"])
 
 if st.session_state.logged_in:
     c.execute("SELECT coins FROM users WHERE username = ?", (st.session_state.username,))
@@ -182,22 +182,22 @@ if st.session_state.logged_in:
     user_coins = res_coins[0] if res_coins else 100
     
     st.sidebar.markdown(f"---")
-    st.sidebar.success(f"Sesión: @{st.session_state.username}")
-    st.sidebar.info(f"🪙 NoxCoins: **{user_coins} 🪙**")
-    if st.sidebar.button("Cerrar Sesión"):
+    st.sidebar.success(f"Sesion: @{st.session_state.username}")
+    st.sidebar.info(f"NoxCoins: **{user_coins}**")
+    if st.sidebar.button("Cerrar Sesion"):
         st.session_state.logged_in = False
         st.session_state.username = ""
         st.rerun()
 
 if not st.session_state.logged_in:
-    st.title("Bienvenido a NoxVibe 🚀")
-    st.info("🔒 **Acceso Estricto:** Comunidad privada exclusiva para mayores de edad con invitación y correo.")
+    st.title("Bienvenido a NoxVibe")
+    st.info("Acceso exclusivo para mayores de edad con invitacion y correo.")
     
-    tab_login, tab_reg = st.tabs(["Iniciar Sesión", "Registrarse"])
+    tab_login, tab_reg = st.tabs(["Iniciar Sesion", "Registrarse"])
     
     with tab_login:
         l_user = st.text_input("Usuario", key="l_user")
-        l_pass = st.text_input("Contraseña", type="password", key="l_pass")
+        l_pass = st.text_input("Contrasena", type="password", key="l_pass")
         if st.button("Entrar"):
             c.execute("SELECT * FROM users WHERE username = ? AND password = ?", (l_user, l_pass))
             if c.fetchone():
@@ -205,59 +205,59 @@ if not st.session_state.logged_in:
                 st.session_state.username = l_user
                 st.rerun()
             else:
-                st.error("Usuario o contraseña incorrectos")
+                st.error("Usuario o contrasena incorrectos")
                 
     with tab_reg:
-        r_email = st.text_input("Correo Electrónico (Obligatorio)", key="r_email")
+        r_email = st.text_input("Correo Electronico (Obligatorio)", key="r_email")
         r_user = st.text_input("Nuevo Usuario", key="r_user")
-        r_pass = st.text_input("Nueva Contraseña", type="password", key="r_pass")
+        r_pass = st.text_input("Nueva Contrasena", type="password", key="r_pass")
         r_dob = st.date_input("Fecha de nacimiento", min_value=date(1900, 1, 1), max_value=date.today(), key="r_dob")
         
         codigo_secreto_invitacion = "noxvibe2026"
-        r_invite = st.text_input("Código de Invitación / Acceso", type="password", key="r_invite", placeholder="Pide el código al administrador")
-        r_adult = st.checkbox("Confirmo bajo mi responsabilidad que soy mayor de 18 años.")
+        r_invite = st.text_input("Codigo de Invitacion", type="password", key="r_invite", placeholder="Pide el codigo al admin")
+        r_adult = st.checkbox("Confirmo que soy mayor de 18 anos.")
         
         if st.button("Crear cuenta"):
             today = date.today()
             age = today.year - r_dob.year - ((today.month, today.day) < (r_dob.month, r_dob.day))
             
             if not r_email or "@" not in r_email or "." not in r_email:
-                st.error("❌ Introduce un correo electrónico válido.")
+                st.error("Introduce un correo electronico valido.")
             elif not r_user or not r_pass:
-                st.warning("⚠️ Rellena el usuario y la contraseña.")
+                st.warning("Rellena el usuario y la contrasena.")
             elif age < 18:
-                st.error("❌ Lo sentimos, debes ser mayor de 18 años.")
+                st.error("Debes ser mayor de 18 anos.")
             elif r_invite != codigo_secreto_invitacion:
-                st.error("❌ Código de invitación incorrecto. Esta comunidad es privada.")
+                st.error("Codigo de invitacion incorrecto.")
             elif not r_adult:
-                st.warning("⚠️ Debes marcar la casilla de confirmación de mayoría de edad.")
+                st.warning("Debes marcar la casilla de mayoria de edad.")
             else:
                 try:
                     c.execute("INSERT INTO users (username, password, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                              (r_user, r_pass, r_email, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público", 100, "Oscuro (Por defecto)"))
+                              (r_user, r_pass, r_email, 10, "Hola! Uso NoxVibe.", "", "Publico", 100, "Oscuro"))
                     conn.commit()
-                    st.success("¡Cuenta creada con éxito y verificada! Ya puedes iniciar sesión.")
+                    st.success("Cuenta creada con exito. Ya puedes iniciar sesion.")
                 except:
-                    st.error("El nombre de usuario ya está en uso.")
+                    st.error("El nombre de usuario ya esta en uso.")
 
 else:
     cur = st.session_state.username
     
-    if menu_option == "🔥 Feed de Vídeos":
-        st.title("🔥 NoxVibe Feed")
-        st.write("Vídeos públicos de la comunidad al estilo interactivo.")
+    if menu_option == "Feed de Videos":
+        st.title("NoxVibe Feed")
+        st.write("Videos publicos de la comunidad.")
         
         c.execute("""
             SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
             FROM posts p 
             JOIN users u ON p.username = u.username 
-            WHERE p.file_type = 'video' AND u.account_privacy = 'Público' 
+            WHERE p.file_type = 'video' AND u.account_privacy = 'Publico' 
             ORDER BY p.id DESC
         """)
         videos = c.fetchall()
         
         if not videos:
-            st.info("No hay vídeos públicos en este momento. ¡Sube el primero desde tu perfil!")
+            st.info("No hay videos publicos. Sube el primero desde tu perfil.")
         else:
             for post in videos:
                 p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
@@ -266,18 +266,18 @@ else:
                 col_vid, col_act = st.columns([4, 1])
                 
                 with col_vid:
-                    st.markdown(f"### @{p_user} · `{p_tag}`")
+                    st.markdown(f"### @{p_user} - {p_tag}")
                     if p_cap: st.write(p_cap)
                     if p_file and isinstance(p_file, str) and os.path.exists(p_file):
                         st.video(p_file)
                 
                 with col_act:
                     st.markdown("<br><br>", unsafe_allow_html=True)
-                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
+                    if st.button(f"Fuego {p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
-                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
+                    if st.button(f"Ok {p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
-                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
+                    if st.button(f"Amor {p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -289,10 +289,10 @@ else:
         xp = user_data[0] if user_data else 0
         bio = user_data[1] if user_data else ""
         avatar = user_data[2] if user_data else ""
-        account_privacy = user_data[3] if user_data else "Público"
+        account_privacy = user_data[3] if user_data else "Publico"
         coins = user_data[4] if user_data else 100
 
-        priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Pública"
+        priv_badge = "Cuenta Privada" if account_privacy == "Privado" else "Cuenta Publica"
         st.title(f"@{cur}")
         st.caption(priv_badge)
         
@@ -326,17 +326,17 @@ else:
                     </div>
                 </div>
             """, unsafe_allow_html=True)
-            st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
+            st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins}")
             
         st.write(bio)
         st.markdown("---")
         
-        with st.expander("✏️ Publicar Contenido (Fotos o Vídeos)", expanded=False):
+        with st.expander("Publicar Contenido", expanded=False):
             with st.form("new_post_form", clear_on_submit=True):
-                cap = st.text_input("¿Qué estás pensando?")
-                uploaded_file = st.file_uploader("Sube foto (para tu perfil) o vídeo (para el feed general)", type=["jpg", "png", "mp4", "mov"])
+                cap = st.text_input("Que estas pensando?")
+                uploaded_file = st.file_uploader("Sube foto o video", type=["jpg", "png", "mp4", "mov"])
                 
-                if st.form_submit_button("Publicar con IA 🚀"):
+                if st.form_submit_button("Publicar"):
                     path_to_save = ""
                     f_type = ""
                     if uploaded_file is not None:
@@ -350,67 +350,67 @@ else:
                     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
                     
                     c.execute("INSERT INTO posts (username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", 
-                              (cur, cap, path_to_save, f_type, 0, 0, 0, 0, auto_tag, now_str, "Público"))
+                              (cur, cap, path_to_save, f_type, 0, 0, 0, 0, auto_tag, now_str, "Publico"))
                     c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,))
                     conn.commit()
-                    st.success(f"¡Publicado! {ai_msg}")
+                    st.success(f"Publicado! {ai_msg}")
                     st.rerun()
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("🖼️ Ver Fotos", use_container_width=True):
+            if st.button("Ver Fotos", use_container_width=True):
                 st.session_state.profile_tab = "Fotos"
         with col_btn2:
-            if st.button("🎬 Ver Vídeos", use_container_width=True):
-                st.session_state.profile_tab = "Vídeos"
+            if st.button("Ver Videos", use_container_width=True):
+                st.session_state.profile_tab = "Videos"
 
         st.markdown("---")
 
         if st.session_state.profile_tab == "Fotos":
-            st.markdown("### 🖼️ Tus Fotos")
+            st.markdown("### Tus Fotos")
             c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
             for post in c.fetchall():
                 p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
+                st.markdown(f"**@{cur}** - {p_tag} - {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}", use_container_width=True):
+                    if st.button(f"Fuego {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
                 with col_r2:
-                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}", use_container_width=True):
+                    if st.button(f"Ok {p_thumbs if p_thumbs is not None else 0}", key=f"p_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
                 with col_r3:
-                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}", use_container_width=True):
+                    if st.button(f"Amor {p_hearts if p_hearts is not None else 0}", key=f"p_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 st.markdown("---")
         else:
-            st.markdown("### 🎬 Tus Vídeos")
+            st.markdown("### Tus Videos")
             c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
             for post in c.fetchall():
                 p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
+                st.markdown(f"**@{cur}** - {p_tag} - {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.video(p_file)
                 
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}", use_container_width=True):
+                    if st.button(f"Fuego {p_fires if p_fires is not None else 0}", key=f"pv_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
                 with col_r2:
-                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}", use_container_width=True):
+                    if st.button(f"Ok {p_thumbs if p_thumbs is not None else 0}", key=f"pv_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
                 with col_r3:
-                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}", use_container_width=True):
+                    if st.button(f"Amor {p_hearts if p_hearts is not None else 0}", key=f"pv_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 st.markdown("---")
 
-    elif menu_option == "Buscar / Ver Perfiles":
-        st.title("🔍 Buscar Perfiles")
+    elif menu_option == "Buscar Perfiles":
+        st.title("Buscar Perfiles")
         search_user = st.text_input("Escribe el nombre de usuario:")
         if search_user:
             c.execute("SELECT username, bio, avatar, account_privacy FROM users WHERE username = ?", (search_user,))
@@ -422,25 +422,33 @@ else:
                 st.info(f"Tipo de cuenta: {t_privacy}")
 
     elif menu_option == "Siguiendo":
-        st.title("👥 Siguiendo")
-        st.write("Vídeos de la gente a la que sigues.")
+        st.title("Siguiendo")
+        st.write("Videos de la gente a la que sigues.")
 
     elif menu_option == "Explorar Canales":
-        st.title("🔍 Explorar Canales")
-        st.write("Tendencias y canales temáticos.")
+        st.title("Explorar Canales")
+        st.write("Tendencias y canales tematicos.")
 
     elif menu_option == "Mensajes":
-        st.title("💬 Mensajes Directos")
+        st.title("Mensajes Directos")
         st.write("Tus chats privados.")
 
     elif menu_option == "Ajustes":
-        st.title("⚙️ Ajustes de la cuenta")
+        st.title("Ajustes de la cuenta")
         
         c.execute("SELECT bio, avatar, account_privacy, theme FROM users WHERE username = ?", (cur,))
         u_settings = c.fetchone()
         current_bio = u_settings[0] if u_settings and u_settings[0] else ""
-        current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Público"
-        current_db_theme = u_settings[3] if u_settings and u_settings[3] else "Oscuro (Por defecto)"
+        current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Publico"
+        current_db_theme = u_settings[3] if u_settings and u_settings[3] else "Oscuro"
         
         with st.form("settings_form"):
-            new_bio = st.text_area("Actualizar tu biogr
+            new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
+            
+            priv_index = 0 if current_acc_priv == "Publico" else 1
+            priv_options = ["Publico", "Privado"]
+            priv_choice = st.selectbox("Privacidad del Perfil", priv_options, index=priv_index)
+            
+            temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
+            current_theme_index = temas_disponibles.index(current_db_theme) if current_db_theme in temas_disponibles else 0
+         
