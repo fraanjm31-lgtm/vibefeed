@@ -79,7 +79,7 @@ def get_badge(xp):
         return "🌱 Novato", "badge-novato"
 
 def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
-    st.markdown(f"*Tema: {p_tag}*")
+    st.markdown(f"*Tema: {p_tag}* | *Canal de: @{p_user}*")
     if p_cap:
         st.write(p_cap)
     if p_file and os.path.exists(p_file):
@@ -107,10 +107,21 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
+# Menú de navegación lateral adaptado para móviles
 with st.sidebar:
-    st.subheader("🔑 Acceso NoxVibe")
+    st.subheader("🧭 Menú NoxVibe")
+    menu = st.radio("Ir a:", [
+        "👤 Mi Perfil", 
+        "👥 Siguiendo", 
+        "🔍 Explorar Canales", 
+        "💬 Mensajes Privados", 
+        "⚙️ Ajustes"
+    ])
+    
+    st.markdown("---")
+    st.subheader("🔑 Tu Cuenta")
     if not st.session_state['logged_in']:
-        auth_mode = st.radio("Modo:", ["Iniciar Sesión", "Registrarse"])
+        auth_mode = st.radio("Modo:", ["Iniciar Sesión", "Registrarse"], key="auth_radio")
         u_in = st.text_input("Apodo / Usuario")
         p_in = st.text_input("Contraseña", type="password")
         
@@ -156,27 +167,19 @@ with st.sidebar:
             st.rerun()
 
     st.markdown("---")
-    st.subheader("💼 Explorar Perfiles")
-    search_query = st.text_input("🔍 Escribe el apodo:", placeholder="Ej: Labachito")
-    if st.button("Buscar Usuario"):
+    st.subheader("💼 Buscar Creador")
+    search_query = st.text_input("🔍 Apodo:", placeholder="Ej: Labachito")
+    if st.button("Buscar"):
         clean_q = search_query.strip().replace("@", "")
         exists = c.execute("SELECT 1 FROM users WHERE username = ?", (clean_q,)).fetchone()
         if exists:
             st.session_state['viewing_user'] = clean_q
-            st.session_state['active_tab_idx'] = 2
-            st.rerun()
+            st.success(f"¡Canal de @{clean_q} encontrado! Ve a 'Explorar Canales'.")
         else:
             st.error("Usuario no encontrado.")
 
-tabs = st.tabs([
-    "👤 Mi Perfil", 
-    "👥 Siguiendo", 
-    "🔍 Explorar Canales", 
-    "💬 Mensajes", 
-    "⚙️ Ajustes"
-])
-
-with tabs[0]:
+# Pantallas según el menú lateral
+if menu == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -244,15 +247,15 @@ with tabs[0]:
         for p in my_posts:
             render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
     else:
-        st.warning("Inicia sesión para gestionar tu perfil y publicar.")
+        st.warning("Inicia sesión en el menú lateral para gestionar tu perfil y publicar.")
 
-with tabs[1]:
+elif menu == "👥 Siguiendo":
     st.subheader("👥 Actividad de Seguidos")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         following = [row[0] for row in c.execute("SELECT followed FROM follows WHERE follower = ?", (cur,)).fetchall()]
         if not following:
-            st.info("Aún no sigues a nadie. Busca perfiles en la barra lateral para ver su contenido aquí.")
+            st.info("Aún no sigues a nadie. Usa 'Explorar Canales' o busca perfiles en el menú lateral para ver contenido aquí.")
         else:
             for f_user in following:
                 st.markdown(f"### Canal de @{f_user}")
@@ -262,9 +265,19 @@ with tabs[1]:
     else:
         st.warning("Inicia sesión para ver la actividad de tus seguidos.")
 
-with tabs[2]:
+elif menu == "🔍 Explorar Canales":
     st.subheader("🔍 Explorar Canales y Perfiles")
-    target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
+    
+    # Mostrar lista de todos los usuarios registrados para elegir fácilmente
+    all_users = [u[0] for u in c.execute("SELECT username FROM users").fetchall()]
+    if all_users:
+        selected_explore = st.selectbox("Selecciona un usuario para ver su canal:", all_users)
+        if selected_explore:
+            target_user = selected_explore
+        else:
+            target_user = st.session_state.get('viewing_user') or (all_users[0] if all_users else None)
+    else:
+        target_user = st.session_state.get('viewing_user')
     
     if target_user:
         u_data = c.execute("SELECT username, bio, city, xp, profile_pic FROM users WHERE username = ?", (target_user,)).fetchone()
@@ -301,11 +314,11 @@ with tabs[2]:
                 for p in user_posts:
                     render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
         else:
-            st.info("Busca un usuario en el menú lateral para ver su perfil.")
+            st.info("Selecciona un usuario para ver su perfil.")
     else:
-        st.info("Busca un usuario en el menú lateral para ver su perfil.")
+        st.info("No hay usuarios registrados todavía.")
 
-with tabs[3]:
+elif menu == "💬 Mensajes Privados":
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -316,7 +329,7 @@ with tabs[3]:
         users_list = [u[0] for u in chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
         if not users_list:
-            st.info("No hay más usuarios registrados.")
+            st.info("No hay más usuarios registrados para chatear.")
         else:
             partner = st.selectbox("Para:", users_list, key="chat_partner_final_definitivo")
             if partner:
@@ -364,7 +377,7 @@ with tabs[3]:
     else:
         st.warning("Inicia sesión para chatear.")
 
-with tabs[4]:
+elif menu == "⚙️ Ajustes":
     st.subheader("⚙️ Ajustes")
     sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
     if sel_theme != st.session_state['theme']:
