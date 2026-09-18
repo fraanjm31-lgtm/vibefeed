@@ -198,28 +198,7 @@ with st.sidebar:
         else:
             st.error("Usuario no encontrado.")
 
-                    
-                    priv_val = 1 if visibility_option == "🔒 Privado" else 0
-                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, is_private = ? WHERE username = ?", 
-                              (new_bio, new_city, pic_path, priv_val, cur))
-                    conn.commit()
-                    st.success("¡Perfil actualizado con éxito!")
-                    st.rerun()
-
-        u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
-        
-        num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
-        num_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,)).fetchone()[0]
-        num_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,)).fetchone()[0]
-        
-        if u_info and u_info[3] and os.path.exists(u_info[3]):
-            st.image(u_info[3], width=110)
-        else:
-            st.markdown("📷 *Sin foto*")
-            
-        priv_status = "🔒 Privado" if (u_info and u_info[4] == 1) else "🌐 Público"
-        st.markdown(f"### @{cur} ({priv_status})")
-        if menu == "👤 Mi Perfil":
+if menu == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
@@ -227,14 +206,6 @@ with st.sidebar:
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
-            current_visibility = "🔒 Privado" if (u_info and u_info[4] == 1) else "🌐 Público"
-            
-            visibility_option = st.selectbox(
-                "Visibilidad del Canal", 
-                ["🌐 Público", "🔒 Privado"], 
-                index=0 if current_visibility == "🌐 Público" else 1
-            )
-            
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
                 new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
@@ -248,9 +219,8 @@ with st.sidebar:
                         with open(pic_path, "wb") as f:
                             f.write(new_pic.getbuffer())
                     
-                    priv_val = 1 if visibility_option == "🔒 Privado" else 0
-                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, is_private = ? WHERE username = ?", 
-                              (new_bio, new_city, pic_path, priv_val, cur))
+                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ? WHERE username = ?", 
+                              (new_bio, new_city, pic_path, cur))
                     conn.commit()
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
@@ -266,57 +236,6 @@ with st.sidebar:
             
         priv_status = "🔒 Privado" if (u_info and u_info[4] == 1) else "🌐 Público"
         st.markdown(f"### @{cur} ({priv_status})")
-        
-        st.markdown(f"""
-            <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
-                <div style="text-align: center; margin-right: 15px;">
-                    <strong>{num_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
-                </div>
-                <div style="text-align: center; margin-right: 15px;">
-                    <strong>{num_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
-                </div>
-                <div style="text-align: center;">
-                    <strong>{num_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        if u_info:
-            st.markdown(f"**Bio:** {u_info[0]}")
-            st.markdown(f"**Ciudad:** {u_info[1]}")
-            st.markdown(f"**XP:** {u_info[2]}")
-            
-        st.markdown("---")
-        st.subheader("📝 Publicar Contenido en tu Canal")
-        with st.form("new_post_form", clear_on_submit=True):
-            cap = st.text_area("¿Qué estás pensando?")
-            tag = st.selectbox("Vibe / Categoría", ["General", "Música", "Tecnología", "Amor", "Viajes"])
-            uploaded_file = st.file_uploader("Sube foto o vídeo", type=["jpg", "png", "mp4", "mov"])
-            
-            if st.form_submit_button("Publicar 🚀"):
-                path_to_save = ""
-                f_type = ""
-                if uploaded_file is not None:
-                    os.makedirs("uploads", exist_ok=True)
-                    path_to_save = os.path.join("uploads", uploaded_file.name)
-                    with open(path_to_save, "wb") as f:
-                        f.write(uploaded_file.getbuffer())
-                    f_type = "video" if uploaded_file.type.startswith("video") else "image"
-                
-                c.execute("INSERT INTO posts (username, caption, file, file_type, likes, vibe_tag) VALUES (?, ?, ?, ?, ?, ?)",
-                          (cur, cap, path_to_save, f_type, 0, tag))
-                c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (cur,))
-                conn.commit()
-                st.success("¡Publicado con éxito! (+10 XP)")
-                st.rerun()
-                
-        st.markdown("---")
-        st.subheader("Tus publicaciones:")
-        my_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (cur,)).fetchall()
-        for p in my_posts:
-            render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
-    else:
-        st.warning("Inicia sesión en el menú lateral para gestionar tu perfil y publicar.")
         
         st.markdown(f"""
             <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 10px;">
@@ -516,4 +435,18 @@ elif menu == "💬 Mensajes Privados":
                         if txt.strip():
                             chat_c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner,
+                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
+                            )
+                            chat_conn.commit()
+                            chat_conn.close()
+                            st.rerun()
+                            
+        chat_conn.close()
+    else:
+        st.warning("Inicia sesión para chatear.")
+
+elif menu == "⚙️ Ajustes":
+    st.subheader("⚙️ Ajustes")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
+    if sel_theme != st.session_state['theme']:
+        st.session_state['theme'] = se
