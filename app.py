@@ -128,7 +128,7 @@ if 'logged_in' not in st.session_state:
     st.session_state.profile_tab = "Fotos"
 
 st.sidebar.title("🧭 Menú NoxVibe")
-menu_option = st.sidebar.radio("Navegación", ["🔥 Reels / Vídeos Activos", "Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
+menu_option = st.sidebar.radio("Navegación", ["🔥 Feed de Vídeos", "Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Explorar Canales", "Mensajes", "Ajustes"])
 
 if st.session_state.logged_in:
     c.execute("SELECT coins FROM users WHERE username = ?", (st.session_state.username,))
@@ -197,15 +197,21 @@ if not st.session_state.logged_in:
 else:
     cur = st.session_state.username
     
-    if menu_option == "🔥 Reels / Vídeos Activos":
-        st.title("🔥 NoxVibe Reels")
-        st.write("Contenido en vídeo de la comunidad para mantener la actividad a tope.")
+    if menu_option == "🔥 Feed de Vídeos":
+        st.title("🔥 NoxVibe Feed")
+        st.write("Vídeos públicos de la comunidad para mantener la actividad a tope.")
         
-        c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE file_type = 'video' ORDER BY id DESC")
+        c.execute("""
+            SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
+            FROM posts p 
+            JOIN users u ON p.username = u.username 
+            WHERE p.file_type = 'video' AND u.account_privacy = 'Público' 
+            ORDER BY p.id DESC
+        """)
         videos = c.fetchall()
         
         if not videos:
-            st.info("Todavía no hay vídeos publicados. ¡Sube el primero desde tu perfil!")
+            st.info("No hay vídeos públicos en este momento. ¡Sube el primero desde tu perfil!")
         else:
             for post in videos:
                 p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
@@ -216,13 +222,13 @@ else:
                 
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
-                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"reel_fire_{p_id}", use_container_width=True):
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
                 with col_r2:
-                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"reel_like_{p_id}", use_container_width=True):
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
                 with col_r3:
-                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"reel_heart_{p_id}", use_container_width=True):
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 st.markdown("---")
 
@@ -275,10 +281,10 @@ else:
         st.write(bio)
         st.markdown("---")
         
-        with st.expander("✏️ Publicar Contenido", expanded=False):
+        with st.expander("✏️ Publicar Contenido (Fotos o Vídeos)", expanded=False):
             with st.form("new_post_form", clear_on_submit=True):
                 cap = st.text_input("¿Qué estás pensando?")
-                uploaded_file = st.file_uploader("Sube foto o vídeo", type=["jpg", "png", "mp4", "mov"])
+                uploaded_file = st.file_uploader("Sube foto (para tu perfil) o vídeo (para el feed general)", type=["jpg", "png", "mp4", "mov"])
                 
                 if st.form_submit_button("Publicar con IA 🚀"):
                     path_to_save = ""
@@ -302,7 +308,7 @@ else:
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("🖼️ Fotos", use_container_width=True):
+            if st.button("🖼️ Fotos (Tu Galería)", use_container_width=True):
                 st.session_state.profile_tab = "Fotos"
         with col_btn2:
             if st.button("🎬 Vídeos", use_container_width=True):
@@ -311,7 +317,7 @@ else:
         st.markdown("---")
 
         if st.session_state.profile_tab == "Fotos":
-            st.markdown("### 🖼️ Tus Fotos")
+            st.markdown("### 🖼️ Tus Fotos (Privadas o de perfil)")
             c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
             for post in c.fetchall():
                 p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
@@ -365,36 +371,13 @@ else:
                 st.write(t_bio)
                 st.info(f"Tipo de cuenta: {t_privacy}")
 
-    elif menu_option == "Muro 24h":
-        st.title("🌐 Muro Global 24h")
-        c.execute("SELECT id, username, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts ORDER BY id DESC")
-        for post in c.fetchall():
-            p_id, p_user, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-            st.markdown(f"**@{p_user}** · `{p_tag}` · {p_time}")
-            if p_cap: st.write(p_cap)
-            if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-                if p_type == "video": st.video(p_file)
-                else: st.image(p_file, width=320)
-            
-            col_r1, col_r2, col_r3 = st.columns(3)
-            with col_r1:
-                if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"muro_fire_{p_id}", use_container_width=True):
-                    handle_reaction(p_id, cur, 'fire')
-            with col_r2:
-                if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"muro_like_{p_id}", use_container_width=True):
-                    handle_reaction(p_id, cur, 'thumb')
-            with col_r3:
-                if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"muro_heart_{p_id}", use_container_width=True):
-                    handle_reaction(p_id, cur, 'heart')
-            st.markdown("---")
-
     elif menu_option == "Siguiendo":
         st.title("👥 Siguiendo")
-        st.write("Contenido de tus amigos.")
+        st.write("Vídeos de la gente a la que sigues.")
 
     elif menu_option == "Explorar Canales":
         st.title("🔍 Explorar Canales")
-        st.write("Tendencias y canales.")
+        st.write("Tendencias y canales temáticos.")
 
     elif menu_option == "Mensajes":
         st.title("💬 Mensajes Directos")
