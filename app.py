@@ -433,7 +433,7 @@ else:
         st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
-            elif menu_option == "💬 Mensajes":
+    elif menu_option == "💬 Mensajes":
         st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
