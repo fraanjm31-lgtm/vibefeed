@@ -433,4 +433,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-        
+                                  
