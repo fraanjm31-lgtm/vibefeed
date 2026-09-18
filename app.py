@@ -13,7 +13,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREM
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)''')
 
-# Añadir columnas necesarias de forma segura
 try:
     c.execute("ALTER TABLE users ADD COLUMN email TEXT")
 except:
@@ -67,14 +66,12 @@ if 'logged_in' not in st.session_state:
     st.session_state.profile_tab = "Fotos"
     st.session_state.theme = "Oscuro (Por defecto)"
 
-# Si hay sesión iniciada, cargamos el tema desde la base de datos
 if st.session_state.logged_in and st.session_state.username:
     c.execute("SELECT theme FROM users WHERE username = ?", (st.session_state.username,))
     res_theme = c.fetchone()
     if res_theme and res_theme[0]:
         st.session_state.theme = res_theme[0]
 
-# Definir colores según el tema elegido
 if st.session_state.theme == "Claro":
     bg_color = "#ffffff"
     text_color = "#000000"
@@ -85,7 +82,7 @@ elif st.session_state.theme == "Neón / Cyber":
     text_color = "#00ffcc"
     box_bg = "#121224"
     sub_text = "#ff007f"
-else:  # Oscuro
+else:
     bg_color = "#0e1117"
     text_color = "#ffffff"
     box_bg = "#161b22"
@@ -438,4 +435,6 @@ else:
         current_db_theme = u_settings[3] if u_settings and u_settings[3] else "Oscuro (Por defecto)"
         
         with st.form("settings_form"):
-            new_bio = st.text_area("Actualizar tu biografía"
+            new_bio = st.text_area("Actualizar tu biografía", value=current_bio)
+            priv_index = 0 if current_acc_priv == "Público" else 1
+            priv_choice = st.selectbox("Privacidad del Perfil", ["Público
