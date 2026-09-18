@@ -33,6 +33,15 @@ st.markdown("""
         font-size: 12px;
         color: #8b949e;
     }
+    /* Estilo tipo TikTok para los vídeos con barra lateral de botones */
+    .video-container {
+        position: relative;
+        background: #161b22;
+        border-radius: 15px;
+        padding: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
     </style>
 """, unsafe_allow_html=True)
 
@@ -199,7 +208,7 @@ else:
     
     if menu_option == "🔥 Feed de Vídeos":
         st.title("🔥 NoxVibe Feed")
-        st.write("Vídeos públicos de la comunidad para mantener la actividad a tope.")
+        st.write("Vídeos públicos de la comunidad al estilo interactivo.")
         
         c.execute("""
             SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
@@ -215,21 +224,28 @@ else:
         else:
             for post in videos:
                 p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                st.markdown(f"### @{p_user} · `{p_tag}`")
-                if p_cap: st.write(p_cap)
-                if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-                    st.video(p_file)
                 
-                col_r1, col_r2, col_r3 = st.columns(3)
-                with col_r1:
-                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
+                st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
+                
+                # Dividimos en dos columnas: Izquierda para el vídeo y texto, Derecha para los botones flotantes de reacción
+                col_vid, col_act = st.columns([4, 1])
+                
+                with col_vid:
+                    st.markdown(f"### @{p_user} · `{p_tag}`")
+                    if p_cap: st.write(p_cap)
+                    if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+                        st.video(p_file)
+                
+                with col_act:
+                    st.markdown("<br><br>", unsafe_allow_html=True) # Espaciado vertical para alinear al estilo TikTok
+                    if st.button(f"🔥\n{p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
-                with col_r2:
-                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
+                    if st.button(f"👍\n{p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
-                with col_r3:
-                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
+                    if st.button(f"❤️\n{p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
+                
+                st.markdown('</div>', unsafe_allow_html=True)
                 st.markdown("---")
 
     elif menu_option == "Mi Perfil":
