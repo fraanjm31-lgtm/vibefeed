@@ -79,7 +79,7 @@ def get_badge(xp):
         return "🌱 Novato", "badge-novato"
 
 def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
-    st.markdown(f"*Tema: {p_tag}* | *Canal de: @{p_user}*")
+    st.markdown(f"**@{p_user}** · *Tema: {p_tag}*")
     if p_cap:
         st.write(p_cap)
     if p_file and os.path.exists(p_file):
@@ -88,26 +88,45 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    col_l, col_c, col_r, col_s = st.columns([1, 1, 1, 1])
+    # Barra de iconos estilo red social moderna (Me gusta, Comentarios, Repost, Enviar, Guardar)
+    col_l, col_c, col_r, col_s, col_b = st.columns([1, 1, 1, 1, 1])
     with col_l:
         if st.button("❤️", key=f"like_btn_{p_id}"):
             c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
             conn.commit()
             st.rerun()
     with col_c:
-        st.markdown(f"💬")
+        if st.button("💬", key=f"com_btn_{p_id}"):
+            st.session_state[f"show_comments_{p_id}"] = not st.session_state.get(f"show_comments_{p_id}", False)
     with col_r:
-        st.markdown(f"🔄")
+        st.button("🔄", key=f"repost_btn_{p_id}")
     with col_s:
-        st.markdown(f"📌")
+        st.button("↗️", key=f"share_btn_{p_id}")
+    with col_b:
+        st.button("🔖", key=f"save_btn_{p_id}")
         
-    st.markdown(f"❤️ **{p_likes} Me gusta**")
+    # Texto de likes y descripción estilo Instagram / Threads
+    if p_likes > 0:
+        st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
+    else:
+        st.markdown("❤️ *Sé el primero en darle Me gusta*")
+        
+    # Sección desplegable de comentarios
+    if st.session_state.get(f"show_comments_{p_id}", False):
+        st.markdown("---")
+        st.markdown("💬 **Comentarios:**")
+        # Aquí puedes dejar lista la caja de comentarios
+        new_comment = st.text_input("Añade un comentario...", key=f"input_comm_{p_id}")
+        if st.button("Publicar comentario", key=f"send_comm_{p_id}"):
+            if new_comment.strip():
+                st.success("¡Comentario añadido!")
+                st.rerun()
+                
     st.markdown("---")
 
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
-# Menú de navegación lateral adaptado para móviles
 with st.sidebar:
     st.subheader("🧭 Menú NoxVibe")
     menu = st.radio("Ir a:", [
@@ -178,7 +197,6 @@ with st.sidebar:
         else:
             st.error("Usuario no encontrado.")
 
-# Pantallas según el menú lateral
 if menu == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
@@ -258,7 +276,6 @@ elif menu == "👥 Siguiendo":
             st.info("Aún no sigues a nadie. Usa 'Explorar Canales' o busca perfiles en el menú lateral para ver contenido aquí.")
         else:
             for f_user in following:
-                st.markdown(f"### Canal de @{f_user}")
                 f_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (f_user,)).fetchall()
                 for p in f_posts:
                     render_post(p[0], f_user, p[1], p[2], p[3], p[4], p[5])
@@ -268,14 +285,10 @@ elif menu == "👥 Siguiendo":
 elif menu == "🔍 Explorar Canales":
     st.subheader("🔍 Explorar Canales y Perfiles")
     
-    # Mostrar lista de todos los usuarios registrados para elegir fácilmente
     all_users = [u[0] for u in c.execute("SELECT username FROM users").fetchall()]
     if all_users:
         selected_explore = st.selectbox("Selecciona un usuario para ver su canal:", all_users)
-        if selected_explore:
-            target_user = selected_explore
-        else:
-            target_user = st.session_state.get('viewing_user') or (all_users[0] if all_users else None)
+        target_user = selected_explore if selected_explore else (st.session_state.get('viewing_user') or all_users[0])
     else:
         target_user = st.session_state.get('viewing_user')
     
@@ -326,7 +339,7 @@ elif menu == "💬 Mensajes Privados":
         chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
         chat_c = chat_conn.cursor()
         
-        users_list = [u[0] for u in chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
+        users_list = [u[0] for u in chat_c.execute("SELECT username WHERE username != ?", (cur,)).fetchall() if u[0] != cur]
         
         if not users_list:
             st.info("No hay más usuarios registrados para chatear.")
