@@ -6,19 +6,18 @@ import hashlib
 
 st.set_page_config(page_title="NoxVibe", page_icon="⚡", layout="centered")
 
-# CSS para evitar que Streamlit ponga las columnas en vertical en el móvil
+# CSS definitivo para prohibir que baje los botones en móviles
 st.markdown("""
     <style>
-        /* Forzar que las columnas se queden en horizontal en móviles */
         [data-testid="stHorizontalBlock"] {
             display: flex !important;
             flex-direction: row !important;
-            align-items: center !important;
+            flex-wrap: nowrap !important;
         }
         [data-testid="column"] {
-            width: auto !important;
             flex: 1 !important;
-            min-width: 35px !important;
+            width: auto !important;
+            min-width: unset !important;
         }
     </style>
 """, unsafe_allow_html=True)
