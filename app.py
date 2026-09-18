@@ -106,7 +106,6 @@ st.markdown(f"""
         color: {text_color} !important;
     }}
     
-    /* Forzar fondo oscuro/claro en botones para evitar el bloque blanco */
     div.stButton > button {{
         background-color: {box_bg} !important;
         color: {text_color} !important;
@@ -172,7 +171,7 @@ def handle_reaction(p_id, user, r_type):
         conn.commit()
         st.rerun()
     else:
-        st.toast("¡Ya has dado esta reacción!", icon="⚠️")
+        st.toast("¡Ya habías dado esta reacción!", icon="⚠️")
 
 st.sidebar.title("🧭 Menú NoxVibe")
 menu_option = st.sidebar.radio("Navegación", ["🔥 Feed de Vídeos", "Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Explorar Canales", "Mensajes", "Ajustes"])
@@ -443,4 +442,5 @@ else:
         current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Público"
         current_db_theme = u_settings[3] if u_settings and u_settings[3] else "Oscuro (Por defecto)"
         
-        with st.form(
+        with st.form("settings_form"):
+            new_bio = st.text_area("Actualizar tu biogr
