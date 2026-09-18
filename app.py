@@ -7,13 +7,15 @@ st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
 st.markdown("""
     <style>
-    /* Ocultar elementos de desarrollo y en especial el icono de GitHub por seguridad */
-    .stAppDeployButton {display: none;}
-    
-    /* Ocultar específicamente el enlace a GitHub de la barra superior */
-    header [data-testid="stToolbar"] a[href*="github"] {
-        display: none !important;
-    }
+    /* Ocultar la barra superior completa y la barra flotante de Streamlit Cloud */
+    header {visibility: hidden !important; display: none !important;}
+    #MainMenu {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    .stAppDeployButton {display: none !important;}
+    div[data-testid="stToolbar"] {visibility: hidden !important; display: none !important;}
+    [data-testid="stDecoration"] {display: none !important;}
+    header[data-testid="stHeader"] {display: none !important; visibility: hidden !important;}
+    .stApp > header {display: none !important;}
     
     .stApp {
         background-color: #0e1117;
