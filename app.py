@@ -433,14 +433,15 @@ else:
         st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
-    elif menu_option == "⚙️ Ajustes":
+        elif menu_option == "⚙️ Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
         c.execute("SELECT bio, avatar, account_privacy, theme FROM users WHERE username = ?", (cur,))
         u_settings = c.fetchone()
-        current_bio = u_settings[0] if u_settings and u_settings[0] else ""
-        current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Publico"
-        current_db_theme = u_settings[3] if u_settings and u_settings[3] else "Oscuro"
+        
+        current_bio = u_settings[0] if u_settings and u_settings[0] is not None else ""
+        current_acc_priv = u_settings[2] if u_settings and len(u_settings) > 2 and u_settings[2] is not None else "Publico"
+        current_db_theme = u_settings[3] if u_settings and len(u_settings) > 3 and u_settings[3] is not None else "Oscuro"
         
         with st.form("settings_form"):
             new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
@@ -450,4 +451,15 @@ else:
             priv_choice = st.selectbox("Privacidad del Perfil", priv_options, index=priv_index)
             
             temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
-            current_
+            current_theme_index = temas_disponibles.index(current_db_theme) if current_db_theme in temas_disponibles else 0
+            new_theme = st.selectbox("🎨 Tema de Colores", temas_disponibles, index=current_theme_index)
+            
+            submit_settings = st.form_submit_button("Guardar cambios")
+            
+        if submit_settings:
+            c.execute("UPDATE users SET bio = ?, account_privacy = ?, theme = ? WHERE username = ?", (new_bio, priv_choice, new_theme, cur))
+            conn.commit()
+            st.session_state.theme = new_theme
+            st.success("Ajustes actualizados correctamente!")
+            st.rerun()
+            
