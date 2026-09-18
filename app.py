@@ -447,6 +447,6 @@ elif selected_tab == "💬 Mensajes":
                 mostrar_mensajes_en_tiempo_real()
                 
                 with st.form(key=f"chat_form_final_{partner}", clear_on_submit=True):
-                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_final")
+                    txt_msg = st.text_input("Escribe tu mensaje...", key="input_msg_final_fixed")
                     if st.form_submit_button("Enviar 🚀"):
-                        if tx
+                   
