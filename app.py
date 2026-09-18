@@ -16,9 +16,15 @@ st.markdown("""
         color: white;
         border: none;
         border-radius: 8px;
-        padding: 0.4rem 0.8rem;
+        padding: 0.4rem 0.2rem;
         font-weight: bold;
         width: 100%;
+    }
+    /* Forzar que las columnas de las reacciones no se apilen en el móvil */
+    [data-testid="column"] {
+        width: 33.33% !important;
+        flex: 1 1 33.33% !important;
+        min-width: unset !important;
     }
     .profile-stats {
         display: flex;
@@ -259,7 +265,7 @@ else:
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
-                # Reacciones puestas de lado (en columnas horizontales)
+                # Botones de reacción forzados en horizontal
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
                     if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}"):
@@ -377,4 +383,4 @@ else:
                 conn.commit()
                 st.success("¡Ajustes guardados correctamente!")
                 st.rerun()
-                    
+                
