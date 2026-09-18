@@ -29,7 +29,6 @@ c.execute('''
     )
 ''')
 
-# Asegurar compatibilidad si la tabla users ya existía sin la columna is_private
 try:
     c.execute("SELECT is_private FROM users LIMIT 1")
 except sqlite3.OperationalError:
@@ -203,6 +202,33 @@ if menu == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
+        
+        # Guardar cambios si se envió el formulario de edición
+        with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
+            u_info_form = c.execute("SELECT bio, city, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
+            with st.form("edit_profile_form"):
+                new_bio = st.text_area("Biografía", value=u_info_form[0] if u_info_form else "")
+                new_city = st.text_input("Ciudad", value=u_info_form[1] if u_info_form else "")
+                current_priv = True if (u_info_form and u_info_form[3] == 1) else False
+                new_priv = st.checkbox("🔒 Hacer mi canal privado (Solo visible para quienes me siguen)", value=current_priv)
+                new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
+                
+                if st.form_submit_button("Guardar Cambios 💾"):
+                    pic_path = u_info_form[2] if u_info_form else ""
+                    if new_pic is not None:
+                        os.makedirs("uploads", exist_ok=True)
+                        pic_path = os.path.join("uploads", f"profile_{cur}_{new_pic.name}")
+                        with open(pic_path, "wb") as f:
+                            f.write(new_pic.getbuffer())
+                    
+                    priv_val = 1 if new_priv else 0
+                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, is_private = ? WHERE username = ?", 
+                              (new_bio, new_city, pic_path, priv_val, cur))
+                    conn.commit()
+                    st.success("¡Perfil actualizado con éxito!")
+                    st.rerun()
+
+        # Volver a leer los datos actualizados de la base de datos
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
@@ -214,7 +240,7 @@ if menu == "👤 Mi Perfil":
         else:
             st.markdown("📷 *Sin foto*")
             
-        priv_status = "🔒 Privado" if u_info and u_info[4] == 1 else "🌐 Público"
+        priv_status = "🔒 Privado" if (u_info and u_info[4] == 1) else "🌐 Público"
         st.markdown(f"### @{cur} ({priv_status})")
         
         st.markdown(f"""
@@ -235,29 +261,6 @@ if menu == "👤 Mi Perfil":
             st.markdown(f"**Bio:** {u_info[0]}")
             st.markdown(f"**Ciudad:** {u_info[1]}")
             st.markdown(f"**XP:** {u_info[2]}")
-        
-        with st.expander("⚙️ Editar mi Perfil y Foto"):
-            with st.form("edit_profile_form"):
-                new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
-                new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
-                current_priv = True if (u_info and u_info[4] == 1) else False
-                new_priv = st.checkbox("🔒 Hacer mi canal privado (Solo visible para quienes me siguen)", value=current_priv)
-                new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
-                
-                if st.form_submit_button("Guardar Cambios 💾"):
-                    pic_path = u_info[3] if u_info else ""
-                    if new_pic is not None:
-                        os.makedirs("uploads", exist_ok=True)
-                        pic_path = os.path.join("uploads", f"profile_{cur}_{new_pic.name}")
-                        with open(pic_path, "wb") as f:
-                            f.write(new_pic.getbuffer())
-                    
-                    priv_val = 1 if new_priv else 0
-                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, is_private = ? WHERE username = ?", 
-                              (new_bio, new_city, pic_path, priv_val, cur))
-                    conn.commit()
-                    st.success("¡Perfil actualizado con éxito!")
-                    st.rerun()
             
         st.markdown("---")
         st.subheader("📝 Publicar Contenido en tu Canal")
@@ -328,7 +331,6 @@ elif menu == "🔍 Explorar Canales":
             is_priv = (u_data[5] == 1)
             current_user = st.session_state.get('username', '')
             
-            # Comprobar si el usuario actual es amigo/seguidor o es el dueño del canal
             is_friend_or_owner = False
             if current_user == target_user:
                 is_friend_or_owner = True
@@ -439,7 +441,4 @@ elif menu == "💬 Mensajes Privados":
                         if txt.strip():
                             chat_c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                            chat_conn.commit()
-                    
+                                (cur, pa
