@@ -428,7 +428,7 @@ else:
         st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
-    elif menu_option == "⚙️ Ajustes":
+     elif menu_option == "⚙️ Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
         c.execute("SELECT bio, avatar, theme FROM users WHERE username = ?", (cur,))
@@ -446,7 +446,7 @@ else:
             
             submit_settings = st.form_submit_button("Guardar cambios")
             
-                if submit_settings:
+        if submit_settings:
             c.execute("UPDATE users SET bio = ?, theme = ? WHERE username = ?", (new_bio, new_theme, cur))
             conn.commit()
             st.session_state.theme = new_theme
