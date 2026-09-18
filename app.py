@@ -126,7 +126,8 @@ with st.sidebar:
         "👤 Mi Perfil", 
         "👥 Siguiendo", 
         "🔍 Explorar Canales", 
-        "💬 Mensajes Privados"
+        "💬 Mensajes Privados",
+        "⚙️ Ajustes"
     ])
     
     st.markdown("---")
@@ -414,4 +415,8 @@ elif menu == "💬 Mensajes Privados":
         chat_conn.close()
     else:
         st.warning("Inicia sesión para chatear.")
-        
+
+elif menu == "⚙️ Ajustes":
+    st.subheader("⚙️ Ajustes y Configuración")
+    st.info("🛠️ Esta sección está lista para que empieces a añadir tus propias opciones y configuraciones nuevas.")
+    
