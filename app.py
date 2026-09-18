@@ -7,30 +7,13 @@ st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
 st.markdown("""
     <style>
-    /* Ocultar elementos sobrantes de la barra flotante de Streamlit Cloud (GitHub, Lápiz, Share, etc.) */
+    /* Ocultar iconos de desarrollo y GitHub de la barra flotante */
     header [data-testid="stToolbar"] a[href*="github"],
     header [data-testid="stToolbar"] button[kind="header"],
-    header [data-testid="stToolbar"] .st-emotion-cache-12w0qpk,
     header [data-testid="stToolbar"] [title*="Edit"],
     header [data-testid="stToolbar"] [title*="Share"],
-    header [data-testid="stToolbar"] button:has(svg path[d*="M18"]) {
-        display: none !important;
-    }
-    
-    /* Selector específico para limpiar los botones laterales dejando sólo estrella y menú */
-    header [data-testid="stToolbar"] > div:not(:has(button[title*="star"])) {
-        /* Mantenemos solo lo necesario */
-    }
-    
-    /* Ocultar específicamente los botones de compartir y editar código si se muestran por clases genéricas */
     header [data-testid="stToolbar"] button[aria-label*="Share"],
-    header [data-testid="stToolbar"] button[aria-label*="Edit"],
-    header [data-testid="stToolbar"] span:has(svg path[d*="M3"]) {
-        display: none !important;
-    }
-
-    /* Ocultar las flechas dobles de la esquina izquierda de la barra */
-    header .paint-container, header [data-testid="collapsedControl"] {
+    header [data-testid="stToolbar"] button[aria-label*="Edit"] {
         display: none !important;
     }
     
@@ -439,4 +422,8 @@ else:
             
             submit_settings = st.form_submit_button("Guardar cambios")
             if submit_settings:
-                c.execute("UPDATE users SET bio = ?, account_privacy = ? WH
+                c.execute("UPDATE users SET bio = ?, account_privacy = ? WHERE username = ?", (new_bio, priv_choice, cur))
+                conn.commit()
+                st.success("¡Ajustes guardados correctamente!")
+                st.rerun()
+                
