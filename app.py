@@ -105,6 +105,14 @@ st.markdown(f"""
         background-color: {bg_color} !important;
         color: {text_color} !important;
     }}
+    
+    /* Forzar fondo oscuro/claro en botones para evitar el bloque blanco */
+    div.stButton > button {{
+        background-color: {box_bg} !important;
+        color: {text_color} !important;
+        border: 1px solid {sub_text} !important;
+    }}
+
     .profile-stats {{
         display: flex;
         justify-content: space-around;
@@ -266,11 +274,11 @@ else:
                 
                 with col_act:
                     st.markdown("<br><br>", unsafe_allow_html=True)
-                    if st.button(f"🔥\n{p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
+                    if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
-                    if st.button(f"👍\n{p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
+                    if st.button(f"👍 {p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'thumb')
-                    if st.button(f"❤️\n{p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
+                    if st.button(f"❤️ {p_hearts if p_hearts is not None else 0}", key=f"feed_heart_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'heart')
                 
                 st.markdown('</div>', unsafe_allow_html=True)
@@ -286,7 +294,8 @@ else:
         coins = user_data[4] if user_data else 100
 
         priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Pública"
-        st.title(f"@{cur} ({priv_badge})")
+        st.title(f"@{cur}")
+        st.caption(priv_badge)
         
         c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
         total_posts = c.fetchone()[0]
@@ -350,16 +359,16 @@ else:
 
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
-            if st.button("🖼️ Fotos (Tu Galería)", use_container_width=True):
+            if st.button("🖼️ Ver Fotos", use_container_width=True):
                 st.session_state.profile_tab = "Fotos"
         with col_btn2:
-            if st.button("🎬 Vídeos", use_container_width=True):
+            if st.button("🎬 Ver Vídeos", use_container_width=True):
                 st.session_state.profile_tab = "Vídeos"
 
         st.markdown("---")
 
         if st.session_state.profile_tab == "Fotos":
-            st.markdown("### 🖼️ Tus Fotos (Privadas o de perfil)")
+            st.markdown("### 🖼️ Tus Fotos")
             c.execute("SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
             for post in c.fetchall():
                 p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
@@ -434,9 +443,4 @@ else:
         current_acc_priv = u_settings[2] if u_settings and u_settings[2] else "Público"
         current_db_theme = u_settings[3] if u_settings and u_settings[3] else "Oscuro (Por defecto)"
         
-        with st.form("settings_form"):
-            new_bio = st.text_area("Actualizar tu biografía", value=current_bio)
-            
-            priv_index = 0 if current_acc_priv == "Público" else 1
-            priv_options = ["Público", "Privado"]
-          
+        with st.form(
