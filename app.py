@@ -629,11 +629,57 @@ else:
         else "Publico"
     )
 
-    with st.form("settings_form"):
+    # 1. Formulario para la biografía
+    with st.form("settings_bio_form"):
       new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
+      submit_bio = st.form_submit_button("Guardar Biografia")
 
-      temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
-      if current_db_theme in temas_disponibles:
-        current_theme_index = temas_disponibles.index(current_db_theme)
-      else:
-        current_theme_
+    if submit_bio:
+      c.execute("UPDATE users SET bio = ? WHERE username = ?", (new_bio, cur))
+      conn.commit()
+      st.success("¡Biografía actualizada con éxito!")
+      st.rerun()
+
+    st.markdown("---")
+    st.subheader("🎨 Apariencia y Privacidad")
+
+    # 2. Selector de tema fuera del form para evitar bloqueos visuales
+    temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
+    current_theme_index = (
+        temas_disponibles.index(current_db_theme)
+        if current_db_theme in temas_disponibles
+        else 0
+    )
+
+    new_theme = st.selectbox(
+        "Tema de Colores", temas_disponibles, index=current_theme_index
+    )
+    if new_theme != current_db_theme:
+      c.execute(
+          "UPDATE users SET theme = ? WHERE username = ?", (new_theme, cur)
+      )
+      conn.commit()
+      st.session_state.theme = new_theme
+      st.success(f"Tema cambiado a {new_theme}")
+      st.rerun()
+
+    # 3. Interruptor de cuenta privada fuera del form
+    is_private_checked = st.toggle(
+        "🔒 Cuenta Privada",
+        value=(current_privacy == "Privado"),
+        help=(
+            "Actívalo para que tu cuenta sea privada o desactívalo para que"
+            " sea pública."
+        ),
+    )
+
+    new_privacy_value = "Privado" if is_private_checked else "Publico"
+    if new_privacy_value != current_privacy:
+      c.execute(
+          "UPDATE users SET account_privacy = ? WHERE username = ?",
+          (new_privacy_value, cur),
+      )
+      conn.commit()
+      st.success(f"Configuración de cuenta actualizada a: {new_privacy_value}")
+      st.rerun()
+        
