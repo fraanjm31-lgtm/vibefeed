@@ -172,7 +172,7 @@ else:
 
         col1, col2 = st.columns([1, 2])
         with col1:
-            if avatar and os.path.exists(avatar):
+            if avatar and isinstance(avatar, str) and os.path.exists(avatar):
                 st.image(avatar, width=110)
             else:
                 st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=110)
@@ -240,7 +240,8 @@ else:
                 p_id, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
-                if p_file and os.path.exists(p_file): st.image(p_file, use_column_width=True)
+                if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
+                    st.image(p_file, use_column_width=True)
                 st.markdown(f"❤️ {p_likes} Me gusta")
                 st.markdown("---")
         else:
@@ -250,7 +251,8 @@ else:
                 p_id, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
-                if p_file and os.path.exists(p_file): st.video(p_file)
+                if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
+                    st.video(p_file)
                 st.markdown(f"❤️ {p_likes} Me gusta")
                 st.markdown("---")
 
@@ -273,7 +275,7 @@ else:
             p_id, p_user, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
             st.markdown(f"**@{p_user}** · `{p_tag}` · {p_time}")
             if p_cap: st.write(p_cap)
-            if p_file and os.path.exists(p_file):
+            if p_file and isinstance(p_file, str) and os.path.exists(p_file):
                 if p_type == "video": st.video(p_file)
                 else: st.image(p_file, use_column_width=True)
             st.markdown("---")
