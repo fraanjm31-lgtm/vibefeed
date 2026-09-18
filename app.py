@@ -6,7 +6,7 @@ from datetime import datetime
 # Configuración de la página
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
-# Estilos CSS personalizados (Modo Oscuro / Neón y diseño de perfil en línea)
+# Estilos CSS personalizados
 st.markdown("""
     <style>
     .stApp {
@@ -24,7 +24,6 @@ st.markdown("""
     .stButton>button:hover {
         opacity: 0.9;
     }
-    /* Estilo para alinear contadores de perfil de forma compacta */
     .profile-stats {
         display: flex;
         justify-content: space-around;
@@ -80,7 +79,6 @@ try:
 except:
     pass
 
-# Tabla para registrar los regalos enviados
 c.execute('''CREATE TABLE IF NOT EXISTS gifts (
              id INTEGER PRIMARY KEY AUTOINCREMENT, 
              sender TEXT, 
@@ -92,7 +90,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS gifts (
 
 conn.commit()
 
-# Función de la IA para etiquetar vibraciones
 def ai_vibe_checker(text):
     if not text:
         return "✨ Chill", "Ambiente tranquilo y relajado detectado."
@@ -106,13 +103,11 @@ def ai_vibe_checker(text):
     else:
         return "🚀 Inspirador", "¡Pensamiento innovador detectado!"
 
-# Estado de sesión para control de usuarios
 if 'logged_in' not in st.session_state:
     st.session_state.logged_in = False
     st.session_state.username = ""
     st.session_state.profile_tab = "Fotos"
 
-# Menú lateral de navegación
 st.sidebar.title("🧭 Menú")
 menu_option = st.sidebar.radio("Navegación", ["Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
 
@@ -129,7 +124,6 @@ if st.session_state.logged_in:
         st.session_state.username = ""
         st.rerun()
 
-# --- PANTALLA DE INICIO DE SESIÓN / REGISTRO ---
 if not st.session_state.logged_in:
     st.title("Bienvenido a NoxVibe 🚀")
     tab_login, tab_reg = st.tabs(["Iniciar Sesión", "Registrarse"])
@@ -161,7 +155,6 @@ if not st.session_state.logged_in:
             else:
                 st.warning("Rellena todos los campos.")
 
-# --- APLICACIÓN PRINCIPAL ---
 else:
     cur = st.session_state.username
     
@@ -427,4 +420,10 @@ else:
                                         c.execute("INSERT INTO gifts (sender, receiver, post_id, gift_name, coins_cost, timestamp) VALUES (?, ?, ?, ?, ?, ?)",
                                                   (cur, t_user, p_id, "⭐ Estrella", 50, datetime.now().strftime("%Y-%m-%d %H:%M")))
                                         conn.commit()
-                                        st.s
+                                        st.success("¡Has enviado ⭐ Estrella!")
+                                        st.rerun()
+                                    else:
+                                        st.error("No tienes suficientes NoxCoins.")
+                            with col_g3:
+                                if st.button("👑 Corona (100 🪙)", key=f"crown_{p_id}"):
+                    
