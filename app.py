@@ -7,6 +7,14 @@ st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
 st.markdown("""
     <style>
+    /* Ocultar elementos de desarrollo y en especial el icono de GitHub por seguridad */
+    .stAppDeployButton {display: none;}
+    
+    /* Ocultar específicamente el enlace a GitHub de la barra superior */
+    header [data-testid="stToolbar"] a[href*="github"] {
+        display: none !important;
+    }
+    
     .stApp {
         background-color: #0e1117;
         color: #ffffff;
@@ -33,7 +41,6 @@ st.markdown("""
         font-size: 12px;
         color: #8b949e;
     }
-    /* Estilo tipo TikTok para los vídeos con barra lateral de botones */
     .video-container {
         position: relative;
         background: #161b22;
@@ -227,7 +234,6 @@ else:
                 
                 st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
                 
-                # Dividimos en dos columnas: Izquierda para el vídeo y texto, Derecha para los botones flotantes de reacción
                 col_vid, col_act = st.columns([4, 1])
                 
                 with col_vid:
@@ -237,7 +243,7 @@ else:
                         st.video(p_file)
                 
                 with col_act:
-                    st.markdown("<br><br>", unsafe_allow_html=True) # Espaciado vertical para alinear al estilo TikTok
+                    st.markdown("<br><br>", unsafe_allow_html=True)
                     if st.button(f"🔥\n{p_fires if p_fires is not None else 0}", key=f"feed_fire_{p_id}", use_container_width=True):
                         handle_reaction(p_id, cur, 'fire')
                     if st.button(f"👍\n{p_thumbs if p_thumbs is not None else 0}", key=f"feed_like_{p_id}", use_container_width=True):
