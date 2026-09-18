@@ -29,10 +29,12 @@ c.execute('''
     )
 ''')
 
+# Asegurar que la columna is_private existe siempre
 try:
     c.execute("SELECT is_private FROM users LIMIT 1")
 except sqlite3.OperationalError:
     c.execute("ALTER TABLE users ADD COLUMN is_private INTEGER DEFAULT 0")
+    conn.commit()
 
 try:
     c.execute("SELECT username, likes, vibe_tag FROM posts LIMIT 1")
@@ -448,5 +450,4 @@ elif menu == "💬 Mensajes Privados":
 elif menu == "⚙️ Ajustes":
     st.subheader("⚙️ Ajustes")
     sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
-    if sel_theme != st.session_state['theme']:
-        st.session_state['theme'] = se
+    if sel_them
