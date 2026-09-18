@@ -203,11 +203,9 @@ if menu == "👤 Mi Perfil":
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         
-        # Leemos los datos directamente primero
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
-            # Forzamos una clave dinámica para que el checkbox lea siempre el valor fresco de la base de datos
             current_priv = True if (u_info and u_info[4] == 1) else False
             
             with st.form("edit_profile_form"):
@@ -231,7 +229,6 @@ if menu == "👤 Mi Perfil":
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
 
-        # Volvemos a consultar por si acaban de guardar cambios
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
@@ -443,4 +440,8 @@ elif menu == "💬 Mensajes Privados":
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
                             chat_c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestam
+                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
+                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
+                            )
+                            chat_conn.commit()
+                          
