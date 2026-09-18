@@ -90,10 +90,10 @@ else:
 
 st.markdown(f"""
     <style>
-    /* Ocultar la barra superior de Streamlit por completo */
-    header {{visibility: hidden !important;}}
-    footer {{visibility: hidden !important;}}
+    /* Ocultar elementos de despliegue y herramientas de la derecha, manteniendo visible el menú */
+    [data-testid="stToolbar"] {{display: none !important;}}
     .stDeployButton {{display: none !important;}}
+    footer {{visibility: hidden !important;}}
     
     .stApp {{
         background-color: {bg_color} !important;
@@ -449,5 +449,4 @@ else:
             c.execute("UPDATE users SET bio = ?, theme = ? WHERE username = ?", (new_bio, new_theme, cur))
             conn.commit()
             st.session_state.theme = new_theme
-            st.success("¡Cambios guardados!")
-            st.rerun
+            st
