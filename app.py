@@ -282,7 +282,6 @@ if menu == "👤 Mi Perfil":
         st.markdown("---")
         st.subheader("Tus publicaciones:")
         
-        # Pestañas para separar fotos y vídeos en tu perfil
         tab_mi_fotos, tab_mi_videos = st.tabs(["📸 Fotos", "🎥 Vídeos"])
         
         with tab_mi_fotos:
@@ -376,7 +375,6 @@ elif menu == "🔍 Explorar Canales":
                             
             st.markdown("---")
             
-            # Pestañas para separar fotos y vídeos en canales explorados
             tab_ex_fotos, tab_ex_videos = st.tabs(["📸 Fotos", "🎥 Vídeos"])
             
             with tab_ex_fotos:
@@ -442,4 +440,6 @@ elif menu == "💬 Mensajes Privados":
                         if txt.strip():
                             chat_c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-           
+                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
+                            )
+                    
