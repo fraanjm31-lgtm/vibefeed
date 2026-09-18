@@ -43,6 +43,13 @@ c.execute('''
     )
 ''')
 
+# Añadir columna vibe_tag si la base de datos es antigua y no la tiene
+try:
+    c.execute("ALTER TABLE posts ADD COLUMN vibe_tag TEXT")
+    conn.commit()
+except sqlite3.OperationalError:
+    pass
+
 c.execute('''
     CREATE TABLE IF NOT EXISTS messages (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
