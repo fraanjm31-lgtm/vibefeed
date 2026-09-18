@@ -94,9 +94,9 @@ if st.session_state.logged_in:
 # --- PANTALLA DE INICIO DE SESIÓN / REGISTRO ---
 if not st.session_state.logged_in:
     st.title("Bienvenido a NoxVibe 🚀")
-    tab1, tab2 = st.tabs(["Iniciar Sesión", "Registrarse"])
+    tab_login, tab_reg = st.tabs(["Iniciar Sesión", "Registrarse"])
     
-    with tab1:
+    with tab_login:
         l_user = st.text_input("Usuario", key="l_user")
         l_pass = st.text_input("Contraseña", type="password", key="l_pass")
         if st.button("Entrar"):
@@ -108,7 +108,7 @@ if not st.session_state.logged_in:
             else:
                 st.error("Usuario o contraseña incorrectos")
                 
-    with tab2:
+    with tab_reg:
         r_user = st.text_input("Nuevo Usuario", key="r_user")
         r_pass = st.text_input("Nueva Contraseña", type="password", key="r_pass")
         if st.button("Crear cuenta"):
@@ -155,7 +155,6 @@ else:
             else:
                 st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=110)
         with col2:
-            # Contadores perfectamente colocados de lado con HTML/CSS
             st.markdown(f"""
                 <div class="profile-stats">
                     <div class="stat-box">
@@ -175,7 +174,6 @@ else:
             
             st.markdown(f"**Tus XP:** {xp}")
             
-        # Biografía debajo ocupando todo el ancho de forma limpia
         st.write(bio)
             
         st.markdown("---")
@@ -206,25 +204,44 @@ else:
                     st.success(f"¡Publicado! {ai_msg} (+15 XP)")
                     st.rerun()
 
-        st.markdown("### Tus publicaciones recientes")
-        c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
-        user_posts = c.fetchall()
+        st.markdown("### Publicaciones")
         
-        if not user_posts:
-            st.info("Aún no has publicado nada. ¡Despliega 'Publicar Contenido' arriba para crear tu primer post!")
+        # Pestañas estilo Instagram para separar Fotos y Vídeos
+        tab_photos, tab_videos = st.tabs(["🖼️ Fotos", "🎬 Vídeos"])
         
-        for post in user_posts:
-            p_cap, p_file, p_type, p_likes, p_tag, p_time = post
-            st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
-            if p_cap:
-                st.write(p_cap)
-            if p_file and os.path.exists(p_file):
-                if p_type == "image":
+        with tab_photos:
+            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
+            photo_posts = c.fetchall()
+            
+            if not photo_posts:
+                st.info("No tienes fotos publicadas todavía.")
+            
+            for post in photo_posts:
+                p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
+                if p_cap:
+                    st.write(p_cap)
+                if p_file and os.path.exists(p_file):
                     st.image(p_file, use_column_width=True)
-                elif p_type == "video":
+                st.markdown(f"❤️ {p_likes} Me gusta")
+                st.markdown("---")
+                
+        with tab_videos:
+            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
+            video_posts = c.fetchall()
+            
+            if not video_posts:
+                st.info("No tienes vídeos publicados todavía.")
+                
+            for post in video_posts:
+                p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
+                if p_cap:
+                    st.write(p_cap)
+                if p_file and os.path.exists(p_file):
                     st.video(p_file)
-            st.markdown(f"❤️ {p_likes} Me gusta")
-            st.markdown("---")
+                st.markdown(f"❤️ {p_likes} Me gusta")
+                st.markdown("---")
 
     elif menu_option == "Muro 24h":
         st.title("🌐 Muro Global 24h")
@@ -242,10 +259,10 @@ else:
             if p_cap:
                 st.write(p_cap)
             if p_file and os.path.exists(p_file):
-                if p_type == "image":
-                    st.image(p_file, use_column_width=True)
-                elif p_type == "video":
+                if p_type == "video":
                     st.video(p_file)
+                else:
+                    st.image(p_file, use_column_width=True)
             st.markdown(f"❤️ {p_likes} Me gusta")
             st.markdown("---")
 
