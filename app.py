@@ -78,7 +78,6 @@ def get_badge(xp):
     else:
         return "🌱 Novato", "badge-novato"
 
-# Función auxiliar para renderizar una publicación con su barra de estilo Instagram
 def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
     st.markdown(f"*Tema: {p_tag}*")
     if p_cap:
@@ -89,7 +88,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Barra de interacciones estilo Instagram[span_3](start_span)[span_3](end_span)
     col_l, col_c, col_r, col_s = st.columns([1, 1, 1, 1])
     with col_l:
         if st.button("❤️", key=f"like_btn_{p_id}"):
@@ -103,7 +101,7 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
     with col_s:
         st.markdown(f"📌")
         
-    st.markdown(f"❤️ **{p_likes} Me gusta**[span_4](start_span)[span_4](end_span)")
+    st.markdown(f"❤️ **{p_likes} Me gusta**")
     st.markdown("---")
 
 st.title("⚡ NoxVibe")
@@ -195,6 +193,27 @@ with tabs[0]:
                 st.markdown(f"**Bio:** {u_info[0]}")
                 st.markdown(f"**Ciudad:** {u_info[1]}")
                 st.markdown(f"**XP:** {u_info[2]}")
+        
+        # Formulario para editar perfil y subir foto de perfil
+        with st.expander("⚙️ Editar mi Perfil y Foto"):
+            with st.form("edit_profile_form"):
+                new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
+                new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
+                new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
+                
+                if st.form_submit_button("Guardar Cambios 💾"):
+                    pic_path = u_info[3] if u_info else ""
+                    if new_pic is not None:
+                        os.makedirs("uploads", exist_ok=True)
+                        pic_path = os.path.join("uploads", f"profile_{cur}_{new_pic.name}")
+                        with open(pic_path, "wb") as f:
+                            f.write(new_pic.getbuffer())
+                    
+                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ? WHERE username = ?", 
+                              (new_bio, new_city, pic_path, cur))
+                    conn.commit()
+                    st.success("¡Perfil actualizado con éxito!")
+                    st.rerun()
             
         st.markdown("---")
         st.subheader("📝 Publicar Contenido en tu Canal")
