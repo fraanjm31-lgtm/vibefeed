@@ -206,14 +206,6 @@ if menu == "👤 Mi Perfil":
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
-            current_visibility = "🔒 Privado" if (u_info and u_info[4] == 1) else "🌐 Público"
-            
-            visibility_option = st.selectbox(
-                "Visibilidad del Canal", 
-                ["🌐 Público", "🔒 Privado"], 
-                index=0 if current_visibility == "🌐 Público" else 1
-            )
-            
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
                 new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
@@ -227,9 +219,8 @@ if menu == "👤 Mi Perfil":
                         with open(pic_path, "wb") as f:
                             f.write(new_pic.getbuffer())
                     
-                    priv_val = 1 if visibility_option == "🔒 Privado" else 0
-                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, is_private = ? WHERE username = ?", 
-                              (new_bio, new_city, pic_path, priv_val, cur))
+                    c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ? WHERE username = ?", 
+                              (new_bio, new_city, pic_path, cur))
                     conn.commit()
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
@@ -447,4 +438,15 @@ elif menu == "💬 Mensajes Privados":
                                 (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
                             )
                             chat_conn.commit()
-         
+                            chat_conn.close()
+                            st.rerun()
+                            
+        chat_conn.close()
+    else:
+        st.warning("Inicia sesión para chatear.")
+
+elif menu == "⚙️ Ajustes":
+    st.subheader("⚙️ Ajustes")
+    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
+    if sel_theme != st.session_state['theme']:
+        st.session_state['theme'] = se
