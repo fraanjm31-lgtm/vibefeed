@@ -43,9 +43,15 @@ c.execute('''
     )
 ''')
 
-# Añadir columna vibe_tag si la base de datos es antigua y no la tiene
+# Bloques de seguridad para actualizar bases de datos antiguas sin perder datos
 try:
     c.execute("ALTER TABLE posts ADD COLUMN vibe_tag TEXT")
+    conn.commit()
+except sqlite3.OperationalError:
+    pass
+
+try:
+    c.execute("ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0")
     conn.commit()
 except sqlite3.OperationalError:
     pass
@@ -196,8 +202,8 @@ with tabs[0]:
                         f.write(uploaded_file.getbuffer())
                     f_type = "video" if uploaded_file.type.startswith("video") else "image"
                 
-                c.execute("INSERT INTO posts (username, caption, file, file_type, vibe_tag) VALUES (?, ?, ?, ?, ?)",
-                          (cur, cap, path_to_save, f_type, tag))
+                c.execute("INSERT INTO posts (username, caption, file, file_type, likes, vibe_tag) VALUES (?, ?, ?, ?, ?, ?)",
+                          (cur, cap, path_to_save, f_type, 0, tag))
                 c.execute("UPDATE users SET xp = xp + 10 WHERE username = ?", (cur,))
                 conn.commit()
                 st.success("¡Publicado con éxito! (+10 XP)")
