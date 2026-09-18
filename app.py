@@ -206,12 +206,20 @@ if menu == "👤 Mi Perfil":
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
-            current_priv = True if (u_info and u_info[4] == 1) else False
+            # Determinamos la opción inicial basada en la base de datos
+            current_visibility = "🔒 Privado" if (u_info and u_info[4] == 1) else "🌐 Público"
             
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info[0] if u_info else "")
                 new_city = st.text_input("Ciudad", value=u_info[1] if u_info else "")
-                new_priv = st.checkbox("🔒 Hacer mi canal privado (Solo visible para quienes me siguen)", value=current_priv)
+                
+                # Desplegable de visibilidad en lugar de checkbox
+                visibility_option = st.selectbox(
+                    "Visibilidad del Canal", 
+                    ["🌐 Público", "🔒 Privado"], 
+                    index=0 if current_visibility == "🌐 Público" else 1
+                )
+                
                 new_pic = st.file_uploader("Sube nueva foto de perfil", type=["jpg", "png", "jpeg"])
                 
                 if st.form_submit_button("Guardar Cambios 💾"):
@@ -222,7 +230,7 @@ if menu == "👤 Mi Perfil":
                         with open(pic_path, "wb") as f:
                             f.write(new_pic.getbuffer())
                     
-                    priv_val = 1 if new_priv else 0
+                    priv_val = 1 if visibility_option == "🔒 Privado" else 0
                     c.execute("UPDATE users SET bio = ?, city = ?, profile_pic = ?, is_private = ? WHERE username = ?", 
                               (new_bio, new_city, pic_path, priv_val, cur))
                     conn.commit()
@@ -439,9 +447,4 @@ elif menu == "💬 Mensajes Privados":
                     txt = st.text_input("Escribe tu mensaje...", key="input_msg_final")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
-                            chat_c.execute(
-                                "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
-                            )
-                            chat_conn.commit()
-                          
+                           
