@@ -113,7 +113,11 @@ else:
     if menu_option == "Mi Perfil":
         st.title(f"@{cur}")
         
-        # Estadísticas y perfil con foto personalizada
+        # Calcular número de publicaciones del usuario
+        c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
+        total_posts = c.fetchone()[0]
+
+        # Perfil con foto, contadores y biografía
         col1, col2 = st.columns([1, 2])
         with col1:
             if avatar and os.path.exists(avatar):
@@ -121,6 +125,12 @@ else:
             else:
                 st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=100)
         with col2:
+            # Métricas / Contadores estilo red social
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Posts", total_posts)
+            m2.metric("Seguidores", "142")
+            m3.metric("Siguiendo", "89")
+            
             st.markdown(f"**Tus XP:** {xp}")
             st.write(bio)
             
