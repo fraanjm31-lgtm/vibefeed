@@ -11,7 +11,6 @@ st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 conn = sqlite3.connect("noxvibe.db", check_same_thread=False)
 c = conn.cursor()
 
-# Tablas base
 c.execute(
     """CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)"""
 )
@@ -23,7 +22,6 @@ c.execute(
     """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
 )
 
-# Añadir columnas de forma segura para que no dé errores de pantalla negra
 columnas_usuarios = [
     ("email", "TEXT"),
     ("theme", "TEXT DEFAULT 'Oscuro'"),
@@ -139,10 +137,8 @@ st.markdown(
 
 
 def enviar_codigo_correo(destinatario, codigo):
-  remitente = "tu_correo@gmail.com"  # <--- Cambia por tu correo de Gmail
-  password = (
-      "tu_contraseña_de_aplicacion"  # <--- Cambia por tu contraseña de aplicación
-  )
+  remitente = "tu_correo@gmail.com"
+  password = "tu_contraseña_de_aplicacion"
 
   msg = EmailMessage()
   msg.set_content(
@@ -613,4 +609,10 @@ else:
     search_user = st.text_input("Escribe el nombre de usuario:")
     if search_user:
       c.execute(
-          "SELECT 
+          "SELECT username, bio, avatar, account_privacy FROM users WHERE"
+          " username = ?",
+          (search_user,),
+      )
+      target_user = c.fetchone()
+      if target_user:
+        t_use
