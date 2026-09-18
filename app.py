@@ -78,6 +78,34 @@ def get_badge(xp):
     else:
         return "🌱 Novato", "badge-novato"
 
+# Función auxiliar para renderizar una publicación con su barra de estilo Instagram
+def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
+    st.markdown(f"*Tema: {p_tag}*")
+    if p_cap:
+        st.write(p_cap)
+    if p_file and os.path.exists(p_file):
+        if p_file_type == "video":
+            st.video(p_file)
+        else:
+            st.image(p_file, use_container_width=True)
+            
+    # Barra de interacciones estilo Instagram[span_3](start_span)[span_3](end_span)
+    col_l, col_c, col_r, col_s = st.columns([1, 1, 1, 1])
+    with col_l:
+        if st.button("❤️", key=f"like_btn_{p_id}"):
+            c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+            conn.commit()
+            st.rerun()
+    with col_c:
+        st.markdown(f"💬")
+    with col_r:
+        st.markdown(f"🔄")
+    with col_s:
+        st.markdown(f"📌")
+        
+    st.markdown(f"❤️ **{p_likes} Me gusta**[span_4](start_span)[span_4](end_span)")
+    st.markdown("---")
+
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
@@ -191,6 +219,12 @@ with tabs[0]:
                 conn.commit()
                 st.success("¡Publicado con éxito! (+10 XP)")
                 st.rerun()
+                
+        st.markdown("---")
+        st.subheader("Tus publicaciones:")
+        my_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (cur,)).fetchall()
+        for p in my_posts:
+            render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
     else:
         st.warning("Inicia sesión para gestionar tu perfil y publicar.")
 
@@ -206,15 +240,7 @@ with tabs[1]:
                 st.markdown(f"### Canal de @{f_user}")
                 f_posts = c.execute("SELECT id, caption, file, file_type, likes, vibe_tag FROM posts WHERE username = ? ORDER BY id DESC", (f_user,)).fetchall()
                 for p in f_posts:
-                    st.markdown(f"*Tema: {p[5]}*")
-                    if p[1]:
-                        st.write(p[1])
-                    if p[2] and os.path.exists(p[2]):
-                        if p[3] == "video":
-                            st.video(p[2])
-                        else:
-                            st.image(p[2], use_container_width=True)
-                    st.markdown("---")
+                    render_post(p[0], f_user, p[1], p[2], p[3], p[4], p[5])
     else:
         st.warning("Inicia sesión para ver la actividad de tus seguidos.")
 
@@ -255,15 +281,7 @@ with tabs[2]:
                 st.info("Este usuario aún no ha publicado nada.")
             else:
                 for p in user_posts:
-                    st.markdown(f"*Tema: {p[5]}*")
-                    if p[1]:
-                        st.write(p[1])
-                    if p[2] and os.path.exists(p[2]):
-                        if p[3] == "video":
-                            st.video(p[2])
-                        else:
-                            st.image(p[2], use_container_width=True)
-                    st.markdown("---")
+                    render_post(p[0], target_user, p[1], p[2], p[3], p[4], p[5])
         else:
             st.info("Busca un usuario en el menú lateral para ver su perfil.")
     else:
