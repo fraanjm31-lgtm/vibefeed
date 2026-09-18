@@ -604,17 +604,17 @@ else:
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
           
-  elif menu_option == "🔍 Buscar Perfiles":
+    elif menu_option == "🔍 Buscar Perfiles":
     st.title("🔍 Buscar Perfiles")
     search_user = st.text_input("Escribe el nombre de usuario:")
-         if search_user:
-   c.execute(
+    if search_user:
+      c.execute(
           "SELECT username, bio, avatar, account_privacy FROM users WHERE"
           " username = ?",
           (search_user,),
       )
       target_user = c.fetchone()
-         if target_user:
+      if target_user:
         t_user, t_bio, t_avatar, t_privacy = target_user
         st.markdown(f"### @{t_user}")
         st.write(t_bio)
