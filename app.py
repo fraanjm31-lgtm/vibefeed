@@ -88,8 +88,8 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Barra de iconos estilo red social moderna (Me gusta, Comentarios, Repost, Enviar, Guardar)
-    col_l, col_c, col_r, col_s, col_b = st.columns([1, 1, 1, 1, 1])
+    # Usamos columnas con proporciones iguales para forzar que vayan de izquierda a derecha en una sola línea
+    col_l, col_c, col_r, col_s, col_b, col_empty = st.columns([0.8, 0.8, 0.8, 0.8, 0.8, 2.5])
     with col_l:
         if st.button("❤️", key=f"like_btn_{p_id}"):
             c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
@@ -105,17 +105,14 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
     with col_b:
         st.button("🔖", key=f"save_btn_{p_id}")
         
-    # Texto de likes y descripción estilo Instagram / Threads
     if p_likes > 0:
         st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
     else:
         st.markdown("❤️ *Sé el primero en darle Me gusta*")
         
-    # Sección desplegable de comentarios
     if st.session_state.get(f"show_comments_{p_id}", False):
         st.markdown("---")
         st.markdown("💬 **Comentarios:**")
-        # Aquí puedes dejar lista la caja de comentarios
         new_comment = st.text_input("Añade un comentario...", key=f"input_comm_{p_id}")
         if st.button("Publicar comentario", key=f"send_comm_{p_id}"):
             if new_comment.strip():
@@ -339,7 +336,7 @@ elif menu == "💬 Mensajes Privados":
         chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
         chat_c = chat_conn.cursor()
         
-        users_list = [u[0] for u in chat_c.execute("SELECT username WHERE username != ?", (cur,)).fetchall() if u[0] != cur]
+        users_list = [u[0] for u in chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
         if not users_list:
             st.info("No hay más usuarios registrados para chatear.")
