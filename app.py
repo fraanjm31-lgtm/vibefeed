@@ -18,6 +18,7 @@ st.markdown("""
         border-radius: 8px;
         padding: 0.4rem 0.8rem;
         font-weight: bold;
+        width: 100%;
     }
     .profile-stats {
         display: flex;
@@ -51,7 +52,6 @@ c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, passwo
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
 
-# Añadir columnas independientes para las distintas reacciones si no existen
 try:
     c.execute("ALTER TABLE posts ADD COLUMN fires INTEGER DEFAULT 0")
 except:
@@ -259,7 +259,7 @@ else:
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.image(p_file, width=320)
                 
-                # Fila independiente para Fuego, Me gusta y Corazón
+                # Reacciones puestas de lado (en columnas horizontales)
                 col_r1, col_r2, col_r3 = st.columns(3)
                 with col_r1:
                     if st.button(f"🔥 {p_fires if p_fires is not None else 0}", key=f"p_fire_{p_id}"):
@@ -377,4 +377,4 @@ else:
                 conn.commit()
                 st.success("¡Ajustes guardados correctamente!")
                 st.rerun()
-                
+                    
