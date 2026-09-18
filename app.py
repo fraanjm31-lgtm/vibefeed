@@ -59,7 +59,7 @@ c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, passwo
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
 
-# Asegurar que las columnas nuevas existan sin dar errores si ya existían
+# Asegurar columnas y esquemas actualizados sin errores
 try:
     c.execute("ALTER TABLE posts ADD COLUMN privacy TEXT DEFAULT 'Público'")
 except:
@@ -67,6 +67,11 @@ except:
 
 try:
     c.execute("ALTER TABLE users ADD COLUMN account_privacy TEXT DEFAULT 'Público'")
+except:
+    pass
+
+try:
+    c.execute("ALTER TABLE follows ADD COLUMN status TEXT DEFAULT 'accepted'")
 except:
     pass
 
@@ -152,14 +157,14 @@ else:
         priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Pública"
         st.title(f"@{cur} ({priv_badge})")
         
-        # Calcular estadísticas reales
+        # Calcular estadísticas reales (solo seguidores aceptados)
         c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
         total_posts = c.fetchone()[0]
 
-        c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,))
+        c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
         total_followers = c.fetchone()[0]
 
-        c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,))
+        c.execute("SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
         total_following = c.fetchone()[0]
 
         col1, col2 = st.columns([1, 2])
@@ -190,6 +195,30 @@ else:
             
         st.write(bio)
             
+        # GESTIÓN DE SOLICITUDES PENDIENTES SI LA CUENTA ES PRIVADA
+        c.execute("SELECT follower FROM follows WHERE followed = ? AND status = 'pending'", (cur,))
+        pending_requests = c.fetchall()
+        
+        if pending_requests:
+            st.markdown("---")
+            st.markdown("### 🔔 Solicitudes de seguimiento pendientes")
+            for req in pending_requests:
+                req_user = req[0]
+                cols_req = st.columns([2, 1, 1])
+                with cols_req[0]:
+                    st.write(f"**@{req_user}** quiere seguirte.")
+                with cols_req[1]:
+                    if st.button("Aceptar", key=f"accept_{req_user}"):
+                        c.execute("UPDATE follows SET status = 'accepted' WHERE follower = ? AND followed = ?", (req_user, cur))
+                        conn.commit()
+                        st.success(f"¡Has aceptado a @{req_user}!")
+                        st.rerun()
+                with cols_req[2]:
+                    if st.button("Rechazar", key=f"reject_{req_user}"):
+                        c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (req_user, cur))
+                        conn.commit()
+                        st.rerun()
+
         st.markdown("---")
         
         # Formulario desplegable para publicar contenido
@@ -289,26 +318,35 @@ else:
                 with col_u2:
                     st.write(t_bio)
                     
-                # Botón de seguir / dejar de seguir
-                c.execute("SELECT * FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
-                is_following = c.fetchone() is not None
+                # Comprobar estado de seguimiento (aceptado o pendiente)
+                c.execute("SELECT status FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
+                row_follow = c.fetchone()
+                follow_status = row_follow[0] if row_follow else None
                 
                 if t_user != cur:
-                    if is_following:
+                    if follow_status == 'accepted':
                         if st.button("Siguiendo 👤✓"):
                             c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
                             conn.commit()
                             st.rerun()
+                    elif follow_status == 'pending':
+                        if st.button("Solicitud Enviada ⏳"):
+                            c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
+                            conn.commit()
+                            st.rerun()
                     else:
-                        if st.button("Seguir ➕"):
-                            c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (cur, t_user))
+                        btn_label = "Solicitar Seguir 🔒" if t_privacy == "Privado" else "Seguir ➕"
+                        if st.button(btn_label):
+                            initial_status = 'pending' if t_privacy == "Privado" else 'accepted'
+                            c.execute("INSERT INTO follows (follower, followed, status) VALUES (?, ?, ?)", (cur, t_user, initial_status))
                             conn.commit()
                             st.rerun()
 
                 st.markdown("---")
                 
-                if t_privacy == "Privado" and t_user != cur and not is_following:
-                    st.warning("🔒 **Esta cuenta es privada.** Solo sus seguidores pueden ver sus fotos y vídeos.")
+                # REGLA DE VISIBILIDAD DE CONTENIDO
+                if t_privacy == "Privado" and t_user != cur and follow_status != 'accepted':
+                    st.warning("🔒 **Esta cuenta es privada.** Envía una solicitud de seguimiento para ver sus fotos y vídeos.")
                 else:
                     st.markdown("#### Publicaciones:")
                     c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (t_user,))
@@ -344,7 +382,12 @@ else:
             res_priv = c.fetchone()
             u_priv = res_priv[0] if res_priv else "Público"
             
-            if u_priv == "Privado" and p_user != cur:
+            # Verificar si el usuario actual lo sigue con estado 'accepted'
+            c.execute("SELECT status FROM follows WHERE follower = ? AND followed = ?", (cur, p_user))
+            f_row = c.fetchone()
+            is_accepted = f_row and f_row[0] == 'accepted'
+            
+            if u_priv == "Privado" and p_user != cur and not is_accepted:
                 continue
                 
             st.markdown(f"**@{p_user}** · `{p_tag}` · {p_time}")
@@ -373,7 +416,6 @@ else:
     elif menu_option == "Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
-        # Cargar datos actuales del usuario para los campos de ajustes
         c.execute("SELECT bio, avatar, account_privacy FROM users WHERE username = ?", (cur,))
         u_settings = c.fetchone()
         current_bio = u_settings[0] if u_settings and u_settings[0] else ""
