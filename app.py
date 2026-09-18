@@ -241,8 +241,13 @@ else:
                 st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
-                    st.image(p_file, width=320)  # <-- Imagen más pequeña y manejable
-                st.markdown(f"❤️ {p_likes} Me gusta")
+                    st.image(p_file, width=320)
+                
+                # Botón interactivo de Like
+                if st.button(f"🔥 Dar Vibe ({p_likes})", key=f"profile_like_{p_id}"):
+                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    conn.commit()
+                    st.rerun()
                 st.markdown("---")
         else:
             st.markdown("### 🎬 Tus Vídeos")
@@ -253,7 +258,11 @@ else:
                 if p_cap: st.write(p_cap)
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file): 
                     st.video(p_file)
-                st.markdown(f"❤️ {p_likes} Me gusta")
+                
+                if st.button(f"🔥 Dar Vibe ({p_likes})", key=f"profile_video_like_{p_id}"):
+                    c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                    conn.commit()
+                    st.rerun()
                 st.markdown("---")
 
     elif menu_option == "Buscar / Ver Perfiles":
@@ -277,7 +286,12 @@ else:
             if p_cap: st.write(p_cap)
             if p_file and isinstance(p_file, str) and os.path.exists(p_file):
                 if p_type == "video": st.video(p_file)
-                else: st.image(p_file, width=320)  # <-- Imagen más pequeña en el muro global
+                else: st.image(p_file, width=320)
+            
+            if st.button(f"🔥 Dar Vibe ({p_likes})", key=f"muro_like_{p_id}"):
+                c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+                conn.commit()
+                st.rerun()
             st.markdown("---")
 
     elif menu_option == "Siguiendo":
