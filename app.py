@@ -449,5 +449,4 @@ elif menu == "💬 Mensajes Privados":
 elif menu == "⚙️ Ajustes":
     st.subheader("⚙️ Ajustes")
     sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
-    if sel_theme != st.session_state['theme']:
-        st.session_s
+    if sel_theme != st.session_state.get('theme', 'Modo Oscuro 🌙')
