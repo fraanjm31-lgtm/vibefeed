@@ -90,14 +90,13 @@ else:
 
 st.markdown(f"""
     <style>
-    header [data-testid="stToolbar"] a[href*="github"],
-    header [data-testid="stToolbar"] button[kind="header"],
-    header [data-testid="stToolbar"] [title*="Edit"],
-    header [data-testid="stToolbar"] [title*="Share"],
-    header [data-testid="stToolbar"] button[aria-label*="Share"],
-    header [data-testid="stToolbar"] button[aria-label="Edit"],
-    header [data-testid="stToolbar"] [data-testid="stDecoration"],
-    header [data-testid="collapsedControl"] {{
+    /* Ocultar elementos de Streamlit y el botón flotante Manage app */
+    header [data-testid="stToolbar"],
+    [data-testid="stStatusWidget"],
+    div.viewerBadge_container__1QSob,
+    #MainMenu,
+    footer,
+    .stDeployButton {{
         display: none !important;
     }}
     
@@ -433,26 +432,17 @@ else:
         st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
-    elif menu_option == "💬 Mensajes":
-        st.title("💬 Mensajes Directos")
-        st.write("Tus chats privados.")
-
     elif menu_option == "⚙️ Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
-        c.execute("SELECT bio, avatar, account_privacy, theme FROM users WHERE username = ?", (cur,))
+        c.execute("SELECT bio, avatar, theme FROM users WHERE username = ?", (cur,))
         u_settings = c.fetchone()
         
         current_bio = u_settings[0] if u_settings and u_settings[0] is not None else ""
-        current_acc_priv = u_settings[2] if u_settings and len(u_settings) > 2 and u_settings[2] is not None else "Publico"
-        current_db_theme = u_settings[3] if u_settings and len(u_settings) > 3 and u_settings[3] is not None else "Oscuro"
+        current_db_theme = u_settings[2] if u_settings and len(u_settings) > 2 and u_settings[2] is not None else "Oscuro"
         
         with st.form("settings_form"):
             new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
-            
-            priv_index = 0 if current_acc_priv == "Publico" else 1
-            priv_options = ["Publico", "Privado"]
-            priv_choice = st.selectbox("Privacidad del Perfil", priv_options, index=priv_index)
             
             temas_disponibles = ["Oscuro", "Claro", "Neon / Cyber"]
             current_theme_index = temas_disponibles.index(current_db_theme) if current_db_theme in temas_disponibles else 0
@@ -461,10 +451,6 @@ else:
             submit_settings = st.form_submit_button("Guardar cambios")
             
         if submit_settings:
-            c.execute("UPDATE users SET bio = ?, account_privacy = ?, theme = ? WHERE username = ?", (new_bio, priv_choice, new_theme, cur))
+            c.execute("UPDATE users SET bio = ?, theme = ? WHERE username = ?", (new_bio, new_theme, cur))
             conn.commit()
-            st.session_state.theme = new_theme
-            st.success("Ajustes actualizados correctamente!")
-            st.rerun()
-            
-            
+            st.session_state.theme = new_t
