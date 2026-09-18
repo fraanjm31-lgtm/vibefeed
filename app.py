@@ -6,22 +6,6 @@ import hashlib
 
 st.set_page_config(page_title="NoxVibe", page_icon="⚡", layout="centered")
 
-# CSS definitivo para prohibir que baje los botones en móviles
-st.markdown("""
-    <style>
-        [data-testid="stHorizontalBlock"] {
-            display: flex !important;
-            flex-direction: row !important;
-            flex-wrap: nowrap !important;
-        }
-        [data-testid="column"] {
-            flex: 1 !important;
-            width: auto !important;
-            min-width: unset !important;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -104,21 +88,23 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    col_l, col_c, col_r, col_s, col_b = st.columns(5)
-    with col_l:
-        if st.button("❤️", key=f"like_btn_{p_id}"):
+    # Solución definitiva mediante botones nativos compactos alineados en horizontal uno al lado del otro
+    col1, col2, col3, col4, col5 = st.columns([1, 1, 1, 1, 1])
+    
+    with col1:
+        if st.button("❤️", key=f"like_{p_id}"):
             c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
             conn.commit()
             st.rerun()
-    with col_c:
-        if st.button("💬", key=f"com_btn_{p_id}"):
+    with col2:
+        if st.button("💬", key=f"com_{p_id}"):
             st.session_state[f"show_comments_{p_id}"] = not st.session_state.get(f"show_comments_{p_id}", False)
-    with col_r:
-        st.button("🔄", key=f"repost_btn_{p_id}")
-    with col_s:
-        st.button("↗️", key=f"share_btn_{p_id}")
-    with col_b:
-        st.button("🔖", key=f"save_btn_{p_id}")
+    with col3:
+        st.button("🔄", key=f"rep_{p_id}")
+    with col4:
+        st.button("↗️", key=f"sha_{p_id}")
+    with col5:
+        st.button("🔖", key=f"sav_{p_id}")
         
     if p_likes > 0:
         st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
