@@ -137,15 +137,14 @@ st.markdown(
 
 
 def enviar_codigo_correo(destinatario, codigo):
-  st.success(f"🔑 Tu código de verificación es: **{codigo}**")
-  return True
-    
+  remitente = "labachito91@gmail.com"
+  password = "tu_contraseña_de_16_caracteres"
 
   msg = EmailMessage()
   msg.set_content(
-      f"¡Hola!\n\nTu código de verificación para registrarte en NoxVibe es:"
+      f"¡Hola!\n\nTu código de verificación para registrarte en NoxVibe es:\n"
       f" {codigo}\n\nIntroduce este código en la aplicación para completar tu"
-      f" registro."
+      " registro."
   )
   msg["Subject"] = "Código de verificación - NoxVibe"
   msg["From"] = remitente
@@ -159,6 +158,7 @@ def enviar_codigo_correo(destinatario, codigo):
   except Exception as e:
     print(f"Error al enviar correo: {e}")
     return False
+      
 
 
 def ai_vibe_checker(text):
