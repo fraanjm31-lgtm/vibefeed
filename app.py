@@ -407,13 +407,7 @@ elif menu == "💬 Mensajes Privados":
                     inner_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
                     inner_c = inner_conn.cursor()
                     
-                    msgs = inner_c.execute("""
-                        SELECT sender, message, timestamp 
-                        FROM messages 
-                        WHERE (sender = ? AND receiver = ?) 
-                           OR (sender = ? AND receiver = ?) 
-                        ORDER BY id ASC
-                    """, (cur, partner, partner, cur)).fetchall()
+                    msgs = inner_c.execute("SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC", (cur, partner, partner, cur)).fetchall()
                     
                     inner_conn.close()
                     
@@ -452,5 +446,8 @@ elif menu == "⚙️ Ajustes":
     
     if is_logged and username:
         try:
-            row_p = c.execute(
-                "SELECT is_private FROM users WHERE 
+            row_p = c.execute("SELECT is_private FROM users WHERE username = ?", (username,)).fetchone()
+            cur_val = row_p[0] if row_p and row_p[0] is not None else 0
+        except Exception:
+            cur_val = 0
+         
