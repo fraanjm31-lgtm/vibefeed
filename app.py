@@ -6,6 +6,23 @@ import hashlib
 
 st.set_page_config(page_title="NoxVibe", page_icon="⚡", layout="centered")
 
+# CSS para evitar que Streamlit ponga las columnas en vertical en el móvil
+st.markdown("""
+    <style>
+        /* Forzar que las columnas se queden en horizontal en móviles */
+        [data-testid="stHorizontalBlock"] {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+        }
+        [data-testid="column"] {
+            width: auto !important;
+            flex: 1 !important;
+            min-width: 35px !important;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -88,16 +105,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Forzamos mediante HTML/CSS que los botones de acción vayan estrictamente en horizontal
-    st.markdown("""
-        <style>
-            .row-widget.stButton {
-                display: inline-block;
-                margin-right: 5px;
-            }
-        </style>
-    """, unsafe_allow_html=True)
-
     col_l, col_c, col_r, col_s, col_b = st.columns(5)
     with col_l:
         if st.button("❤️", key=f"like_btn_{p_id}"):
@@ -402,4 +409,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-                    
+        
