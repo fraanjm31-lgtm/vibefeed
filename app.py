@@ -5,47 +5,70 @@ from datetime import datetime, date
 
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
-st.markdown("""
+# Gestionar el tema visual guardado en la sesión
+if 'theme' not in st.session_state:
+    st.session_state.theme = "Oscuro (Por defecto)"
+
+# Definir colores según el tema elegido
+if st.session_state.theme == "Claro":
+    bg_color = "#ffffff"
+    text_color = "#000000"
+    box_bg = "#f0f2f6"
+    sub_text = "#555555"
+elif st.session_state.theme == "Neón / Cyber":
+    bg_color = "#05050a"
+    text_color = "#00ffcc"
+    box_bg = "#121224"
+    sub_text = "#ff007f"
+else:  # Oscuro
+    bg_color = "#0e1117"
+    text_color = "#ffffff"
+    box_bg = "#161b22"
+    sub_text = "#8b949e"
+
+st.markdown(f"""
     <style>
-    /* Ocultar iconos de desarrollo y GitHub de la barra flotante */
+    /* Ocultar elementos sobrantes de la barra superior */
     header [data-testid="stToolbar"] a[href*="github"],
     header [data-testid="stToolbar"] button[kind="header"],
     header [data-testid="stToolbar"] [title*="Edit"],
     header [data-testid="stToolbar"] [title*="Share"],
     header [data-testid="stToolbar"] button[aria-label*="Share"],
-    header [data-testid="stToolbar"] button[aria-label*="Edit"] {
+    header [data-testid="stToolbar"] button[aria-label="Edit"],
+    header [data-testid="stToolbar"] [data-testid="stDecoration"],
+    header [data-testid="collapsedControl"] {{
         display: none !important;
-    }
+    }}
     
-    .stApp {
-        background-color: #0e1117;
-        color: #ffffff;
-    }
-    .profile-stats {
+    .stApp {{
+        background-color: {bg_color};
+        color: {text_color};
+    }}
+    .profile-stats {{
         display: flex;
         justify-content: space-around;
         text-align: center;
-        background: #161b22;
+        background: {box_bg};
         padding: 10px;
         border-radius: 10px;
         margin-bottom: 10px;
-    }
-    .stat-box {
+    }}
+    .stat-box {{
         display: inline-block;
         margin: 0 8px;
-    }
-    .stat-num {
+    }}
+    .stat-num {{
         font-size: 18px;
         font-weight: bold;
-        color: #ffffff;
-    }
-    .stat-label {
+        color: {text_color};
+    }}
+    .stat-label {{
         font-size: 12px;
-        color: #8b949e;
-    }
-    .video-container {
+        color: {sub_text};
+    }}
+    .video-container {{
         position: relative;
-        background: #161b22;
+        background: {box_bg};
         border-radius: 15px;
         padding: 15px;
         margin-bottom: 20px;
@@ -66,37 +89,30 @@ try:
     c.execute("ALTER TABLE users ADD COLUMN email TEXT")
 except:
     pass
-
 try:
     c.execute("ALTER TABLE posts ADD COLUMN fires INTEGER DEFAULT 0")
 except:
     pass
-
 try:
     c.execute("ALTER TABLE posts ADD COLUMN thumbs INTEGER DEFAULT 0")
 except:
     pass
-
 try:
     c.execute("ALTER TABLE posts ADD COLUMN hearts INTEGER DEFAULT 0")
 except:
     pass
-
 try:
     c.execute("ALTER TABLE posts ADD COLUMN privacy TEXT DEFAULT 'Público'")
 except:
     pass
-
 try:
     c.execute("ALTER TABLE users ADD COLUMN account_privacy TEXT DEFAULT 'Público'")
 except:
     pass
-
 try:
     c.execute("ALTER TABLE follows ADD COLUMN status TEXT DEFAULT 'accepted'")
 except:
     pass
-
 try:
     c.execute("ALTER TABLE users ADD COLUMN coins INTEGER DEFAULT 100")
 except:
@@ -235,7 +251,6 @@ else:
                 p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
                 
                 st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
-                
                 col_vid, col_act = st.columns([4, 1])
                 
                 with col_vid:
@@ -270,10 +285,8 @@ else:
         
         c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
         total_posts = c.fetchone()[0]
-
         c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
         total_followers = c.fetchone()[0]
-
         c.execute("SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
         total_following = c.fetchone()[0]
 
@@ -420,10 +433,7 @@ else:
             priv_index = 0 if current_acc_priv == "Público" else 1
             priv_choice = st.selectbox("Privacidad del Perfil", ["Público", "Privado"], index=priv_index)
             
-            submit_settings = st.form_submit_button("Guardar cambios")
-            if submit_settings:
-                c.execute("UPDATE users SET bio = ?, account_privacy = ? WHERE username = ?", (new_bio, priv_choice, cur))
-                conn.commit()
-                st.success("¡Ajustes guardados correctamente!")
-                st.rerun()
-                
+            # Selector de tema de colores para que el usuario elija
+            temas_disponibles = ["Oscuro (Por defecto)", "Claro", "Neón / Cyber"]
+            current_theme_index = temas_disponibles.index(st.session_state.theme) if st.session_state.theme in temas_disponibles else 0
+          
