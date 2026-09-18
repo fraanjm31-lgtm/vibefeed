@@ -59,9 +59,14 @@ c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, passwo
 c.execute('''CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)''')
 c.execute('''CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)''')
 
-# Asegurar que la columna de privacidad existe sin dar errores si ya existiera
+# Asegurar que las columnas nuevas existan sin dar errores si ya existían
 try:
     c.execute("ALTER TABLE posts ADD COLUMN privacy TEXT DEFAULT 'Público'")
+except:
+    pass
+
+try:
+    c.execute("ALTER TABLE users ADD COLUMN account_privacy TEXT DEFAULT 'Público'")
 except:
     pass
 
@@ -89,7 +94,7 @@ if 'logged_in' not in st.session_state:
 
 # Menú lateral de navegación
 st.sidebar.title("🧭 Menú")
-menu_option = st.sidebar.radio("Navegación", ["Mi Perfil", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
+menu_option = st.sidebar.radio("Navegación", ["Mi Perfil", "Buscar / Ver Perfiles", "Siguiendo", "Muro 24h", "Explorar Canales", "Mensajes", "Ajustes"])
 
 if st.session_state.logged_in:
     st.sidebar.markdown(f"---")
@@ -122,8 +127,8 @@ if not st.session_state.logged_in:
         if st.button("Crear cuenta"):
             if r_user and r_pass:
                 try:
-                    c.execute("INSERT INTO users (username, password, xp, bio, avatar) VALUES (?, ?, ?, ?, ?)", 
-                              (r_user, r_pass, 10, "¡Hola! Estoy usando NoxVibe.", ""))
+                    c.execute("INSERT INTO users (username, password, xp, bio, avatar, account_privacy) VALUES (?, ?, ?, ?, ?, ?)", 
+                              (r_user, r_pass, 10, "¡Hola! Estoy usando NoxVibe.", "", "Público"))
                     conn.commit()
                     st.success("¡Cuenta creada con éxito! Ya puedes iniciar sesión.")
                 except:
@@ -135,17 +140,19 @@ if not st.session_state.logged_in:
 else:
     cur = st.session_state.username
     
-    # Obtener datos del usuario
-    c.execute("SELECT xp, bio, avatar FROM users WHERE username = ?", (cur,))
-    user_data = c.fetchone()
-    xp = user_data[0] if user_data else 0
-    bio = user_data[1] if user_data else ""
-    avatar = user_data[2] if user_data else ""
-
     if menu_option == "Mi Perfil":
-        st.title(f"@{cur}")
+        # Obtener datos del usuario actual
+        c.execute("SELECT xp, bio, avatar, account_privacy FROM users WHERE username = ?", (cur,))
+        user_data = c.fetchone()
+        xp = user_data[0] if user_data else 0
+        bio = user_data[1] if user_data else ""
+        avatar = user_data[2] if user_data else ""
+        account_privacy = user_data[3] if user_data else "Público"
+
+        priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Pública"
+        st.title(f"@{cur} ({priv_badge})")
         
-        # Calcular estadísticas reales de la base de datos
+        # Calcular estadísticas reales
         c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
         total_posts = c.fetchone()[0]
 
@@ -155,7 +162,6 @@ else:
         c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,))
         total_following = c.fetchone()[0]
 
-        # Perfil con foto a la izquierda y contadores + bio ordenados a la derecha
         col1, col2 = st.columns([1, 2])
         with col1:
             if avatar and os.path.exists(avatar):
@@ -186,12 +192,11 @@ else:
             
         st.markdown("---")
         
-        # Formulario desplegable para publicar contenido con Privacidad
+        # Formulario desplegable para publicar contenido
         with st.expander("✏️ Publicar Contenido", expanded=False):
             with st.form("new_post_form", clear_on_submit=True):
                 cap = st.text_input("¿Qué estás pensando?")
                 uploaded_file = st.file_uploader("Sube foto o vídeo", type=["jpg", "png", "mp4", "mov"])
-                privacy_option = st.selectbox("Privacidad de la publicación", ["Público", "🔒 Solo Amigos (Privado)"])
                 
                 if st.form_submit_button("Publicar con IA 🚀"):
                     path_to_save = ""
@@ -207,10 +212,10 @@ else:
                     now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
                     
                     c.execute("INSERT INTO posts (username, caption, file, file_type, likes, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", 
-                              (cur, cap, path_to_save, f_type, 0, auto_tag, now_str, privacy_option))
+                              (cur, cap, path_to_save, f_type, 0, auto_tag, now_str, "Público"))
                     c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,))
                     conn.commit()
-                    st.success(f"¡Publicado como {privacy_option}! {ai_msg} (+15 XP)")
+                    st.success(f"¡Publicado! {ai_msg} (+15 XP)")
                     st.rerun()
 
         # Botones de separación estilo barra de perfil (Fotos / Vídeos)
@@ -224,19 +229,18 @@ else:
 
         st.markdown("---")
 
-        # Mostrar contenido según la pestaña seleccionada (incluyendo el indicador de privacidad)
+        # Mostrar contenido según la pestaña seleccionada
         if st.session_state.profile_tab == "Fotos":
             st.markdown("### 🖼️ Tus Fotos")
-            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp, privacy FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
+            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC", (cur,))
             photo_posts = c.fetchall()
             
             if not photo_posts:
                 st.info("No tienes fotos publicadas todavía.")
             
             for post in photo_posts:
-                p_cap, p_file, p_type, p_likes, p_tag, p_time, p_priv = post
-                priv_icon = "🌐" if p_priv == "Público" else "🔒"
-                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time} · {priv_icon} *{p_priv}*")
+                p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap:
                     st.write(p_cap)
                 if p_file and os.path.exists(p_file):
@@ -246,16 +250,15 @@ else:
                 
         else:
             st.markdown("### 🎬 Tus Vídeos")
-            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp, privacy FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
+            c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC", (cur,))
             video_posts = c.fetchall()
             
             if not video_posts:
                 st.info("No tienes vídeos publicados todavía.")
                 
             for post in video_posts:
-                p_cap, p_file, p_type, p_likes, p_tag, p_time, p_priv = post
-                priv_icon = "🌐" if p_priv == "Público" else "🔒"
-                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time} · {priv_icon} *{p_priv}*")
+                p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
                 if p_cap:
                     st.write(p_cap)
                 if p_file and os.path.exists(p_file):
@@ -263,25 +266,91 @@ else:
                 st.markdown(f"❤️ {p_likes} Me gusta")
                 st.markdown("---")
 
+    elif menu_option == "Buscar / Ver Perfiles":
+        st.title("🔍 Buscar Perfiles")
+        search_user = st.text_input("Escribe el nombre de usuario que quieres buscar:")
+        
+        if search_user:
+            c.execute("SELECT username, bio, avatar, account_privacy FROM users WHERE username = ?", (search_user,))
+            target_user = c.fetchone()
+            
+            if not target_user:
+                st.error("No se ha encontrado ningún usuario con ese nombre.")
+            else:
+                t_user, t_bio, t_avatar, t_privacy = target_user
+                
+                st.markdown(f"### Perfil de @{t_user}")
+                col_u1, col_u2 = st.columns([1, 2])
+                with col_u1:
+                    if t_avatar and os.path.exists(t_avatar):
+                        st.image(t_avatar, width=100)
+                    else:
+                        st.image("https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150", width=100)
+                with col_u2:
+                    st.write(t_bio)
+                    
+                # Botón de seguir / dejar de seguir
+                c.execute("SELECT * FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
+                is_following = c.fetchone() is not None
+                
+                if t_user != cur:
+                    if is_following:
+                        if st.button("Siguiendo 👤✓"):
+                            c.execute("DELETE FROM follows WHERE follower = ? AND followed = ?", (cur, t_user))
+                            conn.commit()
+                            st.rerun()
+                    else:
+                        if st.button("Seguir ➕"):
+                            c.execute("INSERT INTO follows (follower, followed) VALUES (?, ?)", (cur, t_user))
+                            conn.commit()
+                            st.rerun()
+
+                st.markdown("---")
+                
+                # REGLA DE PRIVACIDAD: Si el perfil es privado y no eres tú, se bloquea la vista de publicaciones
+                if t_privacy == "Privado" and t_user != cur and not is_following:
+                    st.warning("🔒 **Esta cuenta es privada.** Solo sus seguidores pueden ver sus fotos y vídeos.")
+                else:
+                    st.markdown("#### Publicaciones:")
+                    c.execute("SELECT caption, file, file_type, likes, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (t_user,))
+                    user_posts = c.fetchall()
+                    
+                    if not user_posts:
+                        st.info("Este usuario no tiene publicaciones.")
+                    
+                    for post in user_posts:
+                        p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+                        st.markdown(f"**@{t_user}** · `{p_tag}` · {p_time}")
+                        if p_cap:
+                            st.write(p_cap)
+                        if p_file and os.path.exists(p_file):
+                            if p_type == "video":
+                                st.video(p_file)
+                            else:
+                                st.image(p_file, use_column_width=True)
+                        st.markdown(f"❤️ {p_likes} Me gusta")
+                        st.markdown("---")
+
     elif menu_option == "Muro 24h":
         st.title("🌐 Muro Global 24h")
-        st.write("Explora lo que comparte la comunidad de NoxVibe:")
+        st.write("Explora lo que comparte la comunidad:")
         
-        # En el muro global solo mostramos los que son públicos (o los propios del usuario)
-        c.execute("SELECT username, caption, file, file_type, likes, vibe_tag, timestamp, privacy FROM posts ORDER BY id DESC")
+        c.execute("SELECT username, caption, file, file_type, likes, vibe_tag, timestamp FROM posts ORDER BY id DESC")
         all_posts = c.fetchall()
         
-        if not all_posts:
-            st.info("El muro está tranquilo por ahora. ¡Sé el primero en publicar algo!")
-            
         for post in all_posts:
-            p_user, p_cap, p_file, p_type, p_likes, p_tag, p_time, p_priv = post
-            # Si es privado y no es el usuario actual, nos lo saltamos del muro global
-            if p_priv != "Público" and p_user != cur:
+            p_user, p_cap, p_file, p_type, p_likes, p_tag, p_time = post
+            
+            # Verificar si el usuario dueño del post tiene el perfil privado
+            c.execute("SELECT account_privacy FROM users WHERE username = ?", (p_user,))
+            res_priv = c.fetchone()
+            u_priv = res_priv[0] if res_priv else "Público"
+            
+            # Si es privado y no eres tú, no sale en el muro global
+            if u_priv == "Privado" and p_user != cur:
                 continue
                 
-            priv_icon = "🌐" if p_priv == "Público" else "🔒"
-            st.markdown(f"**@{p_user}** · `{p_tag}` · {p_time} · {priv_icon}")
+            st.markdown(f"**@{p_user}** · `{p_tag}` · {p_time}")
             if p_cap:
                 st.write(p_cap)
             if p_file and os.path.exists(p_file):
@@ -310,6 +379,10 @@ else:
         new_bio = st.text_area("Actualizar tu biografía", value=bio)
         new_avatar = st.file_uploader("Sube tu nueva foto de perfil", type=["jpg", "png", "jpeg"])
         
+        c.execute("SELECT account_privacy FROM users WHERE username = ?", (cur,))
+        current_acc_priv = c.fetchone()[0]
+        priv_choice = st.selectbox("Privacidad del Perfil", ["Público", "Privado"], index=0 if current_acc_priv == "Público" else 1)
+        
         if st.button("Guardar cambios"):
             avatar_path = avatar
             if new_avatar is not None:
@@ -318,8 +391,8 @@ else:
                 with open(avatar_path, "wb") as f:
                     f.write(new_avatar.getbuffer())
             
-            c.execute("UPDATE users SET bio = ?, avatar = ? WHERE username = ?", (new_bio, avatar_path, cur))
+            c.execute("UPDATE users SET bio = ?, avatar = ?, account_privacy = ? WHERE username = ?", (new_bio, avatar_path, priv_choice, cur))
             conn.commit()
-            st.success("¡Perfil y foto actualizados con éxito!")
+            st.success("¡Perfil y ajustes de privacidad actualizados con éxito!")
             st.rerun()
             
