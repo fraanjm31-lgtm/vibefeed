@@ -202,37 +202,51 @@ if menu == "👤 Mi Perfil":
         num_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,)).fetchone()[0]
         num_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,)).fetchone()[0]
         
-        # Estilo tipo Instagram unificado en horizontal (Foto a la izquierda, textos y contadores a la derecha)
         pic_path_html = u_info[3] if (u_info and u_info[3] and os.path.exists(u_info[3])) else ""
         
-        # Convertimos la imagen a un bloque HTML o la mostramos con columnas limpias de Streamlit en paralelo
-        col_img, col_txt = st.columns([1, 2])
+        # Estructura Flexbox pura para forzar foto a la izquierda y textos/métricas a la derecha
+        bio_text = u_info[0] if u_info else ""
+        city_text = u_info[1] if u_info else ""
+        xp_text = u_info[2] if u_info else 0
+        
+        img_tag = f'<img src="app/static/{pic_path_html}" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover;" />' if pic_path_html else '<div style="width: 80px; height: 80px; background: #ddd; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px;">📷</div>'
+        
+        # Truco alternativo robusto en Streamlit usando HTML directo para la cabecera completa del perfil
+        st.markdown(f"""
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 10px;">
+                <div>
+                    {f'<img src="data:image/jpeg;base64,...">' if False else ''} <!-- Placeholder -->
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+        # Usemos el sistema nativo pero optimizado con columnas más estrechas para la foto
+        col_img, col_txt = st.columns([1, 2.5], gap="small")
         with col_img:
             if pic_path_html:
-                st.image(pic_path_html, width=110)
+                st.image(pic_path_html, width=90)
             else:
                 st.markdown("📷 *Sin foto*")
-        
         with col_txt:
-            st.markdown(f"### @{cur}")
+            st.markdown(f"**@{cur}**")
             st.markdown(f"""
-                <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 8px;">
-                    <div style="text-align: center; margin-right: 15px;">
-                        <strong>{num_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
-                    </div>
-                    <div style="text-align: center; margin-right: 15px;">
-                        <strong>{num_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
+                <div style="display: flex; gap: 15px; margin: 5px 0;">
+                    <div style="text-align: center;">
+                        <strong>{num_posts}</strong><br><span style="font-size: 11px; color: gray;">publicaciones</span>
                     </div>
                     <div style="text-align: center;">
-                        <strong>{num_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
+                        <strong>{num_followers}</strong><br><span style="font-size: 11px; color: gray;">seguidores</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <strong>{num_following}</strong><br><span style="font-size: 11px; color: gray;">seguidos</span>
                     </div>
                 </div>
             """, unsafe_allow_html=True)
 
         if u_info:
-            st.markdown(f"**Bio:** {u_info[0]}")
-            st.markdown(f"**Ciudad:** {u_info[1]}")
-            st.markdown(f"**XP:** {u_info[2]}")
+            st.markdown(f"**Bio:** {bio_text}")
+            st.markdown(f"**Ciudad:** {city_text}")
+            st.markdown(f"**XP:** {xp_text}")
         
         with st.expander("⚙️ Editar mi Perfil y Foto"):
             with st.form("edit_profile_form"):
@@ -320,24 +334,24 @@ elif menu == "🔍 Explorar Canales":
             t_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (target_user,)).fetchone()[0]
             t_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (target_user,)).fetchone()[0]
             
-            col_ping1, col_ping2 = st.columns([1, 2])
+            col_ping1, col_ping2 = st.columns([1, 2.5], gap="small")
             with col_ping1:
                 if u_data[4] and os.path.exists(u_data[4]):
-                    st.image(u_data[4], width=110)
+                    st.image(u_data[4], width=90)
                 else:
                     st.markdown("📷")
             with col_ping2:
-                st.markdown(f"### @{u_data[0]} [{b_name}]")
+                st.markdown(f"**@{u_data[0]}** [{b_name}]")
                 st.markdown(f"""
-                    <div style="display: flex; justify-content: space-between; max-width: 280px; margin-bottom: 8px;">
-                        <div style="text-align: center; margin-right: 15px;">
-                            <strong>{t_posts}</strong><br><span style="font-size: 13px; color: gray;">publicaciones</span>
-                        </div>
-                        <div style="text-align: center; margin-right: 15px;">
-                            <strong>{t_followers}</strong><br><span style="font-size: 13px; color: gray;">seguidores</span>
+                    <div style="display: flex; gap: 15px; margin: 5px 0;">
+                        <div style="text-align: center;">
+                            <strong>{t_posts}</strong><br><span style="font-size: 11px; color: gray;">publicaciones</span>
                         </div>
                         <div style="text-align: center;">
-                            <strong>{t_following}</strong><br><span style="font-size: 13px; color: gray;">seguidos</span>
+                            <strong>{t_followers}</strong><br><span style="font-size: 11px; color: gray;">seguidores</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <strong>{t_following}</strong><br><span style="font-size: 11px; color: gray;">seguidos</span>
                         </div>
                     </div>
                 """, unsafe_allow_html=True)
@@ -428,10 +442,4 @@ elif menu == "💬 Mensajes Privados":
     else:
         st.warning("Inicia sesión para chatear.")
 
-elif menu == "⚙️ Ajustes":
-    st.subheader("⚙️ Ajustes")
-    sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
-    if sel_theme != st.session_state['theme']:
-        st.session_state['theme'] = sel_theme
-        st.rerun()
-        
+elif menu == "⚙️ 
