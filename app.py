@@ -203,9 +203,9 @@ if menu == "👤 Mi Perfil":
     if st.session_state['logged_in']:
         cur = st.session_state['username']
         
-        # Guardar cambios si se envió el formulario de edición
+        u_info_form = c.execute("SELECT bio, city, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
+        
         with st.expander("⚙️ Editar mi Perfil y Foto", expanded=False):
-            u_info_form = c.execute("SELECT bio, city, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
             with st.form("edit_profile_form"):
                 new_bio = st.text_area("Biografía", value=u_info_form[0] if u_info_form else "")
                 new_city = st.text_input("Ciudad", value=u_info_form[1] if u_info_form else "")
@@ -228,7 +228,6 @@ if menu == "👤 Mi Perfil":
                     st.success("¡Perfil actualizado con éxito!")
                     st.rerun()
 
-        # Volver a leer los datos actualizados de la base de datos
         u_info = c.execute("SELECT bio, city, xp, profile_pic, is_private FROM users WHERE username = ?", (cur,)).fetchone()
         
         num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
@@ -441,4 +440,6 @@ elif menu == "💬 Mensajes Privados":
                         if txt.strip():
                             chat_c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
-                                (cur, pa
+                                (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
+                            )
+                            chat_conn.com
