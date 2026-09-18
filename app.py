@@ -137,8 +137,9 @@ st.markdown(
 
 
 def enviar_codigo_correo(destinatario, codigo):
-  remitente = "tu_correo@gmail.com"
-  password = "tu_contraseña_de_aplicacion"
+  st.success(f"🔑 Tu código de verificación es: **{codigo}**")
+  return True
+    
 
   msg = EmailMessage()
   msg.set_content(
