@@ -446,8 +446,10 @@ else:
             
             submit_settings = st.form_submit_button("Guardar cambios")
             
-        if submit_settings:
+                if submit_settings:
             c.execute("UPDATE users SET bio = ?, theme = ? WHERE username = ?", (new_bio, new_theme, cur))
             conn.commit()
             st.session_state.theme = new_theme
-            st.success("Ajustes actualizados correc
+            st.success("¡Cambios guardados!")
+            st.rerun()
+            
