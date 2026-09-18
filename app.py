@@ -128,7 +128,7 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
-# --- BARRA DE NAVEGACIÓN ESTILO APP MÓVIL ---
+# --- BARRA DE NAVEGACIÓN SUPERIOR ---
 menu_options = [
     "👤 Mi Perfil", 
     "👥 Siguiendo", 
@@ -137,7 +137,6 @@ menu_options = [
     "⚙️ Ajustes"
 ]
 
-# Creamos una barra horizontal de opciones usando radio con formato en columnas o un selectbox limpio
 selected_tab = st.radio("Navegación rápida:", menu_options, horizontal=True, label_visibility="collapsed")
 
 st.markdown("---")
@@ -146,7 +145,6 @@ with st.sidebar:
     st.subheader("🧭 Menú Lateral")
     menu_sidebar = st.radio("Ir a (Sidebar):", menu_options, index=menu_options.index(selected_tab))
     
-    # Sincronizamos por si cambia el sidebar
     if menu_sidebar != selected_tab:
         selected_tab = menu_sidebar
 
@@ -210,7 +208,7 @@ with st.sidebar:
         else:
             st.error("Usuario no encontrado.")
 
-# --- LÓGICA DE LAS SECCIONES SEGÚN LA BARRA SUPERIOR ---
+# --- LÓGICA DE LAS SECCIONES ---
 
 if selected_tab == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
@@ -314,7 +312,7 @@ if selected_tab == "👤 Mi Perfil":
                 for p in my_vids:
                     render_post(p[0], cur, p[1], p[2], p[3], p[4], p[5])
     else:
-        st.warning("Inicia sesión en el menú lateral o superior para gestionar tu perfil y publicar.")
+        st.warning("Inicia sesión para gestionar tu perfil y publicar.")
 
 elif selected_tab == "👥 Siguiendo":
     st.subheader("👥 Actividad de Seguidos")
@@ -448,4 +446,7 @@ elif selected_tab == "💬 Mensajes":
 
                 mostrar_mensajes_en_tiempo_real()
                 
-                with st.form(key=f"chat_form_final_{p
+                with st.form(key=f"chat_form_final_{partner}", clear_on_submit=True):
+                    txt = st.text_input("Escribe tu mensaje...", key="input_msg_final")
+                    if st.form_submit_button("Enviar 🚀"):
+                        if tx
