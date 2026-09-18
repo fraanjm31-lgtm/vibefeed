@@ -5,9 +5,6 @@ from datetime import datetime, date
 
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
-# Forzar modo visualizador limpio para quitar la barra superior innecesaria
-st.set_option("client.toolbarMode", "viewer")
-
 conn = sqlite3.connect('noxvibe.db', check_same_thread=False)
 c = conn.cursor()
 
@@ -428,7 +425,7 @@ else:
         st.title("💬 Mensajes Directos")
         st.write("Tus chats privados.")
 
-     elif menu_option == "⚙️ Ajustes":
+    elif menu_option == "⚙️ Ajustes":
         st.title("⚙️ Ajustes de la cuenta")
         
         c.execute("SELECT bio, avatar, theme FROM users WHERE username = ?", (cur,))
