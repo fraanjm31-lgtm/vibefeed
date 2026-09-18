@@ -90,8 +90,11 @@ else:
 
 st.markdown(f"""
     <style>
-    /* Ocultar el símbolo del gato/ancla (#) en los títulos de Streamlit */
-    a.header-anchor {{display: none !important;}}
+    /* Ocultar específicamente el icono del gato de GitHub en la barra superior */
+    [data-testid="stToolbar"] a[href*="github"],
+    header a[href*="github"] {{
+        display: none !important;
+    }}
     
     footer {{visibility: hidden !important;}}
     
@@ -449,6 +452,4 @@ else:
             c.execute("UPDATE users SET bio = ?, theme = ? WHERE username = ?", (new_bio, new_theme, cur))
             conn.commit()
             st.session_state.theme = new_theme
-            st.success("¡Cambios guardados!")
-            st.rerun()
-            
+            st
