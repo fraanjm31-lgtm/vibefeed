@@ -128,7 +128,6 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
-# --- BARRA DE NAVEGACIÓN SUPERIOR ---
 menu_options = [
     "👤 Mi Perfil", 
     "👥 Siguiendo", 
@@ -207,8 +206,6 @@ with st.sidebar:
             st.success(f"¡Canal de @{clean_q} encontrado! Ve a 'Explorar Canales'.")
         else:
             st.error("Usuario no encontrado.")
-
-# --- LÓGICA DE LAS SECCIONES ---
 
 if selected_tab == "👤 Mi Perfil":
     st.subheader("👤 Tu Perfil y Canal")
@@ -449,4 +446,6 @@ elif selected_tab == "💬 Mensajes":
                 with st.form(key=f"chat_form_final_{partner}", clear_on_submit=True):
                     txt_msg = st.text_input("Escribe tu mensaje...", key="input_msg_final_fixed")
                     if st.form_submit_button("Enviar 🚀"):
-                   
+                        if txt_msg.strip():
+                            chat_c.execute(
+     
