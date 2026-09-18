@@ -307,7 +307,6 @@ if not st.session_state.logged_in:
         elif not r_adult:
           st.warning("Debes marcar la casilla de mayoria de edad.")
         else:
-          # Verificar si el usuario ya existe
           c.execute("SELECT * FROM users WHERE username = ?", (r_user,))
           if c.fetchone():
             st.error("El nombre de usuario ya esta en uso.")
@@ -384,6 +383,9 @@ else:
         p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = (
             post
         )
+        val_fires = p_fires if p_fires is not None else 0
+        val_thumbs = p_thumbs if p_thumbs is not None else 0
+        val_hearts = p_hearts if p_hearts is not None else 0
 
         st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
         col_vid, col_act = st.columns([4, 1])
@@ -402,19 +404,19 @@ else:
         with col_act:
           st.markdown("<br><br>", unsafe_allow_html=True)
           if st.button(
-              f"🔥 {p_fires if p_fires is not None else 0}",
+              f"🔥 {val_fires}",
               key=f"feed_fire_{p_id}",
               use_container_width=True,
           ):
             handle_reaction(p_id, cur, "fire")
           if st.button(
-              f"👍 {p_thumbs if p_thumbs is not None else 0}",
+              f"👍 {val_thumbs}",
               key=f"feed_like_{p_id}",
               use_container_width=True,
           ):
             handle_reaction(p_id, cur, "thumb")
           if st.button(
-              f"❤️ {p_hearts if p_hearts is not None else 0}",
+              f"❤️ {val_hearts}",
               key=f"feed_heart_{p_id}",
               use_container_width=True,
           ):
@@ -562,6 +564,10 @@ else:
         p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = (
             post
         )
+        val_f = p_fires if p_fires is not None else 0
+        val_t = p_thumbs if p_thumbs is not None else 0
+        val_h = p_hearts if p_hearts is not None else 0
+
         st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
         if p_cap:
           st.write(p_cap)
@@ -571,23 +577,17 @@ else:
         col_r1, col_r2, col_r3 = st.columns(3)
         with col_r1:
           if st.button(
-              f"🔥 {p_fires if p_fires is not None else 0}",
-              key=f"p_fire_{p_id}",
-              use_container_width=True,
+              f"🔥 {val_f}", key=f"p_fire_{p_id}", use_container_width=True
           ):
             handle_reaction(p_id, cur, "fire")
         with col_r2:
           if st.button(
-              f"👍 {p_thumbs if p_thumbs is not None else 0}",
-              key=f"p_like_{p_id}",
-              use_container_width=True,
+              f"👍 {val_t}", key=f"p_like_{p_id}", use_container_width=True
           ):
             handle_reaction(p_id, cur, "thumb")
         with col_r3:
           if st.button(
-              f"❤️ {p_hearts if p_hearts is not None else 0}",
-              key=f"p_heart_{p_id}",
-              use_container_width=True,
+              f"❤️ {val_h}", key=f"p_heart_{p_id}", use_container_width=True
           ):
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
@@ -603,6 +603,10 @@ else:
         p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = (
             post
         )
+        val_f = p_fires if p_fires is not None else 0
+        val_t = p_thumbs if p_thumbs is not None else 0
+        val_h = p_hearts if p_hearts is not None else 0
+
         st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
         if p_cap:
           st.write(p_cap)
@@ -612,18 +616,12 @@ else:
         col_r1, col_r2, col_r3 = st.columns(3)
         with col_r1:
           if st.button(
-              f"🔥 {p_fires if p_fires is not None else 0}",
-              key=f"pv_fire_{p_id}",
-              use_container_width=True,
+              f"🔥 {val_f}", key=f"pv_fire_{p_id}", use_container_width=True
           ):
             handle_reaction(p_id, cur, "fire")
         with col_r2:
           if st.button(
-              f"👍 {p_thumbs if p_thumbs is not None else 0}",
-              key=f"pv_like_{p_id}",
-              use_container_width=True,
+              f"👍 {val_t}", key=f"pv_like_{p_id}", use_container_width=True
           ):
             handle_reaction(p_id, cur, "thumb")
-        with col_r3:
-          if st.button(
-              f"❤️ {p_hearts if 
+      
