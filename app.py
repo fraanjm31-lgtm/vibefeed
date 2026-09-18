@@ -88,31 +88,17 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Sistema de botones mediante barra horizontal limpia en HTML que no se rompe en móviles
-    col1, col2 = st.columns([3, 1])
-    with col1:
-        if st.button("❤️ Me gusta", key=f"like_{p_id}"):
-            c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
-            conn.commit()
-            st.rerun()
-    with col2:
-        if st.button("💬", key=f"com_{p_id}"):
-            st.session_state[f"show_comments_{p_id}"] = not st.session_state.get(f"show_comments_{p_id}", False)
+    # Botón de Me gusta independiente
+    if st.button("❤️ Me gusta", key=f"like_{p_id}"):
+        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+        conn.commit()
+        st.rerun()
         
     if p_likes > 0:
         st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
     else:
         st.markdown("❤️ *Sé el primero en darle Me gusta*")
         
-    if st.session_state.get(f"show_comments_{p_id}", False):
-        st.markdown("---")
-        st.markdown("💬 **Comentarios:**")
-        new_comment = st.text_input("Añade un comentario...", key=f"input_comm_{p_id}")
-        if st.button("Publicar comentario", key=f"send_comm_{p_id}"):
-            if new_comment.strip():
-                st.success("¡Comentario añadido!")
-                st.rerun()
-                
     st.markdown("---")
 
 st.title("⚡ NoxVibe")
@@ -387,4 +373,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-                    
+        
