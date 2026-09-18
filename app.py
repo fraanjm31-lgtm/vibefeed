@@ -198,7 +198,6 @@ if menu == "👤 Mi Perfil":
         cur = st.session_state['username']
         u_info = c.execute("SELECT bio, city, xp, profile_pic FROM users WHERE username = ?", (cur,)).fetchone()
         
-        # Calcular estadísticas estilo Instagram
         num_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,)).fetchone()[0]
         num_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (cur,)).fetchone()[0]
         num_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (cur,)).fetchone()[0]
@@ -211,14 +210,21 @@ if menu == "👤 Mi Perfil":
                 st.write("📷 Sin foto")
         with col_p2:
             st.markdown(f"### @{cur}")
-            # Estadísticas estilo Instagram en columnas
-            st1, st2, st3 = st.columns(3)
-            with st1:
-                st.metric("Publicaciones", num_posts)
-            with st2:
-                st.metric("Seguidores", num_followers)
-            with st3:
-                st.metric("Seguidos", num_following)
+            
+            # Estadísticas en línea horizontal forzada con HTML/CSS
+            st.markdown(f"""
+                <div style="display: flex; justify-content: space-between; max-width: 300px; margin-bottom: 10px;">
+                    <div style="text-align: center; margin-right: 20px;">
+                        <strong>{num_posts}</strong><br><span style="font-size: 14px; color: gray;">publicaciones</span>
+                    </div>
+                    <div style="text-align: center; margin-right: 20px;">
+                        <strong>{num_followers}</strong><br><span style="font-size: 14px; color: gray;">seguidores</span>
+                    </div>
+                    <div style="text-align: center;">
+                        <strong>{num_following}</strong><br><span style="font-size: 14px; color: gray;">seguidos</span>
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
                 
             if u_info:
                 st.markdown(f"**Bio:** {u_info[0]}")
@@ -307,7 +313,6 @@ elif menu == "🔍 Explorar Canales":
         if u_data:
             b_name, b_class = get_badge(u_data[3])
             
-            # Estadísticas estilo Instagram para el usuario explorado
             t_posts = c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (target_user,)).fetchone()[0]
             t_followers = c.execute("SELECT COUNT(*) FROM follows WHERE followed = ?", (target_user,)).fetchone()[0]
             t_following = c.execute("SELECT COUNT(*) FROM follows WHERE follower = ?", (target_user,)).fetchone()[0]
@@ -321,13 +326,20 @@ elif menu == "🔍 Explorar Canales":
             with col_ping2:
                 st.markdown(f"### @{u_data[0]} [{b_name}]")
                 
-                st1, st2, st3 = st.columns(3)
-                with st1:
-                    st.metric("Publicaciones", t_posts)
-                with st2:
-                    st.metric("Seguidores", t_followers)
-                with st3:
-                    st.metric("Seguidos", t_following)
+                # Estadísticas horizontales para canales explorados
+                st.markdown(f"""
+                    <div style="display: flex; justify-content: space-between; max-width: 300px; margin-bottom: 10px;">
+                        <div style="text-align: center; margin-right: 20px;">
+                            <strong>{t_posts}</strong><br><span style="font-size: 14px; color: gray;">publicaciones</span>
+                        </div>
+                        <div style="text-align: center; margin-right: 20px;">
+                            <strong>{t_followers}</strong><br><span style="font-size: 14px; color: gray;">seguidores</span>
+                        </div>
+                        <div style="text-align: center;">
+                            <strong>{t_following}</strong><br><span style="font-size: 14px; color: gray;">seguidos</span>
+                        </div>
+                    </div>
+                """, unsafe_allow_html=True)
                     
                 st.markdown(f"**Bio:** {u_data[1]} | **Ciudad:** {u_data[2]} | **XP:** {u_data[3]}")
                 
@@ -421,4 +433,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-                
+        
