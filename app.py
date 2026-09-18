@@ -4,10 +4,8 @@ import os
 from datetime import datetime
 import hashlib
 
-# Configuración inicial de la página
 st.set_page_config(page_title="NoxVibe", page_icon="⚡", layout="centered")
 
-# Funciones de hashing para contraseñas
 def make_hashes(password):
     return hashlib.sha256(str.encode(password)).hexdigest()
 
@@ -16,11 +14,10 @@ def check_hashes(password, hashed_text):
         return hashlib.sha256(str.encode(password)).hexdigest()
     return False
 
-# Inicializar base de datos
 conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
-
 c = conn.cursor()
 
+# Asegurar tabla de usuarios intacta
 c.execute('''
     CREATE TABLE IF NOT EXISTS users (
         username TEXT PRIMARY KEY,
@@ -31,6 +28,12 @@ c.execute('''
         profile_pic TEXT DEFAULT ''
     )
 ''')
+
+# Si la tabla posts antigua da error por columnas corruptas, la recreamos limpia pero conservamos users
+try:
+    c.execute("SELECT username, likes, vibe_tag FROM posts LIMIT 1")
+except sqlite3.OperationalError:
+    c.execute("DROP TABLE IF EXISTS posts")
 
 c.execute('''
     CREATE TABLE IF NOT EXISTS posts (
@@ -43,19 +46,6 @@ c.execute('''
         vibe_tag TEXT
     )
 ''')
-
-# Bloques de seguridad para actualizar bases de datos antiguas sin perder datos
-try:
-    c.execute("ALTER TABLE posts ADD COLUMN vibe_tag TEXT")
-    conn.commit()
-except sqlite3.OperationalError:
-    pass
-
-try:
-    c.execute("ALTER TABLE posts ADD COLUMN likes INTEGER DEFAULT 0")
-    conn.commit()
-except sqlite3.OperationalError:
-    pass
 
 c.execute('''
     CREATE TABLE IF NOT EXISTS messages (
@@ -75,7 +65,6 @@ c.execute('''
 ''')
 conn.commit()
 
-# Estado de sesión por defecto
 if 'logged_in' not in st.session_state:
     st.session_state['logged_in'] = False
 if 'username' not in st.session_state:
@@ -84,10 +73,7 @@ if 'theme' not in st.session_state:
     st.session_state['theme'] = 'Modo Oscuro 🌙'
 if 'viewing_user' not in st.session_state:
     st.session_state['viewing_user'] = ''
-if 'active_tab_idx' not in st.session_state:
-    st.session_state['active_tab_idx'] = 0
 
-# Función para insignias XP
 def get_badge(xp):
     if xp >= 300:
         return "🔥 Creador Pro", "badge-pro"
@@ -97,7 +83,6 @@ def get_badge(xp):
 st.title("⚡ NoxVibe")
 st.caption("✨ Red social completa con XP, Canales y Perfiles.")
 
-# Barra lateral de autenticación y perfil
 with st.sidebar:
     st.subheader("🔑 Acceso NoxVibe")
     if not st.session_state['logged_in']:
@@ -131,8 +116,8 @@ with st.sidebar:
     else:
         st.success(f"Sesión: **@{st.session_state['username']}**")
         u_data = c.execute("SELECT xp, profile_pic FROM users WHERE username = ?", (st.session_state['username'],)).fetchone()
-        xp_val = u_data[0]
-        u_pic = u_data[1]
+        xp_val = u_data[0] if u_data else 0
+        u_pic = u_data[1] if u_data else ''
         
         if u_pic and os.path.exists(u_pic):
             st.image(u_pic, width=80)
@@ -159,7 +144,6 @@ with st.sidebar:
         else:
             st.error("Usuario no encontrado.")
 
-# Pestañas principales de la app
 tabs = st.tabs([
     "👤 Perfil / Canal", 
     "👥 Siguiendo", 
@@ -168,7 +152,6 @@ tabs = st.tabs([
     "⚙️ Ajustes"
 ])
 
-# 1. Perfil / Canal
 with tabs[0]:
     st.subheader("👤 Tu Perfil y Canal")
     if st.session_state['logged_in']:
@@ -177,14 +160,15 @@ with tabs[0]:
         
         col_p1, col_p2 = st.columns([1, 2])
         with col_p1:
-            if u_info[3] and os.path.exists(u_info[3]):
+            if u_info and u_info[3] and os.path.exists(u_info[3]):
                 st.image(u_info[3], width=100)
             else:
                 st.write("📷 Sin foto")
         with col_p2:
-            st.markdown(f"**Bio:** {u_info[0]}")
-            st.markdown(f"**Ciudad:** {u_info[1]}")
-            st.markdown(f"**XP:** {u_info[2]}")
+            if u_info:
+                st.markdown(f"**Bio:** {u_info[0]}")
+                st.markdown(f"**Ciudad:** {u_info[1]}")
+                st.markdown(f"**XP:** {u_info[2]}")
             
         st.markdown("---")
         st.subheader("📝 Publicar Contenido en tu Canal")
@@ -212,7 +196,6 @@ with tabs[0]:
     else:
         st.warning("Inicia sesión para gestionar tu perfil y publicar.")
 
-# 2. Siguiendo
 with tabs[1]:
     st.subheader("👥 Actividad de Seguidos")
     if st.session_state['logged_in']:
@@ -237,7 +220,6 @@ with tabs[1]:
     else:
         st.warning("Inicia sesión para ver la actividad de tus seguidos.")
 
-# 3. Canal / Perfil (Búsqueda externa)
 with tabs[2]:
     st.subheader("🔍 Canal y Perfil del Creador")
     target_user = st.session_state.get('viewing_user') or st.session_state.get('username')
@@ -289,23 +271,18 @@ with tabs[2]:
     else:
         st.info("Busca un usuario en el menú lateral para ver su perfil.")
 
-# 4. Mensajes Privados
 with tabs[3]:
     st.subheader("💬 Mensajes Privados")
     if st.session_state['logged_in']:
         cur = st.session_state['username']
-        
-        chat_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
-        chat_c = chat_conn.cursor()
-        
-        users_list = [u[0] for u in chat_c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
+        users_list = [u[0] for u in c.execute("SELECT username FROM users WHERE username != ?", (cur,)).fetchall()]
         
         if not users_list:
             st.info("No hay más usuarios registrados.")
         else:
             partner = st.selectbox("Para:", users_list, key="chat_partner_final_definitivo")
             if partner:
-                unread_count = chat_c.execute("""
+                unread_count = c.execute("""
                     SELECT COUNT(*) FROM messages 
                     WHERE sender = ? AND receiver = ?
                 """, (partner, cur)).fetchone()[0]
@@ -315,49 +292,36 @@ with tabs[3]:
 
                 st.markdown(f"**Chat con @{partner}**")
                 
-                @st.fragment(run_every=5)
-                def mostrar_mensajes_en_tiempo_real():
-                    inner_conn = sqlite3.connect('vibefeed.db', check_same_thread=False)
-                    inner_c = inner_conn.cursor()
-                    
-                    msgs = inner_c.execute("""
-                        SELECT sender, message, timestamp 
-                        FROM messages 
-                        WHERE (sender = ? AND receiver = ?) 
-                           OR (sender = ? AND receiver = ?) 
-                        ORDER BY id ASC
-                    """, (cur, partner, partner, cur)).fetchall()
-                    
-                    inner_conn.close()
-                    
-                    if not msgs:
-                        st.info("No hay mensajes aún. ¡Escribe el primero!")
-                    else:
-                        for s, m, t in msgs:
-                            if s == cur:
-                                st.markdown(f"**Tú:** {m} *({t})*")
-                            else:
-                                st.markdown(f"**@{s}:** {m} *({t})*")
-
-                mostrar_mensajes_en_tiempo_real()
+                msgs = c.execute("""
+                    SELECT sender, message, timestamp 
+                    FROM messages 
+                    WHERE (sender = ? AND receiver = ?) 
+                       OR (sender = ? AND receiver = ?) 
+                    ORDER BY id ASC
+                """, (cur, partner, partner, cur)).fetchall()
+                
+                if not msgs:
+                    st.info("No hay mensajes aún. ¡Escribe el primero!")
+                else:
+                    for s, m, t in msgs:
+                        if s == cur:
+                            st.markdown(f"**Tú:** {m} *({t})*")
+                        else:
+                            st.markdown(f"**@{s}:** {m} *({t})*")
                 
                 with st.form(key=f"chat_form_final_{partner}", clear_on_submit=True):
                     txt = st.text_input("Escribe tu mensaje...", key="input_msg_final")
                     if st.form_submit_button("Enviar 🚀"):
                         if txt.strip():
-                            chat_c.execute(
+                            c.execute(
                                 "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)", 
                                 (cur, partner, txt.strip(), datetime.now().strftime("%H:%M"))
                             )
-                            chat_conn.commit()
-                            chat_conn.close()
+                            conn.commit()
                             st.rerun()
-                            
-        chat_conn.close()
     else:
         st.warning("Inicia sesión para chatear.")
 
-# 5. Ajustes
 with tabs[4]:
     st.subheader("⚙️ Ajustes")
     sel_theme = st.selectbox("Tema:", ["Modo Oscuro 🌙", "Modo Claro ☀️"], key="settings_theme_final_def")
