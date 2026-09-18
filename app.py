@@ -88,39 +88,40 @@ def render_post(p_id, p_user, p_cap, p_file, p_file_type, p_likes, p_tag):
         else:
             st.image(p_file, use_container_width=True)
             
-    # Botones principales en dos columnas fluidas y cómodas para móviles
-    b_col1, b_col2 = st.columns(2)
-    with b_col1:
-        if st.button("❤️ Me gusta", key=f"like_{p_id}"):
-            c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
-            conn.commit()
-            st.rerun()
-    with b_col2:
-        if st.button("💬 Comentar", key=f"com_{p_id}"):
-            st.session_state[f"show_comments_{p_id}"] = not st.session_state.get(f"show_comments_{p_id}", False)
-            
-    # Botones secundarios distribuidos limpiamente
-    b_col3, b_col4, b_col5 = st.columns(3)
-    with b_col3:
-        st.button("🔄 Repost", key=f"rep_{p_id}")
-    with b_col4:
-        st.button("↗️ Compartir", key=f"sha_{p_id}")
-    with b_col5:
-        st.button("🔖 Guardar", key=f"sav_{p_id}")
+    # Botón principal de Me gusta
+    if st.button("❤️ Me gusta", key=f"like_{p_id}"):
+        c.execute("UPDATE posts SET likes = likes + 1 WHERE id = ?", (p_id,))
+        conn.commit()
+        st.rerun()
         
     if p_likes > 0:
         st.markdown(f"❤️ **Le gusta a {p_likes} personas**")
     else:
         st.markdown("❤️ *Sé el primero en darle Me gusta*")
         
-    if st.session_state.get(f"show_comments_{p_id}", False):
-        st.markdown("---")
-        st.markdown("💬 **Comentarios:**")
-        new_comment = st.text_input("Añade un comentario...", key=f"input_comm_{p_id}")
-        if st.button("Publicar comentario", key=f"send_comm_{p_id}"):
-            if new_comment.strip():
-                st.success("¡Comentario añadido!")
-                st.rerun()
+    # Menú desplegable estilo "flecha" para más opciones
+    with st.expander("📌 Más opciones y comentarios"):
+        # Opciones secundarias ordenadas
+        col_m1, col_m2, col_m3 = st.columns(3)
+        with col_m1:
+            if st.button("💬 Comentar", key=f"com_{p_id}"):
+                st.session_state[f"show_comments_{p_id}"] = not st.session_state.get(f"show_comments_{p_id}", False)
+        with col_m2:
+            st.button("🔄 Repost", key=f"rep_{p_id}")
+        with col_m3:
+            st.button("↗️ Compartir", key=f"sha_{p_id}")
+            
+        st.button("🔖 Guardar publicación", key=f"sav_{p_id}")
+        
+        # Apartado de comentarios si está activo
+        if st.session_state.get(f"show_comments_{p_id}", False):
+            st.markdown("---")
+            st.markdown("💬 **Comentarios:**")
+            new_comment = st.text_input("Añade un comentario...", key=f"input_comm_{p_id}")
+            if st.button("Publicar comentario", key=f"send_comm_{p_id}"):
+                if new_comment.strip():
+                    st.success("¡Comentario añadido!")
+                    st.rerun()
                 
     st.markdown("---")
 
@@ -396,4 +397,4 @@ elif menu == "⚙️ Ajustes":
     if sel_theme != st.session_state['theme']:
         st.session_state['theme'] = sel_theme
         st.rerun()
-        
+                
