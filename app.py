@@ -130,17 +130,15 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }}
-            </style>
-    """
-
+    </style>
+    """,
     unsafe_allow_html=True,
 )
+
 def enviar_codigo_correo(destinatario, codigo):
     st.session_state["codigo_generado"] = codigo
     return True
-    
-    
-    
+
 def ai_vibe_checker(text):
   if not text:
     return "✨ Chill", "Ambiente tranquilo detectado."
@@ -154,17 +152,14 @@ def ai_vibe_checker(text):
   else:
     return "🚀 Inspirador", "Pensamiento innovador detectado."
 
-
 def handle_reaction(p_id, user, r_type):
   c.execute(
-      "SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND"
-      " reaction_type = ?",
+      "SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND reaction_type = ?",
       (p_id, user, r_type),
   )
   if not c.fetchone():
     c.execute(
-        "INSERT INTO post_reactions (post_id, username, reaction_type) VALUES"
-        " (?, ?, ?)",
+        "INSERT INTO post_reactions (post_id, username, reaction_type) VALUES (?, ?, ?)",
         (p_id, user, r_type),
     )
     if r_type == "fire":
@@ -177,7 +172,6 @@ def handle_reaction(p_id, user, r_type):
     st.rerun()
   else:
     st.toast("Ya habias dado esta reacción", icon="⚠️")
-
 
 st.sidebar.title("🧭 Menu NoxVibe")
 menu_option = st.sidebar.radio(
@@ -243,47 +237,35 @@ if not st.session_state.logged_in:
         "Confirmo que soy mayor de 18 anos.", key="r_adult_check"
     )
 
-            if st.button("Obtener Código de Verificación", key="btn_obtener_codigo"):
-            if not r_email or "@" not in r_email or "." not in r_email:
-                st.error("Introduce un correo electrónico válido.")
-            else:
-                codigo_aleatorio = str(random.randint(1000, 9999))
-                enviar_codigo_correo(r_email, codigo_aleatorio)
-                st.warning(f"🔑 Tu código de verificación temporal es: **{codigo_aleatorio}**")
-                
-                if st.button("Registrarse", key="btn_registrar_usuario"):
-            if not r_user or not r_pass:
-                st.warning("Rellena el usuario y la contraseña.")
-            elif age < 18:
-                st.error("Debes ser mayor de 18 años.")
-            elif not r_adult:
-                st.warning("Debes marcar la casilla de mayoría de edad.")
-            else:
-                
-              st.session_state.codigo_enviado = True
-              st.success(
-                  "¡Código enviado! Revisa tu bandeja de entrada o spam."
-              )
-              st.rerun()
-            else:
-              st.error(
-                  "Error al enviar el correo. Revisa la configuración SMTP."
-              )
+    if st.button("Obtener Código de Verificación", key="btn_obtener_codigo"):
+      if not r_email or "@" not in r_email or "." not in r_email:
+        st.error("Introduce un correo electrónico válido.")
+      else:
+        codigo_aleatorio = str(random.randint(1000, 9999))
+        enviar_codigo_correo(r_email, codigo_aleatorio)
+        st.session_state.codigo_enviado = True
+        st.warning(f"🔑 Tu código de verificación temporal es: **{codigo_aleatorio}**")
+        st.success("¡Código enviado! Revisa tu bandeja de entrada o spam.")
+        st.rerun()
 
     if st.session_state.get("codigo_generado"):
-        
       codigo_ingresado = st.text_input(
           "Introduce el Código recibido en tu correo", key="code_input_field"
       )
-      if st.button("Validar y Crear Cuenta"):
-                        if codigo_ingresado == st.session_state.get("codigo_generado"):
-                            
-                    
-            try:
+      if st.button("Validar y Crear Cuenta", key="btn_registrar_usuario"):
+        today_date = date.today()
+        age = today_date.year - r_dob.year - ((today_date.month, today_date.day) < (r_dob.month, r_dob.day))
+        
+        if not r_user or not r_pass:
+          st.warning("Rellena el usuario y la contraseña.")
+        elif age < 18:
+          st.error("Debes ser mayor de 18 años.")
+        elif not r_adult:
+          st.warning("Debes marcar la casilla de mayoría de edad.")
+        elif codigo_ingresado == st.session_state.get("codigo_generado"):
+          try:
             c.execute(
-                "INSERT INTO users (username, password, email, xp, bio, avatar,"
-                " account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?,"
-                " ?, ?)",
+                "INSERT INTO users (username, password, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 (
                     r_user,
                     r_pass,
@@ -297,9 +279,7 @@ if not st.session_state.logged_in:
                 ),
             )
             conn.commit()
-            st.success(
-                "¡Cuenta creada con exito! Ya puedes iniciar sesion arriba."
-            )
+            st.success("¡Cuenta creada con exito! Ya puedes iniciar sesion arriba.")
             st.session_state.codigo_enviado = False
             st.session_state.codigo_generado = ""
             st.rerun()
@@ -328,9 +308,7 @@ else:
       st.info("No hay videos publicos. Sube el primero desde tu perfil.")
     else:
       for post in videos:
-        p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = (
-            post
-        )
+        p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
         val_fires = p_fires if p_fires is not None else 0
         val_thumbs = p_thumbs if p_thumbs is not None else 0
         val_hearts = p_hearts if p_hearts is not None else 0
@@ -342,32 +320,16 @@ else:
           st.markdown(f"### @{p_user} · `{p_tag}`")
           if p_cap:
             st.write(p_cap)
-          if (
-              p_file
-              and isinstance(p_file, str)
-              and os.path.exists(p_file)
-          ):
+          if p_file and isinstance(p_file, str) and os.path.exists(p_file):
             st.video(p_file)
 
         with col_act:
           st.markdown("<br><br>", unsafe_allow_html=True)
-          if st.button(
-              f"🔥 {val_fires}",
-              key=f"feed_fire_{p_id}",
-              use_container_width=True,
-          ):
+          if st.button(f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "fire")
-          if st.button(
-              f"👍 {val_thumbs}",
-              key=f"feed_like_{p_id}",
-              use_container_width=True,
-          ):
+          if st.button(f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "thumb")
-          if st.button(
-              f"❤️ {val_hearts}",
-              key=f"feed_heart_{p_id}",
-              use_container_width=True,
-          ):
+          if st.button(f"❤️ {val_hearts}", key=f"feed_heart_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "heart")
 
         st.markdown("</div>", unsafe_allow_html=True)
@@ -375,8 +337,7 @@ else:
 
   elif menu_option == "👤 Mi Perfil":
     c.execute(
-        "SELECT xp, bio, avatar, account_privacy, coins FROM users WHERE username"
-        " = ?",
+        "SELECT xp, bio, avatar, account_privacy, coins FROM users WHERE username = ?",
         (cur,),
     )
     user_data = c.fetchone()
@@ -396,16 +357,22 @@ else:
 
     c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
     total_posts = c.fetchone()[0]
-    c.execute(
-        "SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'",
-        (cur,),
-    )
-    total_followers = c.fetchone()[0]
-    c.execute(
-        "SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'",
-        (cur,),
-    )
-    total_following = c.fetchone()[0]
+    
+    # Verificamos si existe la columna status en follows de forma segura
+    try:
+      c.execute(
+          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'",
+          (cur,),
+      )
+      total_followers = c.fetchone()[0]
+      c.execute(
+          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'",
+          (cur,),
+      )
+      total_following = c.fetchone()[0]
+    except:
+      total_followers = 0
+      total_following = 0
 
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -466,9 +433,7 @@ else:
           now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
           c.execute(
-              "INSERT INTO posts (username, caption, file, file_type, likes,"
-              " fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?,"
-              " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              "INSERT INTO posts (username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               (
                   cur,
                   cap,
@@ -503,15 +468,11 @@ else:
     if st.session_state.profile_tab == "Fotos":
       st.markdown("### 🖼️ Tus Fotos")
       c.execute(
-          "SELECT id, caption, file, file_type, fires, thumbs, hearts,"
-          " vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type ="
-          " 'image' OR file_type = '') ORDER BY id DESC",
+          "SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC",
           (cur,),
       )
       for post in c.fetchall():
-        p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = (
-            post
-        )
+        p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
         val_f = p_fires if p_fires is not None else 0
         val_t = p_thumbs if p_thumbs is not None else 0
         val_h = p_hearts if p_hearts is not None else 0
@@ -524,33 +485,23 @@ else:
 
         col_r1, col_r2, col_r3 = st.columns(3)
         with col_r1:
-          if st.button(
-              f"🔥 {val_f}", key=f"p_fire_{p_id}", use_container_width=True
-          ):
+          if st.button(f"🔥 {val_f}", key=f"p_fire_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "fire")
         with col_r2:
-          if st.button(
-              f"👍 {val_t}", key=f"p_like_{p_id}", use_container_width=True
-          ):
+          if st.button(f"👍 {val_t}", key=f"p_like_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "thumb")
         with col_r3:
-          if st.button(
-              f"❤️ {val_h}", key=f"p_heart_{p_id}", use_container_width=True
-          ):
+          if st.button(f"❤️ {val_h}", key=f"p_heart_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
     else:
       st.markdown("### 🎬 Tus Videos")
       c.execute(
-          "SELECT id, caption, file, file_type, fires, thumbs, hearts,"
-          " vibe_tag, timestamp FROM posts WHERE username = ? AND file_type ="
-          " 'video' ORDER BY id DESC",
+          "SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC",
           (cur,),
       )
       for post in c.fetchall():
-        p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = (
-            post
-        )
+        p_id, p_cap, p_file, p_type, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
         val_f = p_fires if p_fires is not None else 0
         val_t = p_thumbs if p_thumbs is not None else 0
         val_h = p_hearts if p_hearts is not None else 0
@@ -563,19 +514,13 @@ else:
 
         col_r1, col_r2, col_r3 = st.columns(3)
         with col_r1:
-          if st.button(
-              f"🔥 {val_f}", key=f"pv_fire_{p_id}", use_container_width=True
-          ):
+          if st.button(f"🔥 {val_f}", key=f"pv_fire_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "fire")
         with col_r2:
-          if st.button(
-              f"👍 {val_t}", key=f"pv_like_{p_id}", use_container_width=True
-          ):
+          if st.button(f"👍 {val_t}", key=f"pv_like_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "thumb")
         with col_r3:
-          if st.button(
-              f"❤️ {val_h}", key=f"pv_heart_{p_id}", use_container_width=True
-          ):
+          if st.button(f"❤️ {val_h}", key=f"pv_heart_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
 
@@ -584,23 +529,22 @@ else:
     search_user = st.text_input("Escribe el nombre de usuario:")
     if search_user:
       c.execute(
-          "SELECT username, bio, avatar, account_privacy FROM users WHERE"
-          " username = ?",
+          "SELECT username, bio, avatar, account_privacy FROM users WHERE username = ?",
           (search_user,),
       )
       target_user = c.fetchone()
       if target_user:
-                     pass
-      
-        
+        st.success(f"Usuario encontrado: @{target_user[0]}")
+        st.write(target_user[1])
+      else:
+        st.warning("Usuario no encontrado.")
+
   elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
 
-    # Intentamos leer los datos de ajustes de forma segura
     try:
       c.execute(
-          "SELECT bio, avatar, theme, account_privacy FROM users WHERE"
-          " username = ?",
+          "SELECT bio, avatar, theme, account_privacy FROM users WHERE username = ?",
           (cur,),
       )
       u_settings = c.fetchone()
@@ -637,30 +581,4 @@ else:
     )
     if new_theme != current_db_theme:
       c.execute(
-          "UPDATE users SET theme = ? WHERE username = ?", (new_theme, cur)
-      )
-      conn.commit()
-      st.session_state.theme = new_theme
-      st.success(f"Tema cambiado a {new_theme}")
-      st.rerun()
-
-    is_private = st.checkbox(
-        "🔒 Cuenta Privada", value=(current_privacy == "Privado")
-    )
-    new_priv = "Privado" if is_private else "Publico"
-    if new_priv != current_privacy:
-      c.execute(
-          "UPDATE users SET account_privacy = ? WHERE username = ?",
-          (new_priv, cur),
-      )
-      conn.commit()
-      st.success(f"Privacidad actualizada a: {new_priv}")
-      st.rerun()
-        
-def enviar_codigo_correo(destinatario, codigo):
-    st.session_state["codigo_generado"] = codigo
-
-    return True
-    
-
-    
+          "UPDATE users SET theme = ? WHE
