@@ -415,7 +415,7 @@ else:
             val_hearts = p_hearts if p_hearts is not None else 0
             
                 
-            col_vid, col_act = st.columns((4, 1))
+              col_vid, col_act = st.columns((4, 1))
               
               with col_act:            
              st.markdown("<br><br>", unsafe_allow_html=True)
