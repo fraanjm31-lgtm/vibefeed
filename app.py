@@ -703,7 +703,7 @@ if menu_option == "🛍️ Tienda Vibe":
         # Temática Espacial y Cohetes
         "🛸 Platillo Volador": {"precio": 150, "icono": "🛸"},
         "🪐 Saturno Brillante": {"precio": 200, "icono": "🪐"},
-        "👩‍رس Astronauta Estelar": {"precio": 300, "icono": "👩‍🚀"},
+        "👩‍🚀 Astronauta Estelar": {"precio": 300, "icono": "👩‍🚀"},
         "🌠 Estrella Fugaz": {"precio": 350, "icono": "🌠"},
         "🛰️ Satélite Órbita": {"precio": 400, "icono": "🛰️"},
         "🌌 Agujero Negro": {"precio": 500, "icono": "🌌"},
@@ -714,6 +714,30 @@ if menu_option == "🛍️ Tienda Vibe":
         "☄️ Cometa del Fin del Mundo": {"precio": 1000, "icono": "☄️"},
         "🌟 Supernova Legendaria": {"precio": 1000, "icono": "🌟"}
     }
+    
+    for i, (nombre_articulo, info) in enumerate(articulos.items()):
+        nombre_completo = f"{info['icono']} {nombre_articulo}"
+        col1, col2, col3 = st.columns([3, 2, 2])
+        with col1:
+            st.markdown(f"### {info['icono']} {nombre_articulo}")
+        with col2:
+            st.markdown(f"**{info['precio']} Coins**")
+        with col3:
+            # Claves únicas con el índice 'i' para evitar cualquier conflicto
+            if insignia_actual == nombre_completo:
+                st.button("✅ Equipado", disabled=True, key=f"eq_item_{i}")
+            else:
+                if st.button("Comprar", key=f"comprar_item_{i}"):
+                    if mis_coins >= info['precio']:
+                        nuevos_coins = mis_coins - info['precio']
+                        c.execute("UPDATE users SET coins = ?, badge = ? WHERE username = ?", 
+                                  (nuevos_coins, nombre_completo, st.session_state.username))
+                        conn.commit()
+                        st.success(f"¡Has comprado y equipado {nombre_articulo}!")
+                        st.rerun()
+                    else:
+                        st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
+                        
     
     for i, (nombre_articulo, info) in enumerate(articulos.items()):
         nombre_completo = f"{info['icono']} {nombre_articulo}"
