@@ -358,7 +358,6 @@ else:
     c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
     total_posts = c.fetchone()[0]
     
-    # Verificamos si existe la columna status en follows de forma segura
     try:
       c.execute(
           "SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'",
@@ -581,4 +580,7 @@ else:
     )
     if new_theme != current_db_theme:
       c.execute(
-          "UPDATE users SET theme = ? WHE
+          "UPDATE users SET theme = ? WHERE username = ?", (new_theme, cur)
+      )
+      conn.commit()
+      st.s
