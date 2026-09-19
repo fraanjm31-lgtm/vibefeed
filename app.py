@@ -430,7 +430,7 @@ else:
             if st.button(
         "🌹 5C", key=f"feed_gift_{p_id}", use_container_width=True
     ):
-        c.execute(
+           c.execute(
             "SELECT coins FROM users WHERE username = ?",
             (st.session_state.username,),
         )
