@@ -677,42 +677,67 @@ if menu_option == "🛍️ Tienda Vibe":
     st.title("🛍️ Tienda Vibe")
     st.write("¡Gasta tus Coins en insignias exclusivas y personaliza tu perfil con estilo!")
     
-    # Consultar los coins actuales del usuario
+    # Consultar los coins actuales y la insignia del usuario
     c.execute("SELECT coins, badge FROM users WHERE username = ?", (st.session_state.username,))
     user_data = c.fetchone()
     mis_coins = user_data[0] if user_data and user_data[0] is not None else 0
     insignia_actual = user_data[1] if user_data and user_data[1] is not None else "Ninguna"
     
-    st.info(f"💰 Tienes **{mis_coins} Coins** disponibles. | Insignia actual: **{insignia_actual}**")
+    col_info1, col_info2 = st.columns([2, 1])
+    with col_info1:
+        st.info(f"💰 Tienes **{mis_coins} Coins** | Insignia actual: **{insignia_actual}**")
+    with col_info2:
+        if st.button("🪙 Recargar Coins"):
+            st.warning("💳 Próximamente disponible: Recarga de Coins con pago real.")
+            
     st.markdown("---")
     
-    # Artículos de la tienda peculiar y diferente
+    # Catálogo temático con cohetes, espacio y artículos legendarios de 1.000 Coins
     articulos = {
+        # Insignias iniciales
         "🔮 Oráculo Cósmico": {"precio": 10, "icono": "🔮"},
         "⚡ Rayo Nocturno": {"precio": 25, "icono": "⚡"},
         "🖤 Corazón de Neón": {"precio": 50, "icono": "🖤"},
-        "👑 Corona Cyber": {"precio": 100, "icono": "👑"}
+        "👑 Corona Cyber": {"precio": 100, "icono": "👑"},
+        
+        # Temática Espacial y Cohetes
+        "🛸 Platillo Volador": {"precio": 150, "icono": "🛸"},
+        "🪐 Saturno Brillante": {"precio": 200, "icono": "🪐"},
+        "👩‍🚀 Astronauta Estelar": {"precio": 300, "icono": "👩‍🚀"},
+        "🌠 Estrella Fugaz": {"precio": 350, "icono": "🌠"},
+        "🛰️ Satélite Órbita": {"precio": 400, "icono": "🛰️"},
+        "🌌 Agujero Negro": {"precio": 500, "icono": "🌌"},
+        
+        # Los Legendarios Espaciales de 1.000 Coins
+        "🚀 Cohete Galáctico V1": {"precio": 1000, "icono": "🚀"},
+        "👽 Emperador Alienígena": {"precio": 1000, "icono": "👽"},
+        "☄️ Cometa del Fin del Mundo": {"precio": 1000, "icono": "☄️"},
+        "🌟 Supernova Legendaria": {"precio": 1000, "icono": "🌟"}
     }
     
-    # Mostrar artículos en columnas o tarjetitas
     for nombre_articulo, info in articulos.items():
+        nombre_completo = f"{info['icono']} {nombre_articulo}"
         col1, col2, col3 = st.columns([3, 2, 2])
         with col1:
             st.markdown(f"### {info['icono']} {nombre_articulo}")
         with col2:
             st.markdown(f"**{info['precio']} Coins**")
         with col3:
-            if st.button(f"Comprar", key=f"comprar_{nombre_articulo}"):
-                if mis_coins >= info['precio']:
-                    # Descontar coins y guardar insignia
-                    nuevos_coins = mis_coins - info['precio']
-                    c.execute("UPDATE users SET coins = ?, badge = ? WHERE username = ?", 
-                              (nuevos_coins, f"{info['icono']} {nombre_articulo}", st.session_state.username))
-                    conn.commit()
-                    st.success(f"¡Te has comprado {nombre_articulo}! Ya la tienes equipada.")
-                    st.rerun()
-                else:
-                    st.error("¡No tienes suficientes Coins! Interactúa más en la app para conseguirlos.")
+            # Comprobar si ya la tiene equipada o comprada para evitar duplicados
+            if insignia_actual == nombre_completo:
+                st.button("✅ Equipado", disabled=True, key=f"btn_{nombre_articulo}")
+            else:
+                if st.button(f"Comprar", key=f"comprar_{nombre_articulo}"):
+                    if mis_coins >= info['precio']:
+                        nuevos_coins = mis_coins - info['precio']
+                        c.execute("UPDATE users SET coins = ?, badge = ? WHERE username = ?", 
+                                  (nuevos_coins, nombre_completo, st.session_state.username))
+                        conn.commit()
+                        st.success(f"¡Has comprado y equipado {nombre_articulo}!")
+                        st.rerun()
+                    else:
+                        st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
+                        
                     
     
 if menu_option == "⚙️ Ajustes":
