@@ -404,18 +404,15 @@ else:
     if not videos:
       st.info("No hay videos publicos. Sube el primero desde tu perfil.")
     else:
-      for post in videos:
-        (
-            p_id,
-            p_user,
-            p_cap,
-            p_file,
-            p_fires,
-            p_thumbs,
-            p_hearts,
-            p_tag,
-            p_time,
-        ) = post
+         for post in videos:
+            p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+            
+            # --- AQUÍ LLAMAS A NUESTRA FUNCIÓN ---
+            mostrar_video_con_elementos_superpuestos(p_file, p_user, p_cap, p_tag)
+            
+            # (El resto de tus columnas y botones de reacciones siguen aquí abajo)
+            col_vid, col_act = st.columns((4, 1))
+             
         val_fires = p_fires if p_fires is not None else 0
         val_thumbs = p_thumbs if p_thumbs is not None else 0
         val_hearts = p_hearts if p_hearts is not None else 0
