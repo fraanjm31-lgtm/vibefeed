@@ -459,23 +459,26 @@ else:
         
         
 
-                msg_regalo = (
-                    "🎁 ¡Te ha enviado un regalo: 🌹 Rosa Vibe (5 Coins)! 🌹"
-                )
-                c.execute(
-                    (
-                        "INSERT INTO messages (sender, receiver, message) VALUES"
-                        " (?, ?, ?)"
-                    ),
-                    (st.session_state.username, p_user, msg_regalo),
-                )
-                conn.commit()
-                st.toast(f"¡Rosa enviada a @{p_user} con éxito! 🌹", icon="🎉")
-                st.rerun()
-              else:
-                st.toast(
-                    "¡No tienes suficientes Coins para enviar la Rosa!",
-                    icon="⚠️",)
+                        msg_regalo = (
+            "🎁 ¡Te ha enviado un regalo: 🌹 Rosa Vibe (5 Coins)! 💌"
+        )
+        c.execute(
+            """
+                INSERT INTO messages (sender, receiver, message) VALUES
+                (?, ?, ?)
+            """,
+            (st.session_state.username, p_user, msg_regalo),
+        )
+        conn.commit()
+        st.toast(f"Rosa enviada a @{p_user} con éxito! 🌹", icon="💌")
+        st.rer()
+         
+                  else:
+        st.toast(
+            "¡No tienes suficientes Coins para enviar la Rosa!",
+            icon="⚠️",
+     )
+        
                             
             # --------------------------------------------------
 
