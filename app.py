@@ -130,13 +130,15 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }}
-    </style>
-""",
+            </style>
+    """
+
     unsafe_allow_html=True,
 )
- def enviar_codigo_correo(destinatario, codigo):
+def enviar_codigo_correo(destinatario, codigo):
     st.session_state["codigo_generado"] = codigo
     return True
+    
     
     
 def ai_vibe_checker(text):
