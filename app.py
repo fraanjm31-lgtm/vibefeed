@@ -20,16 +20,17 @@ c.execute(
 c.execute(
     """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
 )
- columnas_usuarios = [
-        ("nombre", "TEXT"),
-        ("apellidos", "TEXT"),
-        ("edad", "INTEGER"),
-        ("email", "TEXT"),
-        ("theme", "TEXT DEFAULT 'Oscuro'"),
-        ("account_privacy", "TEXT DEFAULT 'Publico'"),
-        ("coins", "INTEGER DEFAULT 100"),
-        ("vibe", "TEXT DEFAULT '✨ Explorando noxvibe'"),
-    ]
+columnas_usuarios = [
+    ("nombre", "TEXT"),
+    ("apellidos", "TEXT"),
+    ("edad", "INTEGER"),
+    ("email", "TEXT"),
+    ("theme", "TEXT DEFAULT 'Oscuro'"),
+    ("account_privacy", "TEXT DEFAULT 'Publico'"),
+    ("coins", "INTEGER DEFAULT 100"),
+    ("vibe", "TEXT DEFAULT '✨ Explorando noxvibe'"),
+]
+
 
 for col_nombre, col_tipo in columnas_usuarios:
   try:
