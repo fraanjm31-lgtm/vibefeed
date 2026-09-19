@@ -613,7 +613,54 @@ if menu_option == "👥 Siguiendo":
         st.info("Aún no sigues a nadie.")
 if menu_option == "💬 Mensajes":
     st.title("💬 Mensajes y Chat")
-    st.info("Aquí podrás chatear con otros usuarios próximamente.")
+    
+    # 1. Elegir con quién chatear (buscamos usuarios que no seas tú)
+    c.execute("SELECT username FROM users WHERE username != ?", (st.session_state.username,))
+    usuarios_disponibles = [row[0] for row in c.fetchall()]
+    
+    if usuarios_disponibles:
+        destinatario = st.selectbox("Selecciona un usuario para chatear:", usuarios_disponibles)
+        
+        st.markdown("---")
+        st.subheader(f"Conversación con @{destinatario}")
+        
+        # 2. Cargar los mensajes entre tú y el destinatario
+        c.execute("""
+            SELECT sender, message, timestamp FROM messages 
+            WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?)
+            ORDER BY id ASC
+        """, (st.session_state.username, destinatario, destinatario, st.session_state.username))
+        
+        mensajes = c.fetchall()
+        
+        # Mostrar los mensajes en pantalla
+        chat_container = st.container()
+        with chat_container:
+            if mensajes:
+                for remitente, texto, hora in mensajes:
+                    if remitente == st.session_state.username:
+                        st.markdown(f"**Tú:** {texto}")
+                    else:
+                        st.markdown(f"**@{remitente}:** {texto}")
+            else:
+                st.info("No hay mensajes todavía. ¡Escribe el primero!")
+                
+        # 3. Caja para escribir un nuevo mensaje
+        nuevo_mensaje = st.text_input("Escribe tu mensaje...", key="input_mensaje")
+        if st.button("Enviar mensaje"):
+            if nuevo_mensaje.strip():
+                c.execute(
+                    "INSERT INTO messages (sender, receiver, message) VALUES (?, ?, ?)",
+                    (st.session_state.username, destinatario, nuevo_mensaje)
+                )
+                conn.commit()
+                st.success("¡Mensaje enviado!")
+                st.rerun()
+            else:
+                st.warning("El mensaje no puede estar vacío.")
+    else:
+        st.info("Todavía no hay más usuarios registrados en la app para chatear.")
+        
     
     
 if menu_option == "⚙️ Ajustes":
