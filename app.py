@@ -658,7 +658,57 @@ else:
               " VALUES (?, ?, ?, ?)",
               (cur, chat_con, nuevo_msg, now_str),
           )
-          conn.commit()
-          st.success("¡Mensaje enviado!")
-          st.rerun()
+                conn.commit()
+      st.success("¡Mensaje enviado!")
+      st.rerun()
+
+  elif menu_option == "⚙️ Ajustes":
+    st.title("⚙️ Ajustes de la cuenta")
+
+    c.execute(
+        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
+    )
+    u_settings = c.fetchone()
+
+    current_db_theme = (
+        u_settings[0]
+        if u_settings and u_settings[0] is not None
+        else "Oscuro"
+    )
+    current_privacy = (
+        u_settings[1]
+        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
+        else "Publico"
+    )
+
+    st.subheader("🎨 Apariencia y Privacidad")
+
+    opciones_temas = ["Oscuro", "Claro", "Neon / Cyber"]
+    idx_tema = (
+        opciones_temas.index(current_db_theme)
+        if current_db_theme in opciones_temas
+        else 0
+    )
+    tema_sel = st.selectbox("Tema de Colores", opciones_temas, index=idx_tema)
+
+    opciones_priv = ["Publico", "Privado"]
+    idx_priv = (
+        opciones_priv.index(current_privacy)
+        if current_privacy in opciones_priv
+        else 0
+    )
+    priv_sel = st.selectbox(
+        "Privacidad de la Cuenta", opciones_priv, index=idx_priv
+    )
+
+    if st.button("Guardar Cambios de Ajustes"):
+      c.execute(
+          "UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?",
+          (tema_sel, priv_sel, cur),
+      )
+      conn.commit()
+      st.session_state.theme = tema_sel
+      st.success("¡Ajustes actualizados con éxito!")
+      st.rerun()
+        
             
