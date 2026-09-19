@@ -345,9 +345,10 @@ else:
     avatar = user_data[2] if user_data else ""
     account_privacy = user_data[3] if user_data else "Publico"
     coins = user_data[4] if user_data else 100
-             nombre_real = (
-        f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
-    )
+    nombre_real = f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
+    st.title(f"{nombre_real}")
+    st.caption(f"@{cur} · {priv_badge}")
+      
     st.title(f"{nombre_real}")
     st.caption(f"@{cur} · {priv_badge}")
       
