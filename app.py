@@ -403,9 +403,10 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
      
-       st.markdown(f"**Tus XP:** 100 | **NoxCoins:** 10 🪙")
-       st.markdown("¡Hola! Estoy un Creator de Contenido y en especial GTAV Mod Policia")
-       st.markdown("---")
+st.markdown(f"**Tus XP:** 100 | **NoxCoins:** 10 🪙")
+
+st.markdown("¡Hola! Estoy un Creator de Contenido y en especial GTAV Mod Policia")
+st.markdown("---")
    
     
     # Botón para publicar contenido nuevo directamente desde el perfil
