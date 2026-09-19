@@ -373,10 +373,8 @@ if menu_option == "🔥 Feed de Videos":
 
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
-
 if menu_option == "👤 Mi Perfil":
     st.title("👤 Mi Perfil y Publicación")
-    
     
     c.execute("SELECT account_privacy, bio FROM users WHERE username = ?", (cur,))
     user_data = c.fetchone()
@@ -411,6 +409,33 @@ if menu_option == "👤 Mi Perfil":
                         st.rerun()
                     else:
                         st.warning("Por favor, selecciona un video para subir.")
+        
+        st.markdown("### 🎬 Tus Videos")
+        c.execute("""
+            SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
+            FROM posts 
+            WHERE username = ? AND file_type = 'video' 
+            ORDER BY id DESC
+        """, (cur,))
+        my_posts = c.fetchall()
+        
+        if not my_posts:
+            st.info("Aún no has subido ningún video.")
+        else:
+            for post in my_posts:
+                p_id, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+                val_fires = p_fires if p_fires is not None else 0
+                val_thumbs = p_thumbs if p_thumbs is not None else 0
+                val_hearts = p_hearts if p_hearts is not None else 0
+                
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
+                if p_cap:
+                    st.write(p_cap)
+                if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+                    st.video(p_file)
+                st.markdown("---")
+    else:
+        st.warning("Usuario no encontrado.")
         
         st.markdown("### 🎬 Tus Videos")
         c.execute("""
