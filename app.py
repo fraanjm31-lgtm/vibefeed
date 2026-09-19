@@ -613,12 +613,113 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-  elif menu_option == "👥 Siguiendo":
+    elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
-    st.write("Publicaciones de la gente a la que sigues.")
-  elif menu_option == "📺 Explorar Canales":
-    st.title("📺 Explorar Canales")
-    st.write("Canales de contenido en NoxVibe.")
+    st.write("Videos recientes de la gente a la que sigues.")
+    
+    c.execute("SELECT followed FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
+    siguiendo = [r[0] for r in c.fetchall()]
+    
+    if not siguiendo:
+      st.info("Aún no sigues a nadie. ¡Busca perfiles en la pestaña de búsqueda y añádelos para ver sus videos aquí!")
+    else:
+      placeholders = ','.join(['?'] * len(siguiendo))
+      query = f"""
+            SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
+            FROM posts p 
+            WHERE p.file_type = 'video' AND p.username IN ({placeholders}) 
+            ORDER BY p.id DESC
+      """
+      c.execute(query, siguiendo)
+      videos_amigos = c.fetchall()
+      
+      if not videos_amigos:
+        st.info("La gente a la que sigues aún no ha subido ningún video.")
+      else:
+        for post in videos_amigos:
+          p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+          val_fires = p_fires if p_fires is not None else 0
+          val_thumbs = p_thumbs if p_thumbs is not None else 0
+          val_hearts = p_hearts if p_hearts is not None else 0
+
+          st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
+          col_vid, col_act = st.columns([4, 1])
+
+          with col_vid:
+            st.markdown(f"### @{p_user} · `{p_tag}`")
+            if p_cap:
+              st.write(p_cap)
+            if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+              st.video(p_file)
+
+          with col_act:
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            if st.button(f"🔥 {val_fires}", key=f"f_fire_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "fire")
+            if st.button(f"👍 {val_thumbs}", key=f"f_like_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "thumb")
+            if st.button(f"❤️ {val_hearts}", key=f"f_heart_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "heart")
+
+          st.markdown("</div>", unsafe_allow_html=True)
+          st.markdown("---")
+            
+    elif menu_option == "📺 Explorar Canales":
+    st.title("📺 Explorar Canales por Categoría")
+    
+    canales = ["Todos", "✨ Chill", "🎉 Fiesta", "❤️ Hype / Amor", "🌧️ Melancolico", "🚀 Inspirador"]
+    canal_sel = st.selectbox("Elige un canal:", canales)
+    
+    if canal_sel == "Todos":
+      c.execute("""
+            SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
+            FROM posts p 
+            JOIN users u ON p.username = u.username 
+            WHERE p.file_type = 'video' AND u.account_privacy = 'Publico' 
+            ORDER BY p.id DESC
+      """)
+    else:
+      c.execute("""
+            SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
+            FROM posts p 
+            JOIN users u ON p.username = u.username 
+            WHERE p.file_type = 'video' AND u.account_privacy = 'Publico' AND p.vibe_tag = ? 
+            ORDER BY p.id DESC
+      """, (canal_sel,))
+      
+    videos_canal = c.fetchall()
+    
+    if not videos_canal:
+      st.info(f"No hay videos públicos en el canal '{canal_sel}' todavía.")
+    else:
+      for post in videos_canal:
+        p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+        val_fires = p_fires if p_fires is not None else 0
+        val_thumbs = p_thumbs if p_thumbs is not None else 0
+        val_hearts = p_hearts if p_hearts is not None else 0
+
+        st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
+        col_vid, col_act = st.columns([4, 1])
+
+        with col_vid:
+          st.markdown(f"### @{p_user} · `{p_tag}`")
+          if p_cap:
+            st.write(p_cap)
+          if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+            st.video(p_file)
+
+          with col_act:
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            if st.button(f"🔥 {val_fires}", key=f"c_fire_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "fire")
+            if st.button(f"👍 {val_thumbs}", key=f"c_like_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "thumb")
+            if st.button(f"❤️ {val_hearts}", key=f"c_heart_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "heart")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("---")
+          
 
   elif menu_option == "💬 Mensajes":
     st.title("💬 Tus Mensajes")
