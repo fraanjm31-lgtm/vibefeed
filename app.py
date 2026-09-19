@@ -612,15 +612,12 @@ else:
   elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
 
-    try:
-      c.execute(
-          "SELECT bio, avatar, theme, account_privacy FROM users WHERE"
-          " username = ?",
-          (cur,),
-      )
-      u_settings = c.fetchone()
-    except:
-      u_settings = None
+    c.execute(
+        "SELECT bio, avatar, theme, account_privacy FROM users WHERE"
+        " username = ?",
+        (cur,),
+    )
+    u_settings = c.fetchone()
 
     current_bio = u_settings[0] if u_settings and u_settings[0] else ""
     current_db_theme = (
@@ -634,4 +631,4 @@ else:
         else "Publico"
     )
 
-    with st.
+    new_bio = st.text_area("Actualizar tu biografia", value=current_b
