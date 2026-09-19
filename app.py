@@ -444,32 +444,27 @@ else:
             "SELECT coins FROM users WHERE username = ?",
             (st.session_state.username,),
         )
-           u_data = c.fetchone()
-           mis_c = (
-               u_data[0] if u_data and u_data[0] is not None else 0
-           )
-         
-         
-         
-
-              if mis_c >= 5:
-                c.execute(
-                    "UPDATE users SET coins = ? WHERE username = ?",
-                    (mis_c - 5, st.session_state.username),
-                )
-                c.execute(
-                    "SELECT coins FROM users WHERE username = ?", (p_user,)
-                )
-                creador_data = c.fetchone()
-                creador_c = (
-                    creador_data[0]
-                    if creador_data and creador_data[0] is not None
-                    else 0
-                )
-                c.execute(
-                    "UPDATE users SET coins = ? WHERE username = ?",
-                    (creador_c + 5, p_user),
-                )
+                   u_data = c.fetchone()
+    mis_c = (
+        u_data[0] if u_data and u_data[0] is not None else 0
+    )
+    if mis_c >= 5:
+        c.execute(
+            "UPDATE users SET coins = ? WHERE username = ?",
+            (mis_c - 5, st.session_state.username),
+        )
+        c.execute(
+            "SELECT coins FROM users WHERE username = ?", (p_user,)
+        )
+        creador_data = c.fetchone()
+        creador_c = (
+            creador_data[0] if creador_data and creador_data[0] is not None else 0
+        )
+        c.execute(
+            "UPDATE users SET coins = ? WHERE username = ?",
+            (creador_c + 5, p_user),
+        )
+        
 
                 msg_regalo = (
                     "🎁 ¡Te ha enviado un regalo: 🌹 Rosa Vibe (5 Coins)! 🌹"
