@@ -615,3 +615,15 @@ if menu_option == "⚙️ Ajustes":
               "FROM users WHERE username = ?", (cur,))
     u_settings = c.fetchone()
     
+    if u_settings:
+        current_theme, current_privacy = u_settings
+        
+        new_theme = st.selectbox("Tema", ["Claro", "Oscuro"], index=0 if current_theme == "Claro" else 1)
+        new_privacy = st.selectbox("Privacidad", ["Público", "Privado"], index=0 if current_privacy == "Público" else 1)
+        
+        if st.button("Guardar cambios"):
+            c.execute("UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?", (new_theme, new_privacy, cur))
+            conn.commit()
+            st.success("¡Ajustes guardados con éxito!")
+            st.rerun()
+            
