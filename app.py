@@ -732,7 +732,62 @@ if menu_option == "🛍️ Tienda Vibe":
                     else:
                         st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
                         
-                                
+if menu_option == "🎁 Enviar Regalo":
+    st.title("🎁 Enviar Regalo en Directo")
+    st.write("¡Apoya a tus creadores favoritos enviándoles regalos durante sus directos con tus Coins!")
+    
+    # Consultar los coins actuales del usuario
+    c.execute("SELECT coins FROM users WHERE username = ?", (st.session_state.username,))
+    user_data = c.fetchone()
+    mis_coins = user_data[0] if user_data and user_data[0] is not None else 0
+    
+    st.info(f"💰 Tienes **{mis_coins} Coins** disponibles para enviar.")
+    
+    # Seleccionar a qué usuario/streamer se le quiere regalar
+    c.execute("SELECT username FROM users WHERE username != ?", (st.session_state.username,))
+    usuarios_disponibles = [row[0] for row in c.fetchall()]
+    
+    if not usuarios_disponibles:
+        st.warning("No hay otros usuarios registrados todavía para enviarles regalos.")
+    else:
+        streamer_destino = st.selectbox("Selecciona al creador o usuario en directo:", usuarios_disponibles)
+        
+        # Catálogo de regalos para enviar en directo
+        regalos_directo = {
+            "🔮 Oráculo Místico": 10,
+            "⚡ Rayo Flash": 25,
+            "🖤 Corazón Vibe": 50,
+            "👑 Corona Real": 100,
+            "🚀 Cohete Espacial": 500,
+            "🌟 Supernova": 1000
+        }
+        
+        st.markdown("### Selecciona el regalo:")
+        selected_regalo = st.selectbox("Regalo", list(regalos_directo.keys()))
+        costo_regalo = regalos_directo[selected_regalo]
+        
+        st.write(f"Costo del regalo: **{costo_regalo} Coins**")
+        
+        if st.button("🎁 Enviar Regalo Ahora", key="btn_enviar_regalo_directo"):
+            if mis_coins >= costo_regalo:
+                # Restar coins al usuario que envía
+                nuevos_coins_remitente = mis_coins - costo_regalo
+                c.execute("UPDATE users SET coins = ? WHERE username = ?", (nuevos_coins_remitente, st.session_state.username))
+                
+                # Sumar los coins al streamer que recibe el regalo (opcional pero muy útil)
+                c.execute("SELECT coins FROM users WHERE username = ?", (streamer_destino,))
+                streamer_data = c.fetchone()
+                coins_streamer_actuales = streamer_data[0] if streamer_data and streamer_data[0] is not None else 0
+                nuevos_coins_streamer = coins_streamer_actuales + costo_regalo
+                c.execute("UPDATE users SET coins = ? WHERE username = ?", (nuevos_coins_streamer, streamer_destino))
+                
+                conn.commit()
+                st.success(f"¡Has enviado con éxito **{selected_regalo}** a **{streamer_destino}**! 🎉 Se han transferido {costo_regalo} Coins.")
+                st.balloons()
+                st.rerun()
+            else:
+                st.error("¡No tienes suficientes Coins para enviar este regalo! Recarga más para conseguir más.")
+                
                     
 if menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
