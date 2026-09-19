@@ -187,7 +187,7 @@ menu_option = st.sidebar.radio(
         "👥 Siguiendo",       
         "💬 Mensajes",
         "🛍️ Tienda Vibe",
-        "🎁 Enviar Regalo"
+        "🎁 Enviar Regalo",
         "⚙️ Ajustes",
     ],
 )
