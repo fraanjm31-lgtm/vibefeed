@@ -428,8 +428,8 @@ else:
                 handle_reaction(p_id, cur, "thumb")
 
             if st.button(
-        "🌹 5C", key=f"feed_gift_{p_id}", use_container_width=True
-    ):
+                 "🌹 5C", key=f"feed_gift_{p_id}", use_container_width=True):8
+       
             c.execute(
             "SELECT coins FROM users WHERE username = ?",
             (st.session_state.username,),
