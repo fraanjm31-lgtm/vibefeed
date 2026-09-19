@@ -768,7 +768,7 @@ if menu_option == "🔍 Buscar Perfiles":
             st.warning("No se encontró ningún usuario con ese nombre.")
             
   
- elif menu_option == "👥 Siguiendo":
+elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Videos recientes de la gente a la que sigues.")
     
