@@ -20,6 +20,9 @@ c.execute(
 c.execute(
     """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
 )
+c.execute(
+    """CREATE TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender TEXT, receiver TEXT, message TEXT, timestamp TEXT)"""
+)
 
 columnas_usuarios = [
     ("nombre", "TEXT"),
@@ -609,28 +612,16 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-  elif menu_option == "⚙️ Ajustes":
-    st.title("⚙️ Ajustes de la cuenta")
+  elif menu_option == "👥 Siguiendo":
+    st.title("👥 Siguiendo")
+    st.write("Publicaciones de la gente a la que sigues.")
 
-    c.execute(
-        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
-    )
-    u_settings = c.fetchone()
+  elif menu_option == "📺 Explorar Canales":
+    st.title("📺 Explorar Canales")
+    st.write("Canales de contenido en NoxVibe.")
 
-    current_db_theme = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    tema_sel = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    priv_sel = st.c
+  elif menu_option == "💬 Mensajes":
+    st.title("💬 Tus Mensajes")
+    
+    c.execute("SELECT DISTINCT sender FROM messages WHERE receiver = ? UNION SELECT DISTINCT receiver FROM messages WHERE sender = ?", (cur, cur))
+    contactos = [row[0] f
