@@ -609,43 +609,6 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-           elif menu_option == "⚙️ Ajustes":
-                st.title("⚙️ Ajustes de la cuenta")
-
-    c.execute(
-        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
-    )
-    u_settings = c.fetchone()
-
-    current_db_theme = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    tema_sel = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    priv_sel = st.checkbox(
-        "🔒 Cuenta Privada", value=(current_privacy == "Privado")
-    )
-
-    if st.button("Guardar Cambios"):
-      nuevo_estado = "Privado" if priv_sel else "Publico"
-      c.execute(
-          "UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?",
-          (tema_sel, nuevo_estado, cur),
-      )
-      conn.commit()
-      st.session_state.theme = tema_sel
-      st.success("¡Ajustes guardados con éxito!")
-      st.rerun()
+        
         
         
