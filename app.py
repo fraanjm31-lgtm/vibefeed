@@ -633,4 +633,4 @@ else:
     new_theme = st.selectbox(
         "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
     )
-    if new_theme !
+    is_private = s
