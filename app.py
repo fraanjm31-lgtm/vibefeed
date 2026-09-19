@@ -444,7 +444,7 @@ else:
             "SELECT coins FROM users WHERE username = ?",
             (st.session_state.username,),
         )
-                   u_data = c.fetchone()
+              u_data = c.fetchone()
     mis_c = (
         u_data[0] if u_data and u_data[0] is not None else 0
     )
