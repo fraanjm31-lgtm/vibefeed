@@ -333,7 +333,7 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
 
-    elif menu_option == "👤 Mi Perfil":
+  elif menu_option == "👤 Mi Perfil":
     c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
         " FROM users WHERE username = ?",
@@ -346,8 +346,14 @@ else:
     account_privacy = user_data[3] if user_data else "Publico"
     coins = user_data[4] if user_data else 100
 
-    nombre_real = f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
-    priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Publica"
+    nombre_real = (
+        f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
+    )
+    priv_badge = (
+        "🔒 Cuenta Privada"
+        if account_privacy == "Privado"
+        else "🌐 Cuenta Publica"
+    )
 
     st.title(f"{nombre_real}")
     st.caption(f"@{cur} · {priv_badge}")
@@ -357,19 +363,20 @@ else:
 
     try:
       c.execute(
-          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'",
+          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status ="
+          " 'accepted'",
           (cur,),
       )
       total_followers = c.fetchone()[0]
       c.execute(
-          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'",
+          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status ="
+          " 'accepted'",
           (cur,),
       )
       total_following = c.fetchone()[0]
     except:
       total_followers = 0
       total_following = 0
-        
 
     col1, col2 = st.columns([1, 2])
     with col1:
@@ -616,92 +623,8 @@ else:
 
   elif menu_option == "💬 Mensajes":
     st.title("💬 Tus Mensajes")
-
     c.execute(
         "SELECT DISTINCT sender FROM messages WHERE receiver = ? UNION SELECT"
         " DISTINCT receiver FROM messages WHERE sender = ?",
         (cur, cur),
-    )
-    res_contactos = c.fetchall()
-    contactos = [r[0] for r in res_contactos] if res_contactos else []
-
-    chat_con = st.selectbox("Selecciona un usuario para chatear", [""] + contactos)
-
-    if chat_con:
-      st.markdown(f"### Chat con @{chat_con}")
-
-      c.execute(
-          "SELECT sender, message, timestamp FROM messages WHERE (sender = ?"
-          " AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC",
-          (cur, chat_con, chat_con, cur),
-      )
-      mensajes = c.fetchall()
-
-      for m_sender, m_text, m_time in mensajes:
-        if m_sender == cur:
-          st.markdown(f"**Tú ({m_time}):** {m_text}")
-        else:
-          st.markdown(f"**@{m_sender} ({m_time}):** {m_text}")
-
-      nuevo_msg = st.text_input("Escribe tu mensaje...")
-      if st.button("Enviar Mensaje 🚀"):
-        if nuevo_msg:
-          now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-          c.execute(
-              "INSERT INTO messages (sender, receiver, message, timestamp)"
-              " VALUES (?, ?, ?, ?)",
-              (cur, chat_con, nuevo_msg, now_str),
-          )
-          conn.commit()
-          st.success("¡Mensaje enviado!")
-          st.rerun()
-
-  elif menu_option == "⚙️ Ajustes":
-    st.title("⚙️ Ajustes de la cuenta")
-
-    c.execute(
-        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
-    )
-    u_settings = c.fetchone()
-
-    current_db_theme = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    opciones_temas = ["Oscuro", "Claro", "Neon / Cyber"]
-    idx_tema = (
-        opciones_temas.index(current_db_theme)
-        if current_db_theme in opciones_temas
-        else 0
-    )
-    tema_sel = st.selectbox("Tema de Colores", opciones_temas, index=idx_tema)
-
-    opciones_priv = ["Publico", "Privado"]
-    idx_priv = (
-        opciones_priv.index(current_privacy)
-        if current_privacy in opciones_priv
-        else 0
-    )
-    priv_sel = st.selectbox(
-        "Privacidad de la Cuenta", opciones_priv, index=idx_priv
-    )
-
-    if st.button("Guardar Cambios de Ajustes"):
-      c.execute(
-          "UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?",
-          (tema_sel, priv_sel, cur),
-      )
-      conn.commit()
-      st.session_state.theme = tema_sel
-      st.success("¡Ajustes actualizados con éxito!")
-      st.rerun()
-        
+    
