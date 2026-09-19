@@ -417,7 +417,7 @@ else:
                 
             col_vid, col_act = st.columns((4, 1))
               
-          with col_act:            
+              with col_act:            
              st.markdown("<br><br>", unsafe_allow_html=True)
                if st.button(
                f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True
