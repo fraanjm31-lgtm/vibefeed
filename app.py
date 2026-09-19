@@ -455,11 +455,7 @@ else:
                 (creador_c + 5, p_user),
             )
             
-            
-        
-        
-
-                        msg_regalo = (
+  msg_regalo = (
             "🎁 ¡Te ha enviado un regalo: 🌹 Rosa Vibe (5 Coins)! 💌"
         )
         c.execute(
@@ -471,7 +467,7 @@ else:
         )
         conn.commit()
         st.toast(f"Rosa enviada a @{p_user} con éxito! 🌹", icon="💌")
-        st.rer()
+        st.rerun()
          
                   else:
         st.toast(
