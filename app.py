@@ -673,7 +673,7 @@ if menu_option == "💬 Mensajes":
     else:
         st.info("Todavía no hay más usuarios registrados en la app para chatear.")
         
- if menu_option == "🛍️ Tienda Vibe":
+if menu_option == "🛍️ Tienda Vibe":
     st.title("🛍️ Tienda Vibe")
     st.write("¡Gasta tus Coins en insignias exclusivas y personaliza tu perfil con estilo!")
     
