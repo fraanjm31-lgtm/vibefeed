@@ -793,6 +793,7 @@ elif menu_option == "👥 Siguiendo":
       else:
         for post in videos_amigos:
           p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+            
           val_fires = p_fires if p_fires is not None else 0
           val_thumbs = p_thumbs if p_thumbs is not None else 0
           val_hearts = p_hearts if p_hearts is not None else 0
