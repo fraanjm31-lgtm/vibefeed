@@ -447,7 +447,7 @@ else:
            u_data = c.fetchone()
            mis_c = (
                u_data[0] if u_data and u_data[0] is not None else 0
-        )
+           )
          
          
          
