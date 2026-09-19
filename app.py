@@ -386,11 +386,11 @@ elif menu_option == "👤 Mi Perfil":
     c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
     videos_usuario = c.fetchall()
 
-    col1, col2, col3 = st.columns(3)
+        col1, col2, col3 = st.columns(3)
     col1.metric("Posts", len(videos_usuario))
-    
     col2.metric("Seguidores", 0)
     col3.metric("Siguiendo", 0)
+
     
     st.markdown(f"**Tus XP:** 100 | **NoxCoins:** 10 🪙")
     st.markdown("¡Hola! Estoy un Creator de Contenido y en especial GTAV Mod Policia")
