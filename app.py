@@ -671,7 +671,47 @@ if menu_option == "💬 Mensajes":
     else:
         st.info("Todavía no hay más usuarios registrados en la app para chatear.")
         
+if menu_option == "🛍️ Tienda Vibe":
+    st.title("🛍️ Tienda Vibe")
+    st.write("¡Gasta tus Coins en insignias exclusivas y personaliza tu perfil con estilo!")
     
+    # Consultar los coins actuales del usuario
+    c.execute("SELECT coins, badge FROM users WHERE username = ?", (st.session_state.username,))
+    user_data = c.fetchone()
+    mis_coins = user_data[0] if user_data and user_data[0] is not None else 0
+    insignia_actual = user_data[1] if user_data and user_data[1] is not None else "Ninguna"
+    
+    st.info(f"💰 Tienes **{mis_coins} Coins** disponibles. | Insignia actual: **{insignia_actual}**")
+    st.markdown("---")
+    
+    # Artículos de la tienda peculiar y diferente
+    articulos = {
+        "🔮 Oráculo Cósmico": {"precio": 10, "icono": "🔮"},
+        "⚡ Rayo Nocturno": {"precio": 25, "icono": "⚡"},
+        "🖤 Corazón de Neón": {"precio": 50, "icono": "🖤"},
+        "👑 Corona Cyber": {"precio": 100, "icono": "👑"}
+    }
+    
+    # Mostrar artículos en columnas o tarjetitas
+    for nombre_articulo, info in articulos.items():
+        col1, col2, col3 = st.columns([3, 2, 2])
+        with col1:
+            st.markdown(f"### {info['icono']} {nombre_articulo}")
+        with col2:
+            st.markdown(f"**{info['precio']} Coins**")
+        with col3:
+            if st.button(f"Comprar", key=f"comprar_{nombre_articulo}"):
+                if mis_coins >= info['precio']:
+                    # Descontar coins y guardar insignia
+                    nuevos_coins = mis_coins - info['precio']
+                    c.execute("UPDATE users SET coins = ?, badge = ? WHERE username = ?", 
+                              (nuevos_coins, f"{info['icono']} {nombre_articulo}", st.session_state.username))
+                    conn.commit()
+                    st.success(f"¡Te has comprado {nombre_articulo}! Ya la tienes equipada.")
+                    st.rerun()
+                else:
+                    st.error("¡No tienes suficientes Coins! Interactúa más en la app para conseguirlos.")
+                    
     
 if menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
