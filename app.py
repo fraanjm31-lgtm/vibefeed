@@ -621,10 +621,43 @@ else:
     st.title("📺 Explorar Canales")
     st.write("Canales de contenido en NoxVibe.")
 
-  elif menu_option == "💬 Mensajes":
+    elif menu_option == "💬 Mensajes":
     st.title("💬 Tus Mensajes")
     c.execute(
         "SELECT DISTINCT sender FROM messages WHERE receiver = ? UNION SELECT"
         " DISTINCT receiver FROM messages WHERE sender = ?",
         (cur, cur),
-    
+    )
+    res_contactos = c.fetchall()
+    contactos = [r[0] for r in res_contactos] if res_contactos else []
+
+    chat_con = st.selectbox("Selecciona un usuario para chatear", [""] + contactos)
+
+    if chat_con:
+      st.markdown(f"### Chat con @{chat_con}")
+      c.execute(
+          "SELECT sender, message, timestamp FROM messages WHERE (sender = ?"
+          " AND receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC",
+          (cur, chat_con, chat_con, cur),
+      )
+      mensajes = c.fetchall()
+
+      for m_sender, m_text, m_time in mensajes:
+        if m_sender == cur:
+          st.markdown(f"**Tú ({m_time}):** {m_text}")
+        else:
+          st.markdown(f"**@{m_sender} ({m_time}):** {m_text}")
+
+      nuevo_msg = st.text_input("Escribe tu mensaje...")
+      if st.button("Enviar Mensaje 🚀"):
+        if nuevo_msg:
+          now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+          c.execute(
+              "INSERT INTO messages (sender, receiver, message, timestamp)"
+              " VALUES (?, ?, ?, ?)",
+              (cur, chat_con, nuevo_msg, now_str),
+          )
+          conn.commit()
+          st.success("¡Mensaje enviado!")
+          st.rerun()
+            
