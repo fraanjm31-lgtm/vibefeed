@@ -805,7 +805,19 @@ elif menu_option == "👥 Siguiendo":
             if p_cap:
               st.write(p_cap)
             if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-              st.video(p_file)
+                          import base64
+            with open(p_file, "rb") as f:
+                video_bytes = f.read()
+            video_base64 = base64.b64encode(video_bytes).decode()
+            
+            video_html = f"""
+                <video width="100%" autoplay loop muted playsinline style="border-radius: 10px;">
+                    <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+                    Tu navegador no soporta el elemento de video.
+                </video>
+            """
+            st.markdown(video_html, unsafe_allow_html=True)
+              
 
           with col_act:
             st.markdown("<br><br>", unsafe_allow_html=True)
