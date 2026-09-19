@@ -917,7 +917,7 @@ elif menu_option == "💬 Mensajes":
           st.success("¡Mensaje enviado!")
           st.rerun()
 
-  elif menu_option == "⚙️ Ajustes":
+elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
 
     c.execute(
