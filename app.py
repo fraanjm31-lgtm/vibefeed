@@ -723,7 +723,7 @@ if menu_option == "👤 Mi Perfil":
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
 
-  elif menu_option == "🔍 Buscar Perfiles":
+  if menu_option == "🔍 Buscar Perfiles":
     st.title("🔍 Buscar Perfiles")
     search_user = st.text_input("Escribe el nombre de usuario:")
     if search_user:
