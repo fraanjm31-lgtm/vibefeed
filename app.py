@@ -414,34 +414,28 @@ else:
             val_thumbs = p_thumbs if p_thumbs is not None else 0
             val_hearts = p_hearts if p_hearts is not None else 0
             
+                
             col_vid, col_act = st.columns((4, 1))
-             
-
-        with col_act:
-          st.markdown("<br><br>", unsafe_allow_html=True)
-          if st.button(
-              f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True
-          ):
-            handle_reaction(p_id, cur, "fire")
-          if st.button(
-              f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True
+              
+          with col_act:            
+             st.markdown("<br><br>", unsafe_allow_html=True)
+               if st.button(
+               f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True
+           ):
+               handle_reaction(p_id, cur, "fire")
+               if st.button(
+               f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True
           ):
             handle_reaction(p_id, cur, "thumb")
-          if st.button(
-              f"❤️ {val_hearts}",
-              key=f"feed_heart_{p_id}",
-              use_container_width=True,
+               if st.button(
+               f"❤️ {val_hearts}",
+               key=f"feed_heart_{p_id}",
+               use_container_width=True,
           ):
             handle_reaction(p_id, cur, "heart")
-            if st.button(
-                f"❤️ ({val_hearts})",
-                key=f"feed_heart_{p_id}",
-                use_container_width=True,
-            ):
-              handle_reaction(p_id, cur, "heart")
-
+            
             # --- PEGA ESTO AQUÍ SIN BORRAR NADA DE LO DEMÁS ---
-            if st.button(
+               if st.button(
                 "🌹 5C", key=f"feed_gift_{p_id}", use_container_width=True
             ):
               c.execute(
@@ -449,7 +443,7 @@ else:
                   (st.session_state.username,),
               )
               u_data = c.fetchone()
-              mis_c = (
+                  mis_c = (
                   u_data[0] if u_data and u_data[0] is not None else 0
               )
 
