@@ -484,8 +484,8 @@ else:
               else:
                 st.toast(
                     "¡No tienes suficientes Coins para enviar la Rosa!",
-                    icon="⚠️",
-    )
+                    icon="⚠️",)
+                            
             # --------------------------------------------------
 
             st.markdown("</div>", unsafe_allow_html=True)  # Línea 337 original
