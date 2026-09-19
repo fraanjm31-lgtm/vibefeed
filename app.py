@@ -725,18 +725,20 @@ if menu_option == "👤 Mi Perfil":
 
   if menu_option == "🔍 Buscar Perfiles":
     st.title("🔍 Buscar Perfiles")
-    search_user = st.text_input("Escribe el nombre de usuario:")
+    search_user = st.text_input("Escribe el nombre de usuario a buscar")
     if search_user:
-      c.execute(
-          "SELECT username, bio, avatar, account_privacy FROM users WHERE"
-          " username = ?",
-          (search_user,),
-      )
-      target_user = c.fetchone()
-      if target_user:
-        t_username, t_bio, t_avatar, t_privacy = target_user
-        st.success(f"Usuario encontrado: @{t_username}")
-        st.write(f"**Biografía:** {t_bio}")
+        c.execute(
+            "SELECT username, bio, avatar, account_privacy FROM users WHERE username = ?",
+            (search_user,),
+        )
+        target_user = c.fetchone()
+        if target_user:
+            t_username, t_bio, t_avatar, t_privacy = target_user
+            st.success((f"Usuario encontrado: @{t_username}"))
+            st.write(f"**Biografía:** {t_bio if t_bio else 'Sin biografía'}")
+        else:
+            st.warning("No se encontró ningún usuario con ese nombre.")
+            
 
         if t_username == cur:
           st.info("Este es tu propio perfil.")
