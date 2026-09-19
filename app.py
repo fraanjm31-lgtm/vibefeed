@@ -819,7 +819,7 @@ elif menu_option == "👥 Siguiendo":
           st.markdown("</div>", unsafe_allow_html=True)
           st.markdown("---")
 
-  elif menu_option == "📺 Explorar Canales":
+elif menu_option == "📺 Explorar Canales":
     st.title("📺 Explorar Canales por Categoría")
     
     canales = ["Todos", "✨ Chill", "🎉 Fiesta", "❤️ Hype / Amor", "🌧️ Melancolico", "🚀 Inspirador"]
