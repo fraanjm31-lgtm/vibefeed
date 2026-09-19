@@ -602,6 +602,8 @@ else:
       )
       target_user = c.fetchone()
       if target_user:
+    pass
+      
         
   elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
