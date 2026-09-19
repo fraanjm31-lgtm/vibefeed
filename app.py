@@ -722,8 +722,7 @@ if menu_option == "👤 Mi Perfil":
           ):
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
-
-  if menu_option == "🔍 Buscar Perfiles":
+if menu_option == "🔍 Buscar Perfiles":
     st.title("🔍 Buscar Perfiles")
     search_user = st.text_input("Escribe el nombre de usuario a buscar")
     if search_user:
@@ -768,16 +767,8 @@ if menu_option == "👤 Mi Perfil":
         else:
             st.warning("No se encontró ningún usuario con ese nombre.")
             
-          else:
-            if st.button("➕ Añadir de Amiga / Seguir"):
-              c.execute(
-                  "INSERT INTO follows (follower, followed, status) VALUES (?,"
-                  " ?, ?)",
-                  (cur, t_username, "accepted"),
-              )
-              conn.commit()
-              st.success(f"¡Ahora sigues a @{t_username}!")
-              st.rerun()
+  
+                
       else:
         st.warning("Usuario no encontrado.")
   elif menu_option == "👥 Siguiendo":
