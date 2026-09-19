@@ -381,7 +381,7 @@ else:
     col1, col2 = st.columns([1, 2])
     with col1:
       if avatar and isinstance(avatar, str) and os.path.exists(avatar):
-        st.image(avatar, width=110)
+        st.image(avatar, width=110) 
       else:
         st.image(
             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
@@ -612,7 +612,6 @@ else:
               st.rerun()
       else:
         st.warning("Usuario no encontrado.")
-
   elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Videos recientes de la gente a la que sigues.")
@@ -663,10 +662,8 @@ else:
 
           st.markdown("</div>", unsafe_allow_html=True)
           st.markdown("---")
-            
-            
-            
-    elif menu_option == "📺 Explorar Canales":
+
+  elif menu_option == "📺 Explorar Canales":
     st.title("📺 Explorar Canales por Categoría")
     
     canales = ["Todos", "✨ Chill", "🎉 Fiesta", "❤️ Hype / Amor", "🌧️ Melancolico", "🚀 Inspirador"]
@@ -710,17 +707,18 @@ else:
           if p_file and isinstance(p_file, str) and os.path.exists(p_file):
             st.video(p_file)
 
-          with col_act:
-            st.markdown("<br><br>", unsafe_allow_html=True)
-            if st.button(f"🔥 {val_fires}", key=f"c_fire_{p_id}", use_container_width=True):
-              handle_reaction(p_id, cur, "fire")
-            if st.button(f"👍 {val_thumbs}", key=f"c_like_{p_id}", use_container_width=True):
-              handle_reaction(p_id, cur, "thumb")
-            if st.button(f"❤️ {val_hearts}", key=f"c_heart_{p_id}", use_container_width=True):
-              handle_reaction(p_id, cur, "heart")
+        with col_act:
+          st.markdown("<br><br>", unsafe_allow_html=True)
+          if st.button(f"🔥 {val_fires}", key=f"c_fire_{p_id}", use_container_width=True):
+            handle_reaction(p_id, cur, "fire")
+          if st.button(f"👍 {val_thumbs}", key=f"c_like_{p_id}", use_container_width=True):
+            handle_reaction(p_id, cur, "thumb")
+          if st.button(f"❤️ {val_hearts}", key=f"c_heart_{p_id}", use_container_width=True):
+            handle_reaction(p_id, cur, "heart")
 
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
+          
           
 
   elif menu_option == "💬 Mensajes":
