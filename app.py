@@ -612,7 +612,7 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-  elif menu_option == "👥 Siguiendo":
+    elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Publicaciones de la gente a la que sigues.")
 
@@ -620,7 +620,7 @@ else:
     st.title("📺 Explorar Canales")
     st.write("Canales de contenido en NoxVibe.")
 
-    elif menu_option == "💬 Mensajes":
+  elif menu_option == "💬 Mensajes":
     st.title("💬 Tus Mensajes")
 
     c.execute(
@@ -628,7 +628,8 @@ else:
         " DISTINCT receiver FROM messages WHERE sender = ?",
         (cur, cur),
     )
-    contactos = [row[0] for row in c.fetchall()]
+    res_contactos = c.fetchall()
+    contactos = [row[0] for row in res_contactos] if res_contactos else []
 
     chat_con = st.selectbox("Selecciona un usuario para chatear", [""] + contactos)
 
@@ -660,4 +661,41 @@ else:
           conn.commit()
           st.success("¡Mensaje enviado!")
           st.rerun()
-            
+
+  elif menu_option == "⚙️ Ajustes":
+    st.title("⚙️ Ajustes de la cuenta")
+
+    c.execute(
+        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
+    )
+    u_settings = c.fetchone()
+
+    current_db_theme = (
+        u_settings[0]
+        if u_settings and u_settings[0] is not None
+        else "Oscuro"
+    )
+    current_privacy = (
+        u_settings[1]
+        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
+        else "Publico"
+    )
+
+    st.subheader("🎨 Apariencia y Privacidad")
+
+    tema_sel = st.selectbox(
+        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
+    )
+    priv_sel = st.selectbox(
+        "Privacidad de la Cuenta", ["Publico", "Privado"], index=0
+    )
+
+    if st.button("Guardar Cambios de Ajustes"):
+      c.execute(
+          "UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?",
+          (tema_sel, priv_sel, cur),
+      )
+      conn.commit()
+      st.success("¡Ajustes actualizados con éxito!")
+      st.rerun()
+        
