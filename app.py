@@ -333,7 +333,7 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
 
-  elif menu_option == "👤 Mi Perfil":
+    elif menu_option == "👤 Mi Perfil":
     c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
         " FROM users WHERE username = ?",
@@ -345,35 +345,31 @@ else:
     avatar = user_data[2] if user_data else ""
     account_privacy = user_data[3] if user_data else "Publico"
     coins = user_data[4] if user_data else 100
-    
+
     nombre_real = f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
-    
     priv_badge = "🔒 Cuenta Privada" if account_privacy == "Privado" else "🌐 Cuenta Publica"
 
     st.title(f"{nombre_real}")
     st.caption(f"@{cur} · {priv_badge}")
-      
-      
-    st.title(f"{nombre_real}")
-    st.caption(f"@{cur} · {priv_badge}")
-      
+
+    c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
+    total_posts = c.fetchone()[0]
 
     try:
       c.execute(
-          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status ="
-          " 'accepted'",
+          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'",
           (cur,),
       )
       total_followers = c.fetchone()[0]
       c.execute(
-          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status ="
-          " 'accepted'",
+          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'",
           (cur,),
       )
       total_following = c.fetchone()[0]
     except:
       total_followers = 0
       total_following = 0
+        
 
     col1, col2 = st.columns([1, 2])
     with col1:
