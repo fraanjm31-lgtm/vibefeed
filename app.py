@@ -464,12 +464,9 @@ if menu_option == "👤 Mi Perfil":
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file):
                     st.video(p_file)
                 st.markdown("---")
-    else:
+        else:
         st.warning("Usuario no encontrado.")
-        
-        
-        
-        
+  
     c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
         " FROM users WHERE username = ?",
