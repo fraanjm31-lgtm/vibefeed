@@ -669,3 +669,8 @@ else:
       st.success(f"Privacidad actualizada a: {new_priv}")
       st.rerun()
         
+def enviar_codigo_correo(destinatario, codigo):
+    st.session_state["codigo_generado"] = codigo
+    st.warning(f"🔑 Tu código de verificación temporal es: **{codigo}**")
+    return True
+    
