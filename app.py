@@ -607,7 +607,11 @@ else:
               st.success(f"¡Ahora sigues a @{t_username}!")
               st.rerun()
       else:
-        st.warning("Usuario no encontrado.")
+    st.warning("Usuario no encontrado.")
+
+if menu_option == "⚙️ Ajustes":
+    st.title("⚙️ Ajustes de la cuenta")
+    
 
         
         
