@@ -734,31 +734,40 @@ if menu_option == "👤 Mi Perfil":
         target_user = c.fetchone()
         if target_user:
             t_username, t_bio, t_avatar, t_privacy = target_user
-            st.success((f"Usuario encontrado: @{t_username}"))
+            st.success(f"Usuario encontrado: @{t_username}")
             st.write(f"**Biografía:** {t_bio if t_bio else 'Sin biografía'}")
+            
+            if t_username == cur:
+                st.info("Este es tu propio perfil.")
+            else:
+                c.execute(
+                    "SELECT status FROM follows WHERE follower = ? AND followed = ?",
+                    (cur, t_username),
+                )
+                relacion = c.fetchone()
+                
+                if relacion:
+                    st.info(f"Estado de amistad: {relacion[0]}")
+                    if st.button("❌ Dejar de seguir"):
+                        c.execute(
+                            "DELETE FROM follows WHERE follower = ? AND followed = ?",
+                            (cur, t_username),
+                        )
+                        conn.commit()
+                        st.success("Has dejado de seguir a este usuario.")
+                        st.rerun()
+                else:
+                    if st.button("➕ Añadir de Amiga / Seguir"):
+                        c.execute(
+                            "INSERT INTO follows (follower, followed, status) VALUES (?, ?, ?)",
+                            (cur, t_username, "accepted"),
+                        )
+                        conn.commit()
+                        st.success(f"¡Ahora sigues a @{t_username}!")
+                        st.rerun()
         else:
             st.warning("No se encontró ningún usuario con ese nombre.")
             
-
-        if t_username == cur:
-          st.info("Este es tu propio perfil.")
-        else:
-          c.execute(
-              "SELECT status FROM follows WHERE follower = ? AND followed = ?",
-              (cur, t_username),
-          )
-          relacion = c.fetchone()
-
-          if relacion:
-            st.info(f"Estado de amistad: {relacion[0]}")
-            if st.button("❌ Dejar de seguir"):
-              c.execute(
-                  "DELETE FROM follows WHERE follower = ? AND followed = ?",
-                  (cur, t_username),
-              )
-              conn.commit()
-              st.success("Has dejado de seguir a este usuario.")
-              st.rerun()
           else:
             if st.button("➕ Añadir de Amiga / Seguir"):
               c.execute(
