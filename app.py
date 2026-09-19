@@ -375,6 +375,69 @@ if menu_option == "🔥 Feed de Videos":
         st.markdown("---")
 
   if menu_option == "👤 Mi Perfil":
+    st.title("👤 Mi Perfil y Publicación")
+    
+    c.execute("SELECT account_privacy, bio FROM users WHERE username = ?", (cur,))
+    user_data = c.fetchone()
+    
+    if user_data:
+        privacy, bio = user_data
+        st.write(f"**Usuario:** @{cur}")
+        st.write(f"**Biografía:** {bio if bio else 'Sin biografía'}")
+        st.write(f"**Privacidad:** {privacy}")
+        
+        with st.expander("✏️ Publicar Contenido"):
+            with st.form("upload_form", clear_on_submit=True):
+                caption = st.text_area("Leyenda / Descripción")
+                vibe_tag = st.selectbox("Vibe Tag", ["✨ Chill", "🎉 Fiesta", "❤️ Hype / Amor", "🌧️ Melancolico", "🚀 Inspirador"])
+                uploaded_file = st.file_uploader("Sube tu video", type=["mp4", "mov", "avi"])
+                submitted = st.form_submit_button("Publicar 🚀")
+                
+                if submitted:
+                    if uploaded_file is not None:
+                        os.makedirs("uploads", exist_ok=True)
+                        file_path = os.path.join("uploads", uploaded_file.name)
+                        with open(file_path, "wb") as f:
+                            f.write(uploaded_file.getbuffer())
+                        
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
+                        c.execute("""
+                            INSERT INTO posts (username, caption, file, file_type, vibe_tag, timestamp, fires, thumbs, hearts)
+                            VALUES (?, ?, ?, 'video', ?, ?, 0, 0, 0)
+                        """, (cur, caption, file_path, vibe_tag, timestamp))
+                        conn.commit()
+                        st.success("¡Video publicado con éxito!")
+                        st.rerun()
+                    else:
+                        st.warning("Por favor, selecciona un video para subir.")
+        
+        st.markdown("### 🎬 Tus Videos")
+        c.execute("""
+            SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
+            FROM posts 
+            WHERE username = ? AND file_type = 'video' 
+            ORDER BY id DESC
+        """, (cur,))
+        my_posts = c.fetchall()
+        
+        if not my_posts:
+            st.info("Aún no has subido ningún video.")
+        else:
+            for post in my_posts:
+                p_id, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+                val_fires = p_fires if p_fires is not None else 0
+                val_thumbs = p_thumbs if p_thumbs is not None else 0
+                val_hearts = p_hearts if p_hearts is not None else 0
+                
+                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
+                if p_cap:
+                    st.write(p_cap)
+                if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+                    st.video(p_file)
+                st.markdown("---")
+    else:
+        st.warning("Usuario no encontrado.")
+        
     c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
         " FROM users WHERE username = ?",
