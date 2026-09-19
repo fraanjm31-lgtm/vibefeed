@@ -613,7 +613,7 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-    elif menu_option == "👥 Siguiendo":
+      elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Videos recientes de la gente a la que sigues.")
     
@@ -621,7 +621,7 @@ else:
     siguiendo = [r[0] for r in c.fetchall()]
     
     if not siguiendo:
-      st.info("Aún no sigues a nadie. ¡Busca perfiles en la pestaña de búsqueda y añádelos para ver sus videos aquí!")
+      st.info("Aún no sigues a nadie. ¡Busca perfiles y añádelos para ver sus videos aquí!")
     else:
       placeholders = ','.join(['?'] * len(siguiendo))
       query = f"""
@@ -663,6 +663,7 @@ else:
 
           st.markdown("</div>", unsafe_allow_html=True)
           st.markdown("---")
+            
             
     elif menu_option == "📺 Explorar Canales":
     st.title("📺 Explorar Canales por Categoría")
