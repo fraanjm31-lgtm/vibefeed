@@ -603,7 +603,16 @@ else:
               st.rerun()
       else:
          st.warning("Usuario no encontrado.")
-
+if menu_option == "👥 Siguiendo":
+    st.title("👥 Personas que sigues")
+    c.execute("SELECT followed FROM follows WHERE follower = ?", (st.session_state.username,))
+    siguiendo = c.fetchall()
+    if siguiendo:
+        for s in siguiendo:
+            st.write(f"• @{s[0]}")
+    else:
+        st.info("Aún no sigues a nadie.")
+        
 if menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
     c.execute("SELECT theme, account_privacy, vibe FROM users WHERE username = ?", (cur,))
