@@ -333,7 +333,68 @@ else:
               use_container_width=True,
           ):
             handle_reaction(p_id, cur, "heart")
+            if st.button(
+                f"❤️ ({val_hearts})",
+                key=f"feed_heart_{p_id}",
+                use_container_width=True,
+            ):
+              handle_reaction(p_id, cur, "heart")
 
+            # --- PEGA ESTO AQUÍ SIN BORRAR NADA DE LO DEMÁS ---
+            if st.button(
+                "🌹 5C", key=f"feed_gift_{p_id}", use_container_width=True
+            ):
+              c.execute(
+                  "SELECT coins FROM users WHERE username = ?",
+                  (st.session_state.username,),
+              )
+              u_data = c.fetchone()
+              mis_c = (
+                  u_data[0] if u_data and u_data[0] is not None else 0
+              )
+
+              if mis_c >= 5:
+                c.execute(
+                    "UPDATE users SET coins = ? WHERE username = ?",
+                    (mis_c - 5, st.session_state.username),
+                )
+                c.execute(
+                    "SELECT coins FROM users WHERE username = ?", (p_user,)
+                )
+                creador_data = c.fetchone()
+                creador_c = (
+                    creador_data[0]
+                    if creador_data and creador_data[0] is not None
+                    else 0
+                )
+                c.execute(
+                    "UPDATE users SET coins = ? WHERE username = ?",
+                    (creador_c + 5, p_user),
+                )
+
+                msg_regalo = (
+                    "🎁 ¡Te ha enviado un regalo: 🌹 Rosa Vibe (5 Coins)! 🌹"
+                )
+                c.execute(
+                    (
+                        "INSERT INTO messages (sender, receiver, message) VALUES"
+                        " (?, ?, ?)"
+                    ),
+                    (st.session_state.username, p_user, msg_regalo),
+                )
+                conn.commit()
+                st.toast(f"¡Rosa enviada a @{p_user} con éxito! 🌹", icon="🎉")
+                st.rerun()
+              else:
+                st.toast(
+                    "¡No tienes suficientes Coins para enviar la Rosa!",
+                    icon="⚠️",
+                )
+            # --------------------------------------------------
+
+            st.markdown("</div>", unsafe_allow_html=True)  # Línea 337 original
+            st.markdown("---")  # Línea 338 original
+              
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
 
