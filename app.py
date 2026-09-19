@@ -8,20 +8,13 @@ st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 conn = sqlite3.connect("noxvibe.db", check_same_thread=False)
 c = conn.cursor()
 
-c.execute(
-    
-c.execute(
-    """CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)"""
-)
-c.execute(
-    """CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)"""
-)
-c.execute(
-    """CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT, status TEXT)"""
-)
-c.execute(
-    """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
-)
+c.execute("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)")
+c.execute("CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, files TEXT)")
+c.execute("CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT, status TEXT)")
+c.execute("CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)")
+
+
+
 columnas_usuarios = [
     ("nombre", "TEXT"),
     ("apellidos", "TEXT"),
