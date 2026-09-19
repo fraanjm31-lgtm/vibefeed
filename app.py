@@ -374,7 +374,7 @@ if menu_option == "🔥 Feed de Videos":
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
 
-  elif menu_option == "👤 Mi Perfil":
+  if menu_option == "👤 Mi Perfil":
     c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
         " FROM users WHERE username = ?",
