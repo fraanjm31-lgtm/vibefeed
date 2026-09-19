@@ -271,10 +271,50 @@ if not st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  if menu_option == "🔥 Feed de Videos":
+    elif menu_option == "🔥 Feed de Videos":
     st.title("🔥 NoxVibe Feed")
     st.write("Videos publicos de la comunidad.")
+    
+    # Mostrar todos los videos ordenados del más nuevo al más antiguo
+    c.execute("""
+        SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
+        FROM posts p 
+        WHERE p.file_type = 'video' 
+        ORDER BY p.id DESC
+    """)
+    posts = c.fetchall()
+    
+    if not posts:
+      st.info("No hay videos publicados. Sube el primero desde tu perfil.")
+    else:
+      for post in posts:
+        p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+        val_fires = p_fires if p_fires is not None else 0
+        val_thumbs = p_thumbs if p_thumbs is not None else 0
+        val_hearts = p_hearts if p_hearts is not None else 0
 
+        st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
+        col_vid, col_act = st.columns([4, 1])
+
+        with col_vid:
+          st.markdown(f"### @{p_user} · `{p_tag}` ({p_time})")
+          if p_cap:
+            st.write(p_cap)
+          if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+            st.video(p_file)
+
+        with col_act:
+          st.markdown("<br><br>", unsafe_allow_html=True)
+          if st.button(f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True):
+            handle_reaction(p_id, cur, "fire")
+          if st.button(f"👍 {val_thumbs}", key=f"feed_thumb_{p_id}", use_container_width=True):
+            handle_reaction(p_id, cur, "thumb")
+          if st.button(f"❤️ {val_hearts}", key=f"feed_heart_{p_id}", use_container_width=True):
+            handle_reaction(p_id, cur, "heart")
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("---")
+          
     c.execute("""
             SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
             FROM posts p 
