@@ -630,7 +630,7 @@ else:
 
     st.subheader("🎨 Apariencia y Privacidad")
 
-    new_theme = st.selectbox(
+    tema_sel = st.selectbox(
         "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
     )
-    is_private = s
+    priv_sel = st.c
