@@ -376,7 +376,16 @@ if menu_option == "🔥 Feed de Videos":
 elif menu_option == "👤 Mi Perfil":
     st.markdown(f"## {cur}")
     
-    st.markdown(f"**@{cur}** · 🌐 Cuenta Pública")
+    st.markdown(f"""
+<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+    <img src="https://www.w3schools.com/howto/img_avatar.png" style="width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 2px solid #ff4b4b;">
+    <div>
+        <h1 style="margin: 0; font-size: 24px;">{cur}</h1>
+        <p style="margin: 0; color: gray; font-size: 14px;">🌐 Cuenta Pública</p>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
     
     
     # Imagen de perfil (si la tienes guardada o por defecto)
