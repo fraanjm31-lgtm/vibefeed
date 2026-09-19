@@ -614,8 +614,8 @@ else:
         st.warning("Usuario no encontrado.")
 
   elif menu_option == "👥 Siguiendo":
-        st.title("👥 Siguiendo")
-        st.write("Videos recientes de la gente a la que sigues.")
+    st.title("👥 Siguiendo")
+    st.write("Videos recientes de la gente a la que sigues.")
     
     c.execute("SELECT followed FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
     siguiendo = [r[0] for r in c.fetchall()]
@@ -663,6 +663,7 @@ else:
 
           st.markdown("</div>", unsafe_allow_html=True)
           st.markdown("---")
+            
             
             
     elif menu_option == "📺 Explorar Canales":
