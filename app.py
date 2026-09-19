@@ -375,27 +375,18 @@ if menu_option == "🔥 Feed de Videos":
         st.markdown("---")
 elif menu_option == "👤 Mi Perfil":
     st.markdown(f"## {cur}")
-    
     st.markdown(f"""
-<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 20px;">
     <img src="https://www.w3schools.com/howto/img_avatar.png" style="width: 75px; height: 75px; border-radius: 50%; object-fit: cover; border: 2px solid #ff4b4b;">
     <div>
-        <h1 style="margin: 0; font-size: 24px;">{cur}</h1>
+        <h2 style="margin: 0; font-size: 22px;">{cur}</h2>
         <p style="margin: 0; color: gray; font-size: 14px;">🌐 Cuenta Pública</p>
     </div>
 </div>
 """, unsafe_allow_html=True)
 
-    
-    
-    # Imagen de perfil (si la tienes guardada o por defecto)
-    # Aquí puedes mantener tu lógica de imagen de perfil actual
-    
-        # Contadores de estadísticas
-    c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
-    videos_usuario = c.fetchall() 
-    
-    st.markdown(f"""
+# Contadores de estadísticas (alineados en horizontal)
+st.markdown(f"""
 <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 15px;">
     <div>
         <span style="font-size: 14px; color: gray;">Posts</span><br>
@@ -411,13 +402,6 @@ elif menu_option == "👤 Mi Perfil":
     </div>
 </div>
 """, unsafe_allow_html=True)
-
-
-
-        
-
-
-
     
     st.markdown(f"**Tus XP:** 100 | **NoxCoins:** 10 🪙")
     st.markdown("¡Hola! Estoy un Creator de Contenido y en especial GTAV Mod Policia")
