@@ -136,31 +136,17 @@ st.markdown(
 )
 
 
-def enviar_codigo_correo(destinatario, codigo):
-  remitente = "labachito91@gmail.com"
-  password = "tu_contraseña_de_16_caracteres"
-
-  msg = EmailMessage()
-  msg.set_content(
-      f"¡Hola!\n\nTu código de verificación para registrarte en NoxVibe es:\n"
-      f" {codigo}\n\nIntroduce este código en la aplicación para completar tu"
-      " registro."
-  )
-  msg["Subject"] = "Código de verificación - NoxVibe"
-  msg["From"] = remitente
-  msg["To"] = destinatario
-
-  try:
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp:
-      smtp.login(remitente, password)
-      smtp.send_message(msg)
+def enviar_codigo_correo(
+    destinatario,
+    codigo
+):
+    texto = "Codigo: "
+    texto += str(codigo)
+    st.success(texto)
     return True
-  except Exception as e:
-    print(f"Error al enviar correo: {e}")
-    return False
-      
-
-
+    
+    
+    
 def ai_vibe_checker(text):
   if not text:
     return "✨ Chill", "Ambiente tranquilo detectado."
