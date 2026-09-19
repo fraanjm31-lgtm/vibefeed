@@ -611,7 +611,7 @@ else:
 
 if menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")   
-            c.execute("SELECT theme, account_privacy "
-                      "FROM users WHERE username = ?", (cur,))
-            u_settings = c.fetchone()
-
+    c.execute("SELECT theme, account_privacy "
+              "FROM users WHERE username = ?", (cur,))
+    u_settings = c.fetchone()
+    
