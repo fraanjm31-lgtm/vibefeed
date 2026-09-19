@@ -613,7 +613,7 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-      elif menu_option == "👥 Siguiendo":
+  elif menu_option == "👥 Siguiendo":
         st.title("👥 Siguiendo")
         st.write("Videos recientes de la gente a la que sigues.")
     
