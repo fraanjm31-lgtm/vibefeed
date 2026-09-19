@@ -386,10 +386,23 @@ elif menu_option == "👤 Mi Perfil":
     c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
     videos_usuario = c.fetchall() 
     
-    col1, col2, col3 = st.columns(3)
-    col1.metric("Posts", len(videos_usuario))
-    col2.metric("Seguidores", 0)
-    col3.metric("Siguiendo", 0)
+  st.markdown(f"""
+<div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 15px;">
+    <div>
+        <span style="font-size: 14px; color: gray;">Posts</span><br>
+        <span style="font-size: 20px; font-weight: bold;">{len(videos_usuario)}</span>
+    </div>
+    <div>
+        <span style="font-size: 14px; color: gray;">Seguidores</span><br>
+        <span style="font-size: 20px; font-weight: bold;">0</span>
+    </div>
+    <div>
+        <span style="font-size: 14px; color: gray;">Siguiendo</span><br>
+        <span style="font-size: 20px; font-weight: bold;">0</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
 
 
         
