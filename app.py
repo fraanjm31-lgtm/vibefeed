@@ -135,7 +135,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-    def enviar_codigo_correo(destinatario, codigo):
+ def enviar_codigo_correo(destinatario, codigo):
     st.session_state["codigo_generado"] = codigo
     return True
     
