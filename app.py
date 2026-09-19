@@ -279,13 +279,14 @@ else:
     st.title("🔥 NoxVibe Feed")
     st.write("Videos publicos de la comunidad.")
 
-        c.execute("""
+    c.execute("""
         SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
         FROM posts p
         JOIN users u ON p.username = u.username
         WHERE p.file_type = 'video'
         ORDER BY p.id DESC
     """)
+      
       
     videos = c.fetchall()
 
