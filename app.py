@@ -465,7 +465,8 @@ if menu_option == "👤 Mi Perfil":
                     st.video(p_file)
                 st.markdown("---")
         else:
-        st.warning("Usuario no encontrado.")
+            st.warning("Usuario no encontrado.")
+            
   
     c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
