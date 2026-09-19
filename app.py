@@ -612,7 +612,7 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-    elif menu_option == "👥 Siguiendo":
+  elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Publicaciones de la gente a la que sigues.")
 
@@ -622,80 +622,8 @@ else:
 
   elif menu_option == "💬 Mensajes":
     st.title("💬 Tus Mensajes")
-
     c.execute(
         "SELECT DISTINCT sender FROM messages WHERE receiver = ? UNION SELECT"
         " DISTINCT receiver FROM messages WHERE sender = ?",
         (cur, cur),
-    )
-    res_contactos = c.fetchall()
-    contactos = [row[0] for row in res_contactos] if res_contactos else []
-
-    chat_con = st.selectbox("Selecciona un usuario para chatear", [""] + contactos)
-
-    if chat_con:
-      st.markdown(f"### Chat con @{chat_con}")
-
-      c.execute(
-          "SELECT sender, message, timestamp FROM messages WHERE (sender = ? AND"
-          " receiver = ?) OR (sender = ? AND receiver = ?) ORDER BY id ASC",
-          (cur, chat_con, chat_con, cur),
-      )
-      mensajes = c.fetchall()
-
-      for m_sender, m_text, m_time in mensajes:
-        if m_sender == cur:
-          st.markdown(f"**Tú ({m_time}):** {m_text}")
-        else:
-          st.markdown(f"**@{m_sender} ({m_time}):** {m_text}")
-
-      nuevo_msg = st.text_input("Escribe tu mensaje...")
-      if st.button("Enviar Mensaje 🚀"):
-        if nuevo_msg:
-          now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-          c.execute(
-              "INSERT INTO messages (sender, receiver, message, timestamp)"
-              " VALUES (?, ?, ?, ?)",
-              (cur, chat_con, nuevo_msg, now_str),
-          )
-          conn.commit()
-          st.success("¡Mensaje enviado!")
-          st.rerun()
-
-  elif menu_option == "⚙️ Ajustes":
-    st.title("⚙️ Ajustes de la cuenta")
-
-    c.execute(
-        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
-    )
-    u_settings = c.fetchone()
-
-    current_db_theme = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    tema_sel = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    priv_sel = st.selectbox(
-        "Privacidad de la Cuenta", ["Publico", "Privado"], index=0
-    )
-
-    if st.button("Guardar Cambios de Ajustes"):
-      c.execute(
-          "UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?",
-          (tema_sel, priv_sel, cur),
-      )
-      conn.commit()
-      st.success("¡Ajustes actualizados con éxito!")
-      st.rerun()
-        
+  
