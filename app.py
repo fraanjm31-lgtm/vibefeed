@@ -609,8 +609,8 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-      elif menu_option == "⚙️ Ajustes":
-        st.title("⚙️ Ajustes de la cuenta")
+           elif menu_option == "⚙️ Ajustes":
+                st.title("⚙️ Ajustes de la cuenta")
 
     c.execute(
         "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
