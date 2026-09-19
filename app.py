@@ -410,7 +410,7 @@ else:
         # --- AQUÍ LLAMAS A NUESTRA FUNCIÓN ---
         mostrar_video_con_elementos_superpuestos(p_file, p_user, p_cap, p_tag)
 
-                val_fires = p_fires if p_fires is not None else 0
+        val_fires = p_fires if p_fires is not None else 0
         val_thumbs = p_thumbs if p_thumbs is not None else 0
         val_hearts = p_hearts if p_hearts is not None else 0
         col_vid, col_act = st.columns((4, 1))
