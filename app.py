@@ -674,3 +674,7 @@ def enviar_codigo_correo(destinatario, codigo):
     st.warning(f"🔑 Tu código de verificación temporal es: **{codigo}**")
     return True
     
+if st.button("Obtener Código"):
+    codigo_aleatorio = str(random.randint(1000, 9999))
+    enviar_codigo_correo("", codigo_aleatorio)
+    
