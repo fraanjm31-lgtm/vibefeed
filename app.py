@@ -604,23 +604,22 @@ else:
       else:
          st.warning("Usuario no encontrado.")
 
-    if menu_option == "⚙️ Ajustes":
-        st.title("⚙️ Ajustes de la cuenta")
-        c.execute("SELECT theme, account_privacy, vibe FROM users WHERE username = ?", (cur,))
-        u_settings = c.fetchone()
+if menu_option == "⚙️ Ajustes":
+    st.title("⚙️ Ajustes de la cuenta")
+    c.execute("SELECT theme, account_privacy, vibe FROM users WHERE username = ?", (cur,))
+    u_settings = c.fetchone()
 
-        if u_settings:
-            current_theme, current_privacy, current_vibe = u_settings
-            if not current_vibe:
-                current_vibe = "✨ Explorando noxvibe"
+    if u_settings:
+        current_theme, current_privacy, current_vibe = u_settings
+        if not current_vibe:
+            current_vibe = "✨ Explorando noxvibe"
 
-            new_theme = st.selectbox("Tema", ["Claro", "Oscuro"], index=0 if current_theme == "Claro" else 1)
-            new_privacy = st.selectbox("Privacidad", ["Público", "Privado"], index=0 if current_privacy == "Público" else 1)
-            new_vibe = st.text_input("Tu Vibe (Estado de ánimo / Emoji)", value=current_vibe)
+        new_theme = st.selectbox("Tema", ["Claro", "Oscuro"], index=0 if current_theme == "Claro" else 1)
+        new_privacy = st.selectbox("Privacidad", ["Público", "Privado"], index=0 if current_privacy == "Público" else 1)
+        new_vibe = st.text_input("Tu Vibe (Estado de ánimo / Emoji)", value=current_vibe)
 
-            if st.button("Guardar cambios"):
-                c.execute("UPDATE users SET theme = ?, account_privacy = ?, vibe = ? WHERE username = ?", (new_theme, new_privacy, new_vibe, cur))
-                conn.commit()
-                st.success("¡Ajustes guardados con éxito!")
-                st.rerun()
-                
+        if st.button("Guardar cambios"):
+            c.execute("UPDATE users SET theme = ?, account_privacy = ?, vibe = ? WHERE username = ?", (new_theme, new_privacy, new_vibe, st.session_state.username))
+            conn.commit()
+            st.success("¡Ajustes guardados con éxito!")
+            st.rerun()
