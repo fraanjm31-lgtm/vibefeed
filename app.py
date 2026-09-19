@@ -374,8 +374,9 @@ if menu_option == "🔥 Feed de Videos":
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
 
-  if menu_option == "👤 Mi Perfil":
+if menu_option == "👤 Mi Perfil":
     st.title("👤 Mi Perfil y Publicación")
+    
     
     c.execute("SELECT account_privacy, bio FROM users WHERE username = ?", (cur,))
     user_data = c.fetchone()
