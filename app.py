@@ -384,9 +384,9 @@ elif menu_option == "👤 Mi Perfil":
     
         # Contadores de estadísticas
     c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
-    videos_usuario = c.fetchall()
-
-     col1, col2, col3 = st.columns(3)
+    videos_usuario = c.fetchall() 
+    
+col1, col2, col3 = st.columns(3)
 with col1:
     st.metric("Posts", len(videos_usuario))
 with col2:
