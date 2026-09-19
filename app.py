@@ -373,42 +373,42 @@ if menu_option == "🔥 Feed de Videos":
 
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
-if menu_option == "👤 Mi Perfil":
-    st.title("👤 Mi Perfil y Publicación")
+elif menu_option == "👤 Mi Perfil":
+    st.markdown(f"## {p_user}")
+    st.markdown(f"**@{p_user}** · 🌐 Cuenta Pública")
     
-    c.execute("SELECT account_privacy, bio FROM users WHERE username = ?", (cur,))
-    user_data = c.fetchone()
+    # Imagen de perfil (si la tienes guardada o por defecto)
+    # Aquí puedes mantener tu lógica de imagen de perfil actual
     
-    if user_data:
-        privacy, bio = user_data
-        st.write(f"**Usuario:** @{cur}")
-        st.write(f"**Biografía:** {bio if bio else 'Sin biografía'}")
-        st.write(f"**Privacidad:** {privacy}")
+    # Contadores de estadísticas
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Posts", len(videos_usuario)) # o el contador de posts que uses
+    col2.metric("Seguidores", 0)
+    col3.metric("Siguiendo", 0)
+    
+    st.markdown(f"**Tus XP:** 100 | **NoxCoins:** 10 🪙")
+    st.markdown("¡Hola! Estoy un Creator de Contenido y en especial GTAV Mod Policia")
+    
+    st.markdown("---")
+    
+    # Botón para publicar contenido nuevo directamente desde el perfil
+    if st.button("✏️ Publicar Contenido", use_container_width=True):
+        # Aquí puedes poner la lógica o redirección para abrir el modal/sección de subida
+        st.info("Usa el menú de publicación para subir nuevo contenido.")
         
-        with st.expander("✏️ Publicar Contenido"):
-            with st.form("upload_form", clear_on_submit=True):
-                caption = st.text_area("Leyenda / Descripción")
-                vibe_tag = st.selectbox("Vibe Tag", ["✨ Chill", "🎉 Fiesta", "❤️ Hype / Amor", "🌧️ Melancolico", "🚀 Inspirador"])
-                uploaded_file = st.file_uploader("Sube tu video", type=["mp4", "mov", "avi"])
-                submitted = st.form_submit_button("Publicar 🚀")
-                
-                if submitted:
-                    if uploaded_file is not None:
-                        os.makedirs("uploads", exist_ok=True)
-                        file_path = os.path.join("uploads", uploaded_file.name)
-                        with open(file_path, "wb") as f:
-                            f.write(uploaded_file.getbuffer())
-                        
-                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
-                        c.execute("""
-                            INSERT INTO posts (username, caption, file, file_type, vibe_tag, timestamp, fires, thumbs, hearts)
-                            VALUES (?, ?, ?, 'video', ?, ?, 0, 0, 0)
-                        """, (cur, caption, file_path, vibe_tag, timestamp))
-                        conn.commit()
-                        st.success("¡Video publicado con éxito!")
-                        st.rerun()
-                    else:
-                        st.warning("Por favor, selecciona un video para subir.")
+    st.markdown("### Tus Vídeos")
+    
+    # Bucle para mostrar los vídeos de este usuario
+    # (Asegúrate de usar aquí la lista filtrada solo con los posts de @Javimarquez)
+    for post in videos_usuario:
+        p_id, p_user_post, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+        st.markdown(f"**@{p_user_post}** · {p_time}")
+        if p_cap:
+            st.write(p_cap)
+        if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+            st.video(p_file)
+        st.markdown("---")
+        
         
         st.markdown("### 🎬 Tus Videos")
         c.execute("""
