@@ -30,14 +30,11 @@ columnas_usuarios = [
     ("coins", "INTEGER DEFAULT 100"),
     ("vibe", "TEXT DEFAULT '✨ Explorando noxvibe'"),
 ]
-
-
 for col_nombre, col_tipo in columnas_usuarios:
   try:
     c.execute(f"ALTER TABLE users ADD COLUMN {col_nombre} {col_tipo}")
   except:
     pass
-
 columnas_posts = [
     ("fires", "INTEGER DEFAULT 0"),
     ("thumbs", "INTEGER DEFAULT 0"),
