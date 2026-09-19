@@ -440,14 +440,17 @@ else:
             if st.button(
                 "🌹 5C", key=f"feed_gift_{p_id}", use_container_width=True
             ):
-              c.execute(
-                  "SELECT coins FROM users WHERE username = ?",
-                  (st.session_state.username,),
-              )
-              u_data = c.fetchone()
-                  mis_c = (
-                  u_data[0] if u_data and u_data[0] is not None else 0
-              )
+                      c.execute(
+            "SELECT coins FROM users WHERE username = ?",
+            (st.session_state.username,),
+        )
+           u_data = c.fetchone()
+           mis_c = (
+               u_data[0] if u_data and u_data[0] is not None else 0
+        )
+         
+         
+         
 
               if mis_c >= 5:
                 c.execute(
