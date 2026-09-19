@@ -687,28 +687,23 @@ if menu_option == "🛍️ Tienda Vibe":
     with col_info1:
         st.info(f"💰 Tienes **{mis_coins} Coins** | Insignia actual: **{insignia_actual}**")
     with col_info2:
-        if st.button("🪙 Recargar Coins", key="btn_recargar_coins_vibe"):
+        if st.button("🪙 Recargar Coins", key="recarga_coins_tienda_vibe"):
             st.warning("💳 Próximamente disponible: Recarga de Coins con pago real.")
             
     st.markdown("---")
     
     # Catálogo temático con cohetes, espacio y artículos legendarios de 1.000 Coins
     articulos = {
-        # Insignias iniciales
         "🔮 Oráculo Cósmico": {"precio": 10, "icono": "🔮"},
         "⚡ Rayo Nocturno": {"precio": 25, "icono": "⚡"},
         "🖤 Corazón de Neón": {"precio": 50, "icono": "🖤"},
         "👑 Corona Cyber": {"precio": 100, "icono": "👑"},
-        
-        # Temática Espacial y Cohetes
         "🛸 Platillo Volador": {"precio": 150, "icono": "🛸"},
         "🪐 Saturno Brillante": {"precio": 200, "icono": "🪐"},
         "👩‍🚀 Astronauta Estelar": {"precio": 300, "icono": "👩‍🚀"},
         "🌠 Estrella Fugaz": {"precio": 350, "icono": "🌠"},
         "🛰️ Satélite Órbita": {"precio": 400, "icono": "🛰️"},
         "🌌 Agujero Negro": {"precio": 500, "icono": "🌌"},
-        
-        # Los Legendarios Espaciales de 1.000 Coins
         "🚀 Cohete Galáctico V1": {"precio": 1000, "icono": "🚀"},
         "👽 Emperador Alienígena": {"precio": 1000, "icono": "👽"},
         "☄️ Cometa del Fin del Mundo": {"precio": 1000, "icono": "☄️"},
@@ -723,11 +718,10 @@ if menu_option == "🛍️ Tienda Vibe":
         with col2:
             st.markdown(f"**{info['precio']} Coins**")
         with col3:
-            # Claves únicas con el índice 'i' para evitar cualquier conflicto
             if insignia_actual == nombre_completo:
-                st.button("✅ Equipado", disabled=True, key=f"eq_item_{i}")
+                st.button("✅ Equipado", disabled=True, key=f"equipado_vibe_{i}")
             else:
-                if st.button("Comprar", key=f"comprar_item_{i}"):
+                if st.button("Comprar", key=f"comprar_vibe_{i}"):
                     if mis_coins >= info['precio']:
                         nuevos_coins = mis_coins - info['precio']
                         c.execute("UPDATE users SET coins = ?, badge = ? WHERE username = ?", 
@@ -737,6 +731,7 @@ if menu_option == "🛍️ Tienda Vibe":
                         st.rerun()
                     else:
                         st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
+                        
                         
     
     for i, (nombre_articulo, info) in enumerate(articulos.items()):
