@@ -2,6 +2,117 @@ from datetime import datetime
 import os
 import sqlite3
 import streamlit as st
+import base64
+
+def mostrar_video_con_elementos_superpuestos(video_file_path, username, status, vibe_tag):
+    # 1. Leer y codificar el vídeo en base64 para usarlo en el reproductor HTML
+    try:
+        with open(video_file_path, "rb") as video_file:
+            video_bytes = video_file.read()
+            video_base64 = base64.b64encode(video_bytes).decode('utf-8')
+    except FileNotFoundError:
+        st.error(f"No se encontró el archivo de vídeo: {video_file_path}")
+        return
+
+    # 2. Estilos CSS personalizados para la superposición
+    st.markdown(f"""
+        <style>
+        .video-container {{
+            position: relative;
+            width: 100%;
+            max-width: 400px; /* Ajusta según el tamaño de tu móvil */
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            background-color: black;
+        }}
+        .video-player {{
+            width: 100%;
+            height: auto;
+            display: block;
+        }}
+        .overlay-info {{
+            position: absolute;
+            bottom: 15px; /* Alineación abajo como en la foto */
+            left: 15px;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.7);
+            z-index: 10;
+        }}
+        .live-label-container {{
+            position: absolute;
+            top: 15px; /* Alineación arriba */
+            left: 15px;
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }}
+        .live-label {{
+            background-color: #E91E63; /* Color rosa/magenta de "LIVE ahora" */
+            color: white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }}
+        .follow-btn {{
+            background-color: rgba(255,255,255,0.3);
+            color: white;
+            border: 1px solid white;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }}
+        .username {{
+            font-size: 1.2rem;
+            font-weight: bold;
+        }}
+        .status-text {{
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }}
+        .vibe-tag {{
+            background-color: rgba(200, 230, 201, 0.7); /* Color del tag */
+            color: #2E7D32;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            margin-left: 5px;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
+    # 3. Estructura HTML del reproductor superpuesto
+    st.markdown(f"""
+        <div class="video-container">
+            <video class="video-player" controls>
+                <source src="data:video/mp4;base64,{video_base64}" type="video/mp4">
+                Tu navegador no soporta la etiqueta de vídeo.
+            </video>
+            
+            <div class="live-label-container">
+                <span class="live-label">🔴 LIVE ahora</span>
+                <button class="follow-btn">Siguiendo</button>
+            </div>
+            
+            <div class="overlay-info">
+                <div class="username">@{username} <span class="vibe-tag">✨ {vibe_tag}</span></div>
+                <div class="status-text">{status}</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+# --- Ejemplo de uso dentro de tu bucle del feed de vídeos ---
+# Reemplaza 'video_file_path', 'username', etc., con las variables reales de tu base de datos
+
+# Ejemplo (simulando que esto está dentro de `for post in videos:`):
+p_file = "ruta/a/tu/video.mp4" # Ruta al archivo de vídeo real
+p_user = "Javimarquez"       # Nombre del usuario
+p_cap = "UN DIA COMO POLICIA 🔥" # Título del vídeo
+p_vibe = "Chill"             # Etiqueta de estado
+
+mostrar_video_con_elementos_superpuestos(p_file, p_user, p_cap, p_vibe)
 
 st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
 
