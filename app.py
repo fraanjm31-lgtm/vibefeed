@@ -9,6 +9,8 @@ conn = sqlite3.connect("noxvibe.db", check_same_thread=False)
 c = conn.cursor()
 
 c.execute(
+    
+c.execute(
     """CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)"""
 )
 c.execute(
