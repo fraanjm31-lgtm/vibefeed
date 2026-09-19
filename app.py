@@ -613,22 +613,24 @@ else:
     st.title("⚙️ Ajustes de la cuenta")
 
     c.execute(
-        "SELECT bio, avatar, theme, account_privacy FROM users WHERE"
-        " username = ?",
-        (cur,),
+        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
     )
     u_settings = c.fetchone()
 
-    current_bio = u_settings[0] if u_settings and u_settings[0] else ""
     current_db_theme = (
-        u_settings[2]
-        if u_settings and len(u_settings) > 2 and u_settings[2]
+        u_settings[0]
+        if u_settings and u_settings[0] is not None
         else "Oscuro"
     )
     current_privacy = (
-        u_settings[3]
-        if u_settings and len(u_settings) > 3 and u_settings[3]
+        u_settings[1]
+        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
         else "Publico"
     )
 
-    new_bio = st.text_area("Actualizar tu biografia", value=current_b
+    st.subheader("🎨 Apariencia y Privacidad")
+
+    new_theme = st.selectbox(
+        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
+    )
+    if new_theme !
