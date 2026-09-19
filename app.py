@@ -427,7 +427,7 @@ else:
             ):
                 handle_reaction(p_id, cur, "thumb")
 
-                  if st.button(
+           if st.button(
         "🌹 5C", key=f"feed_gift_{p_id}", use_container_width=True
     ):
         c.execute(
