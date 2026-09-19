@@ -134,17 +134,11 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
-
-
-def enviar_codigo_correo(
-    destinatario,
-    codigo
-):
-    texto = "Codigo: "
-    texto += str(codigo)
-    st.success(texto)
-    return True
+⁶
     
+    def enviar_codigo_correo(destinatario, codigo):
+    st.session_state["codigo_generado"] = codigo
+    return True
     
     
 def ai_vibe_checker(text):
@@ -249,32 +243,23 @@ if not st.session_state.logged_in:
         "Confirmo que soy mayor de 18 anos.", key="r_adult_check"
     )
 
-    if not st.session_state.codigo_enviado:
-      if st.button("Enviar código de verificación al correo"):
-        today = date.today()
-        age = (
-            today.year
-            - r_dob.year
-            - ((today.month, today.day) < (r_dob.month, r_dob.day))
-        )
-
-        if not r_email or "@" not in r_email or "." not in r_email:
-          st.error("Introduce un correo electronico valido.")
-        elif not r_user or not r_pass:
-          st.warning("Rellena el usuario y la contrasena.")
-        elif age < 18:
-          st.error("Debes ser mayor de 18 anos.")
-        elif not r_adult:
-          st.warning("Debes marcar la casilla de mayoria de edad.")
-        else:
-          c.execute("SELECT * FROM users WHERE username = ?", (r_user,))
-          if c.fetchone():
-            st.error("El nombre de usuario ya esta en uso.")
-          else:
-            codigo = str(random.randint(100000, 999999))
-            st.session_state.codigo_generado = codigo
-            exito = enviar_codigo_correo(r_email, codigo)
-            if exito:
+            if st.button("Obtener Código de Verificación", key="btn_obtener_codigo"):
+            if not r_email or "@" not in r_email or "." not in r_email:
+                st.error("Introduce un correo electrónico válido.")
+            else:
+                codigo_aleatorio = str(random.randint(1000, 9999))
+                enviar_codigo_correo(r_email, codigo_aleatorio)
+                st.warning(f"🔑 Tu código de verificación temporal es: **{codigo_aleatorio}**")
+                
+                if st.button("Registrarse", key="btn_registrar_usuario"):
+            if not r_user or not r_pass:
+                st.warning("Rellena el usuario y la contraseña.")
+            elif age < 18:
+                st.error("Debes ser mayor de 18 años.")
+            elif not r_adult:
+                st.warning("Debes marcar la casilla de mayoría de edad.")
+            else:
+                
               st.session_state.codigo_enviado = True
               st.success(
                   "¡Código enviado! Revisa tu bandeja de entrada o spam."
@@ -285,13 +270,16 @@ if not st.session_state.logged_in:
                   "Error al enviar el correo. Revisa la configuración SMTP."
               )
 
-    if st.session_state.codigo_enviado:
+    if st.session_state.get("codigo_generado"):
+        
       codigo_ingresado = st.text_input(
           "Introduce el Código recibido en tu correo", key="code_input_field"
       )
       if st.button("Validar y Crear Cuenta"):
-        if codigo_ingresado == st.session_state.codigo_generado:
-          try:
+                        if codigo_ingresado == st.session_state.get("codigo_generado"):
+                            
+                    
+            try:
             c.execute(
                 "INSERT INTO users (username, password, email, xp, bio, avatar,"
                 " account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?,"
@@ -675,8 +663,4 @@ def enviar_codigo_correo(destinatario, codigo):
     return True
     
 
-if st.button("Obtener Código"):
-    codigo_aleatorio = str(random.randint(1000, 9999))
-    enviar_codigo_correo("", codigo_aleatorio)
-    st.warning(f"🔑 Tu código de verificación temporal es: **{codigo_aleatorio}**")
     
