@@ -173,8 +173,7 @@ menu_option = st.sidebar.radio(
         "🔥 Feed de Videos",
         "👤 Mi Perfil",
         "🔍 Buscar Perfiles",
-        "👥 Siguiendo",
-        "📺 Explorar Canales",
+        "👥 Siguiendo",       
         "💬 Mensajes",
         "⚙️ Ajustes",
     ],
@@ -612,9 +611,7 @@ if menu_option == "👥 Siguiendo":
             st.write(f"• @{s[0]}")
     else:
         st.info("Aún no sigues a nadie.")
-if menu_option == "🖥️ Explorar Canales":
-    st.title("🖥️ Explorar Canales")
-    st.info("Próximamente podrás explorar canales temáticos y categorías de video.")
+
     
 if menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
