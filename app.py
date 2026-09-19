@@ -616,8 +616,7 @@ else:
   elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Publicaciones de la gente a la que sigues.")
-
-    elif menu_option == "📺 Explorar Canales":
+  elif menu_option == "📺 Explorar Canales":
     st.title("📺 Explorar Canales")
     st.write("Canales de contenido en NoxVibe.")
 
