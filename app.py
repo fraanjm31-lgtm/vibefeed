@@ -376,7 +376,8 @@ if menu_option == "🔥 Feed de Videos":
 elif menu_option == "👤 Mi Perfil":
     st.markdown(f"## {cur}")
     
-    st.markdown(f"**@{p_user}** · 🌐 Cuenta Pública")
+    st.markdown(f"**@{cur}** · 🌐 Cuenta Pública")
+    
     
     # Imagen de perfil (si la tienes guardada o por defecto)
     # Aquí puedes mantener tu lógica de imagen de perfil actual
