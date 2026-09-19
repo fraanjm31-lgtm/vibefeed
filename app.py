@@ -611,7 +611,10 @@ if menu_option == "👥 Siguiendo":
             st.write(f"• @{s[0]}")
     else:
         st.info("Aún no sigues a nadie.")
-
+if menu_option == "💬 Mensajes":
+    st.title("💬 Mensajes y Chat")
+    st.info("Aquí podrás chatear con otros usuarios próximamente.")
+    
     
 if menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
