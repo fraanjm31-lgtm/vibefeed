@@ -877,7 +877,7 @@ elif menu_option == "📺 Explorar Canales":
           
           
 
-  elif menu_option == "💬 Mensajes":
+elif menu_option == "💬 Mensajes":
     st.title("💬 Tus Mensajes")
     c.execute(
         "SELECT DISTINCT sender FROM messages WHERE receiver = ? UNION SELECT"
