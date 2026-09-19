@@ -602,7 +602,7 @@ else:
       )
       target_user = c.fetchone()
       if target_user:
-    pass
+                     pass
       
         
   elif menu_option == "⚙️ Ajustes":
