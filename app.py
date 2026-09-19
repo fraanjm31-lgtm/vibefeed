@@ -687,7 +687,7 @@ if menu_option == "🛍️ Tienda Vibe":
     with col_info1:
         st.info(f"💰 Tienes **{mis_coins} Coins** | Insignia actual: **{insignia_actual}**")
     with col_info2:
-        if st.button("🪙 Recargar Coins"):
+        if st.button("🪙 Recargar Coins", key="btn_recargar_coins_vibe"):
             st.warning("💳 Próximamente disponible: Recarga de Coins con pago real.")
             
     st.markdown("---")
@@ -703,7 +703,7 @@ if menu_option == "🛍️ Tienda Vibe":
         # Temática Espacial y Cohetes
         "🛸 Platillo Volador": {"precio": 150, "icono": "🛸"},
         "🪐 Saturno Brillante": {"precio": 200, "icono": "🪐"},
-        "👩‍🚀 Astronauta Estelar": {"precio": 300, "icono": "👩‍🚀"},
+        "👩‍رس Astronauta Estelar": {"precio": 300, "icono": "👩‍🚀"},
         "🌠 Estrella Fugaz": {"precio": 350, "icono": "🌠"},
         "🛰️ Satélite Órbita": {"precio": 400, "icono": "🛰️"},
         "🌌 Agujero Negro": {"precio": 500, "icono": "🌌"},
@@ -714,6 +714,30 @@ if menu_option == "🛍️ Tienda Vibe":
         "☄️ Cometa del Fin del Mundo": {"precio": 1000, "icono": "☄️"},
         "🌟 Supernova Legendaria": {"precio": 1000, "icono": "🌟"}
     }
+    
+    for i, (nombre_articulo, info) in enumerate(articulos.items()):
+        nombre_completo = f"{info['icono']} {nombre_articulo}"
+        col1, col2, col3 = st.columns([3, 2, 2])
+        with col1:
+            st.markdown(f"### {info['icono']} {nombre_articulo}")
+        with col2:
+            st.markdown(f"**{info['precio']} Coins**")
+        with col3:
+            # Claves únicas usando el índice 'i' para evitar duplicados en Streamlit
+            if insignia_actual == nombre_completo:
+                st.button("✅ Equipado", disabled=True, key=f"eq_{i}_{nombre_articulo}")
+            else:
+                if st.button("Comprar", key=f"comprar_{i}_{nombre_articulo}"):
+                    if mis_coins >= info['precio']:
+                        nuevos_coins = mis_coins - info['precio']
+                        c.execute("UPDATE users SET coins = ?, badge = ? WHERE username = ?", 
+                                  (nuevos_coins, nombre_completo, st.session_state.username))
+                        conn.commit()
+                        st.success(f"¡Has comprado y equipado {nombre_articulo}!")
+                        st.rerun()
+                    else:
+                        st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
+                        
     
     for nombre_articulo, info in articulos.items():
         nombre_completo = f"{info['icono']} {nombre_articulo}"
