@@ -417,15 +417,7 @@ else:
         val_thumbs = p_thumbs if p_thumbs is not None else 0
         val_hearts = p_hearts if p_hearts is not None else 0
 
-        st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
-        col_vid, col_act = st.columns([4, 1])
-
-        with col_vid:
-          st.markdown(f"### @{p_user} · `{p_tag}`")
-          if p_cap:
-            st.write(p_cap)
-          if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-            st.video(p_file)
+        
 
         with col_act:
           st.markdown("<br><br>", unsafe_allow_html=True)
