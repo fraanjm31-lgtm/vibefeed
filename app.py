@@ -782,7 +782,7 @@ if menu_option == "🛍️ Tienda Vibe":
                         st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
                         
     
-    for nombre_articulo, info in articulos.items():
+    for i, (nombre_articulo, info) in enumerate(articulos.items()):
         nombre_completo = f"{info['icono']} {nombre_articulo}"
         col1, col2, col3 = st.columns([3, 2, 2])
         with col1:
@@ -790,11 +790,10 @@ if menu_option == "🛍️ Tienda Vibe":
         with col2:
             st.markdown(f"**{info['precio']} Coins**")
         with col3:
-            # Comprobar si ya la tiene equipada o comprada para evitar duplicados
             if insignia_actual == nombre_completo:
-                st.button("✅ Equipado", disabled=True, key=f"btn_{nombre_articulo}")
+                st.button("✅ Equipado", disabled=True, key=f"equipado_vibe_{i}")
             else:
-                if st.button(f"Comprar", key=f"comprar_{nombre_articulo}"):
+                if st.button("Comprar", key=f"comprar_vibe_{i}"):
                     if mis_coins >= info['precio']:
                         nuevos_coins = mis_coins - info['precio']
                         c.execute("UPDATE users SET coins = ?, badge = ? WHERE username = ?", 
@@ -804,6 +803,7 @@ if menu_option == "🛍️ Tienda Vibe":
                         st.rerun()
                     else:
                         st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
+                        
                         
                     
     
