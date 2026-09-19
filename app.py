@@ -35,6 +35,7 @@ columnas_usuarios = [
     ("account_privacy", "TEXT DEFAULT 'Publico'"),
     ("coins", "INTEGER DEFAULT 100"),
     ("vibe", "TEXT DEFAULT '✨ Explorando noxvibe'"),
+    ("badge", "TEXT"),
 ]
 for col_nombre, col_tipo in columnas_usuarios:
   try:
