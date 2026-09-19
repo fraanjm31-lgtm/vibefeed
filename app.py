@@ -383,11 +383,14 @@ elif menu_option == "👤 Mi Perfil":
     # Aquí puedes mantener tu lógica de imagen de perfil actual
     
         # Contadores de estadísticas
-    c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
-    videos_usuario = c.fetchall() col1, col2, col3 = st.columns(3)
-  col1.metric("Posts", len(videos_usuario))
-  col2.metric("Seguidores", 0)
-  col3.metric("Siguiendo", 0)
+        c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
+    videos_usuario = c.fetchall()
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Posts", len(videos_usuario))
+    col2.metric("Seguidores", 0)
+    col3.metric("Siguiendo", 0)
+
 
 
     
