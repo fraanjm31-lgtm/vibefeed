@@ -612,7 +612,10 @@ if menu_option == "👥 Siguiendo":
             st.write(f"• @{s[0]}")
     else:
         st.info("Aún no sigues a nadie.")
-        
+if menu_option == "🖥️ Explorar Canales":
+    st.title("🖥️ Explorar Canales")
+    st.info("Próximamente podrás explorar canales temáticos y categorías de video.")
+    
 if menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
     c.execute("SELECT theme, account_privacy, vibe FROM users WHERE username = ?", (cur,))
