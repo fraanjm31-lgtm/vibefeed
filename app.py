@@ -386,7 +386,7 @@ elif menu_option == "👤 Mi Perfil":
     c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? ORDER BY id DESC", (cur,))
     videos_usuario = c.fetchall() 
     
-  st.markdown(f"""
+    st.markdown(f"""
 <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 15px;">
     <div>
         <span style="font-size: 14px; color: gray;">Posts</span><br>
