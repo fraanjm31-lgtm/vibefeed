@@ -14,7 +14,9 @@ c.execute(
 c.execute(
     """CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)"""
 )
-c.execute("""CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT)""")
+c.execute(
+    """CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT, status TEXT)"""
+)
 c.execute(
     """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
 )
@@ -220,10 +222,14 @@ if not st.session_state.logged_in:
         st.error("Usuario o contrasena incorrectos")
 
   with tab_reg:
-    r_user = st.text_input("Nombre de Usuario (para iniciar sesion)", key="r_user")
+    r_user = st.text_input(
+        "Nombre de Usuario (para iniciar sesion)", key="r_user"
+    )
     r_nombre = st.text_input("Nombre", key="r_nombre")
     r_apellidos = st.text_input("Apellidos", key="r_apellidos")
-    r_edad = st.number_input("Edad", min_value=1, max_value=120, value=18, key="r_edad")
+    r_edad = st.number_input(
+        "Edad", min_value=1, max_value=120, value=18, key="r_edad"
+    )
     r_email = st.text_input("Correo Electronico", key="r_email")
     r_pass = st.text_input("Contrasena", type="password", key="r_pass")
 
@@ -257,9 +263,7 @@ if not st.session_state.logged_in:
           st.success("¡Registro completado con éxito! Entrando...")
           st.rerun()
         except Exception as ex:
-          st.error(
-              f"El usuario o correo ya existe, o hubo un error: {ex}"
-          )
+          st.error(f"El usuario o correo ya existe, o hubo un error: {ex}")
 
 else:
   cur = st.session_state.username
@@ -569,8 +573,39 @@ else:
       )
       target_user = c.fetchone()
       if target_user:
-        st.success(f"Usuario encontrado: @{target_user[0]}")
-        st.write(target_user[1])
+        t_username, t_bio, t_avatar, t_privacy = target_user
+        st.success(f"Usuario encontrado: @{t_username}")
+        st.write(f"**Biografía:** {t_bio}")
+
+        if t_username == cur:
+          st.info("Este es tu propio perfil.")
+        else:
+          c.execute(
+              "SELECT status FROM follows WHERE follower = ? AND followed = ?",
+              (cur, t_username),
+          )
+          relacion = c.fetchone()
+
+          if relacion:
+            st.info(f"Estado de amistad: {relacion[0]}")
+            if st.button("❌ Dejar de seguir"):
+              c.execute(
+                  "DELETE FROM follows WHERE follower = ? AND followed = ?",
+                  (cur, t_username),
+              )
+              conn.commit()
+              st.success("Has dejado de seguir a este usuario.")
+              st.rerun()
+          else:
+            if st.button("➕ Añadir de Amiga / Seguir"):
+              c.execute(
+                  "INSERT INTO follows (follower, followed, status) VALUES (?,"
+                  " ?, ?)",
+                  (cur, t_username, "accepted"),
+              )
+              conn.commit()
+              st.success(f"¡Ahora sigues a @{t_username}!")
+              st.rerun()
       else:
         st.warning("Usuario no encontrado.")
 
@@ -599,39 +634,4 @@ else:
         else "Publico"
     )
 
-    with st.form("settings_bio_form"):
-      new_bio = st.text_area("Actualizar tu biografia", value=current_bio)
-      submit_bio = st.form_submit_button("Guardar Biografia")
-
-    if submit_bio:
-      c.execute("UPDATE users SET bio = ? WHERE username = ?", (new_bio, cur))
-      conn.commit()
-      st.success("¡Biografía actualizada con éxito!")
-      st.rerun()
-
-    st.markdown("---")
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    new_theme = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    if new_theme != current_db_theme:
-      c.execute(
-          "UPDATE users SET theme = ? WHERE username = ?", (new_theme, cur)
-      )
-      conn.commit()
-      st.session_state.theme = new_theme
-      st.success(f"Tema cambiado a {new_theme}")
-      st.rerun()
-
-    is_private = st.checkbox(
-        "🔒 Cuenta Privada", value=(current_privacy == "Privado")
-    )
-    new_priv = "Privado" if is_private else "Publico"
-    if new_priv != current_privacy:
-      c.execute(
-          "UPDATE users SET account_privacy = ? WHERE username = ?",
-          (new_priv, cur),
-      )
-      conn.commit()
-      st.su
+    with st.
