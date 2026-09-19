@@ -185,6 +185,7 @@ menu_option = st.sidebar.radio(
         "🔍 Buscar Perfiles",
         "👥 Siguiendo",       
         "💬 Mensajes",
+        "🛍️ Tienda Vibe",
         "⚙️ Ajustes",
     ],
 )
