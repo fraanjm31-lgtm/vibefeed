@@ -673,6 +673,43 @@ if menu_option == "💬 Mensajes":
     else:
         st.info("Todavía no hay más usuarios registrados en la app para chatear.")
         
+ if menu_option == "🛍️ Tienda Vibe":
+    st.title("🛍️ Tienda Vibe")
+    st.write("¡Gasta tus Coins en insignias exclusivas y personaliza tu perfil con estilo!")
+    
+    # Consultar los coins actuales y la insignia del usuario
+    c.execute("SELECT coins, badge FROM users WHERE username = ?", (st.session_state.username,))
+    user_data = c.fetchone()
+    mis_coins = user_data[0] if user_data and user_data[0] is not None else 0
+    insignia_actual = user_data[1] if user_data and user_data[1] is not None else "Ninguna"
+    
+    col_info1, col_info2 = st.columns([2, 1])
+    with col_info1:
+        st.info(f"💰 Tienes **{mis_coins} Coins** | Insignia actual: **{insignia_actual}**")
+    with col_info2:
+        if st.button("🪙 Recargar Coins", key="recarga_coins_tienda_vibe"):
+            st.warning("💳 Próximamente disponible: Recarga de Coins con pago real.")
+            
+    st.markdown("---")
+    
+    # Catálogo limpio con los nombres correctos y un solo icono
+    articulos = {
+        "Oráculo Cósmico": {"precio": 10, "icono": "🔮"},
+        "Rayo Nocturno": {"precio": 25, "icono": "⚡"},
+        "Corazón de Neón": {"precio": 50, "icono": "🖤"},
+        "Corona Cyber": {"precio": 100, "icono": "👑"},
+        "Platillo Volador": {"precio": 150, "icono": "🛸"},
+        "Saturno Brillante": {"precio": 200, "icono": "🪐"},
+        "Astronauta Estelar": {"precio": 300, "icono": "👩‍🚀"},
+        "Estrella Fugaz": {"precio": 350, "icono": "🌠"},
+        "Satélite Órbita": {"precio": 400, "icono": "🛰️"},
+        "Agujero Negro": {"precio": 500, "icono": "🌌"},
+        "Cohete Galáctico V1": {"precio": 1000, "icono": "🚀"},
+        "Emperador Alienígena": {"precio": 1000, "icono": "👽"},
+        "Cometa del Fin del Mundo": {"precio": 1000, "icono": "☄️"},
+        "Supernova Legendaria": {"precio": 1000, "icono": "🌟"}
+    }
+    
     for i, (nombre_articulo, info) in enumerate(articulos.items()):
         nombre_completo = f"{info['icono']} {nombre_articulo}"
         col1, col2, col3 = st.columns([3, 2, 2])
@@ -694,6 +731,7 @@ if menu_option == "💬 Mensajes":
                         st.rerun()
                     else:
                         st.error("¡No tienes suficientes Coins! Recarga para conseguir más.")
+                        
                                 
                     
 if menu_option == "⚙️ Ajustes":
