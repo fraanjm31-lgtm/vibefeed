@@ -470,8 +470,8 @@ c.execute(
                             
             # --------------------------------------------------
 
-            st.markdown("</div>", unsafe_allow_html=True)  # Línea 337 original
-            st.markdown("---")  # Línea 338 original
+        st.markdown("</div>", unsafe_allow_html=True)  # Línea 337 original
+        st.markdown("---")  # Línea 338 original
               
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
