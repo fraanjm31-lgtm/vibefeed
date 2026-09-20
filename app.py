@@ -498,7 +498,7 @@ st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
 st.markdown(f"**Bio:** {bio}")
 st.markdown("---")
 
-if st.button("✏️ Publicar Contenido", use_container_width=True):
+if st.button("✏️ Publicar Contenido", use_container_width=True, key="btn_publicar_perfil"):
     st.info("Usa el menú de publicación para subir nuevo contenido.")
 
 # SECCIÓN DE VÍDEOS
@@ -526,11 +526,6 @@ else:
             st.video(p_file)
         st.markdown("---")
         
-
-
-        
-        
-
     with st.expander("✏️ Publicar Contenido", expanded=False):
       with st.form("new_post_form", clear_on_submit=True):
         cap = st.text_input("Que estas pensando?")
