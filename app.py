@@ -134,7 +134,7 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}   
-     st.markdown("""
+st.markdown("""
 <style>
 .bottom-nav {
     position: fixed;
