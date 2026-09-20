@@ -271,7 +271,7 @@ else:
           st.markdown("---")
             
           
-     elif menu_option == "👤 Mi Perfil":
+      elif menu_option == "👤 Mi Perfil":
        st.title("👤 Mi Perfil")
       
       c.execute("SELECT * FROM users WHERE username = ?", (cur,))
@@ -289,7 +289,6 @@ else:
       else:
         st.error("No se encontro el perfil del usuario.")
           
-    )
 
     priv_badge = (
         "🔒 Cuenta Privada"
