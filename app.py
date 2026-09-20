@@ -410,7 +410,7 @@ st.markdown("---")
    
     
     # Botón para publicar contenido nuevo directamente desde el perfil
-    if st.button("✏️ Publicar Contenido", use_container_width=True):
+if st.button("✏️ Publicar Contenido", use_container_width=True):
         # Aquí puedes poner la lógica o redirección para abrir el modal/sección de subida
         st.info("Usa el menú de publicación para subir nuevo contenido.")
         
