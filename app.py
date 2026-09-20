@@ -621,7 +621,7 @@ else:
         st.warning("Usuario no encontrado.")
   if opcion == "Feed de Videos":
     # tu código del feed
- elif opcion == "Mi Perfil":
+ 
     # tu código del perfil
 elif opcion == "Siguiendo":
     st.title("👥 Siguiendo")
