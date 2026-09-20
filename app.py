@@ -270,36 +270,32 @@ else:
           st.markdown("</div>", unsafe_allow_html=True)
           st.markdown("---")
             
-          
-      elif menu_option == "👤 Mi Perfil":
-       st.title("👤 Mi Perfil")
-      
+    elif menu_option == "👤 Mi Perfil":
+      st.title("👤 Mi Perfil")
+
       c.execute("SELECT * FROM users WHERE username = ?", (cur,))
       user_data = c.fetchone()
-      
+
       if user_data:
-        # Leemos los campos por índice para evitar errores de columnas faltantes
         p_xp = user_data[2] if len(user_data) > 2 and user_data[2] is not None else 0
         p_bio = user_data[3] if len(user_data) > 3 and user_data[3] is not None else "Sin biografia"
         p_coins = user_data[5] if len(user_data) > 5 and user_data[5] is not None else 100
-        
-        st.success(f"Usuario: @{cur}")
+        nombre_completo = user_data[1] if len(user_data) > 1 and user_data[1] is not None else cur
+        account_privacy = user_data[4] if len(user_data) > 4 and user_data[4] is not None else "Publico"
+
+        priv_badge = (
+            "🔒 Cuenta Privada"
+            if account_privacy == "Privado"
+            else "🌐 Cuenta Publica"
+        )
+
+        st.title(f"{nombre_completo} (@{cur})")
+        st.caption(priv_badge)
         st.info(f"NoxCoins: **{p_coins}** | XP: **{p_xp}**")
         st.write(f"Biografia: {p_bio}")
       else:
         st.error("No se encontro el perfil del usuario.")
           
-
-    priv_badge = (
-        "🔒 Cuenta Privada"
-        if account_privacy == "Privado"
-        else "🌐 Cuenta Publica"
-    )
-    st.title(f"{nombre_completo} (@{cur})")
-    st.caption(priv_badge)
-
-    c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
-    total_posts = c.fetchone()[0]
 
     try:
       c.execute(
