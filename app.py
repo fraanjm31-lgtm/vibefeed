@@ -626,7 +626,7 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-    elif menu_option == "⚙️ Ajustes":
+ elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
 
     c.execute(
