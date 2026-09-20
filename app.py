@@ -134,14 +134,14 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}   
-    /* Barra de navegación inferior fija estilo app móvil */
+        /* Barra de navegación inferior fija estilo app móvil */
     .bottom-nav {
         position: fixed;
         bottom: 0;
         left: 0;
         width: 100%;
-        background-color: {box_bg};
-        border-top: 1px solid {sub_text};
+        background-color: #1a1a1a;
+        border-top: 1px solid #333333;
         display: flex;
         justify-content: space-around;
         padding: 10px 0;
@@ -150,15 +150,11 @@ st.markdown(
     .bottom-nav a, .bottom-nav button {
         background: none !important;
         border: none !important;
-        color: {text_color} !important;
+        color: #ffffff !important;
         font-size: 20px !important;
         cursor: pointer;
     }
     
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
 
 
 def ai_vibe_checker(text):
