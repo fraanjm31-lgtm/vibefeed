@@ -423,24 +423,7 @@ c.execute("""
 my_posts = c.fetchall()
 
         
-        if not my_posts:
-            st.info("Aún no has subido ningún video.")
-        else:
-            for post in my_posts:
-                p_id, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                val_fires = p_fires if p_fires is not None else 0
-                val_thumbs = p_thumbs if p_thumbs is not None else 0
-                val_hearts = p_hearts if p_hearts is not None else 0
-                
-                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
-                if p_cap:
-                    st.write(p_cap)
-                if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-                    st.video(p_file)
-                st.markdown("---")
-else:
-        st.warning("Usuario no encontrado.")
-# 1. CARGA DE DATOS DEL PERFIL Y ESTADÍSTICAS
+    # 1. CARGA DE DATOS DEL PERFIL Y ESTADÍSTICAS (PRIMERO)
 c.execute("""
     SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad 
     FROM users WHERE username = ?
@@ -517,7 +500,7 @@ st.markdown("---")
 if st.button("✏️ Publicar Contenido", use_container_width=True):
     st.info("Usa el menú de publicación para subir nuevo contenido.")
 
-# 2. SECCIÓN DE VÍDEOS DEL USUARIO
+# 2. SECCIÓN DE VÍDEOS DEL USUARIO (DESPUÉS)
 st.markdown("### 🎬 Tus Vídeos")
 c.execute(
     """
@@ -545,6 +528,7 @@ else:
         if p_file and isinstance(p_file, str) and os.path.exists(p_file):
             st.video(p_file)
         st.markdown("---")
+        
         
 
     with st.expander("✏️ Publicar Contenido", expanded=False):
