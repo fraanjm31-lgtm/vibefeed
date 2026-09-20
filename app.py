@@ -623,13 +623,36 @@ if menu_option == "🔥 Feed de Videos":
     st.write("Cargando feed...")
 
 elif menu_option == "👤 Mi Perfil":
-    st.write("Cargando perfil...")
-# Supongamos que 'post_id' es el ID único de la foto o video en tu base de datos
-if st.button("🗑️ Eliminar publicación", key=f"del_post_{post_id}"):
-    c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
-    conn.commit()
-    st.success("¡Publicación eliminada correctamente!")
-    st.rerun()
+    st.title("👤 Mi Perfil")
+    
+    # Consultamos las publicaciones del usuario actual desde la base de datos
+    # (Asegúrate de que el nombre de tu tabla y columnas coincida con tu base de datos)
+    c.execute("SELECT id, caption, file_path FROM posts WHERE username = ?", (st.session_state.get('username', ''),))
+    mis_posts = c.fetchall()
+    
+    if mis_posts:
+        for post in mis_posts:
+            post_id = post0
+            caption = post[1]
+            file_path = post[2]
+            
+            st.write(f"**{caption}**")
+            if file_path:
+                try:
+                    st.image(file_path)
+                except Exception:
+                    st.video(file_path)
+            
+            # Botón de eliminar con clave única para evitar conflictos
+            if st.button("🗑️ Eliminar publicación", key=f"del_post_{post_id}"):
+                c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+                conn.commit()
+                st.success("¡Publicación eliminada con éxito!")
+                st.rerun()
+            st.divider()
+    else:
+        st.info("Aún no has publicado nada.")
+        
     
 elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
