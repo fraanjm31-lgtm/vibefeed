@@ -377,6 +377,7 @@ else:
           (cur,),
       )
       total_following = c.fetchone()[0]
+        
     except:
       total_followers = 0
       total_following = 0
@@ -418,7 +419,28 @@ else:
 
     st.write(bio)
     st.markdown("---")
-
+    # --- TUS PUBLICACIONES EN EL PERFIL ---
+    st.subheader("📋 Tus Publicaciones")
+    
+    c.execute("SELECT id, descripcion, video_path FROM posts WHERE username = ?", (cur,))
+    mis_posts = c.fetchall()
+    
+    if mis_posts:
+        for p in mis_posts:
+            p_id = p[0]
+            p_desc = p[1]
+            p_path = p[2]
+            
+            st.write(f"**{p_desc}**")
+            if p_path:
+                st.video(p_path)
+            
+            if st.button("🗑️ Eliminar", key=f"del_post_{p_id}"):
+                c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
+                conn.commit()
+                st.rerun()
+            st.divider()
+            
     with st.expander("✏️ Publicar Contenido", expanded=False):
       with st.form("new_post_form", clear_on_submit=True):
         cap = st.text_input("Que estas pensando?")
