@@ -228,7 +228,7 @@ if st.session_state.logged_in:
 
 else:
   cur = st.session_state.username
- if menu_option == "🔥 Feed de Videos":
+  if menu_option == "🔥 Feed de Videos":
       st.title("🔥 NoxVibe Feed")
       st.write("Videos publicos de la comunidad.")
       c.execute(
