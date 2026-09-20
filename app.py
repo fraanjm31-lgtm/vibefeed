@@ -630,4 +630,7 @@ else:
     st.title("⚙️ Ajustes de la cuenta")
 
     c.execute(
-        "SELECT theme, account_privacy F
+        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
+    )
+    u_settings = c.fetchone()
+      
