@@ -3,181 +3,143 @@ import os
 import sqlite3
 import streamlit as st
 
-st.set_page_config(page_title="NoxVibe", page_icon="🧭", layout="centered")
+# Configuración de la página
+st.set_page_config(
+    page_title="NoxVibe", page_icon="🔥", layout="centered", initial_sidebar_state="expanded"
+)
 
-conn = sqlite3.connect("noxvibe.db", check_same_thread=False)
+# Inicializar Base de Datos
+conn = sqlite3.connect("vibefeed.db", check_same_thread=False)
 c = conn.cursor()
 
-c.execute(
-    """CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT, xp INTEGER, bio TEXT, avatar TEXT)"""
-)
-c.execute(
-    """CREATE TABLE IF NOT EXISTS posts (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, caption TEXT, file TEXT, file_type TEXT, likes INTEGER, vibe_tag TEXT, timestamp TEXT)"""
-)
-c.execute(
-    """CREATE TABLE IF NOT EXISTS follows (follower TEXT, followed TEXT, status TEXT)"""
-)
-c.execute(
-    """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
-)
+# Crear tablas si no existen
+c.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        username TEXT PRIMARY KEY,
+        password TEXT,
+        nombre TEXT,
+        apellidos TEXT,
+        edad INTEGER,
+        email TEXT,
+        xp INTEGER DEFAULT 0,
+        bio TEXT,
+        avatar TEXT,
+        account_privacy TEXT DEFAULT 'Publico',
+        coins INTEGER DEFAULT 100,
+        theme TEXT DEFAULT 'Oscuro'
+    )
+""")
 
-columnas_usuarios = [
-    ("nombre", "TEXT"),
-    ("apellidos", "TEXT"),
-    ("edad", "INTEGER"),
-    ("email", "TEXT"),
-    ("theme", "TEXT DEFAULT 'Oscuro'"),
-    ("account_privacy", "TEXT DEFAULT 'Publico'"),
-    ("coins", "INTEGER DEFAULT 100"),
-]
-for col_nombre, col_tipo in columnas_usuarios:
-  try:
-    c.execute(f"ALTER TABLE users ADD COLUMN {col_nombre} {col_tipo}")
-  except:
-    pass
+c.execute("""
+    CREATE TABLE IF NOT EXISTS posts (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username TEXT,
+        caption TEXT,
+        file TEXT,
+        file_type TEXT,
+        likes INTEGER DEFAULT 0,
+        fires INTEGER DEFAULT 0,
+        thumbs INTEGER DEFAULT 0,
+        hearts INTEGER DEFAULT 0,
+        vibe_tag TEXT,
+        timestamp TEXT,
+        privacy TEXT DEFAULT 'Publico'
+    )
+""")
 
-columnas_posts = [
-    ("fires", "INTEGER DEFAULT 0"),
-    ("thumbs", "INTEGER DEFAULT 0"),
-    ("hearts", "INTEGER DEFAULT 0"),
-    ("privacy", "TEXT DEFAULT 'Publico'"),
-]
-for col_nombre, col_tipo in columnas_posts:
-  try:
-    c.execute(f"ALTER TABLE posts ADD COLUMN {col_nombre} {col_tipo}")
-  except:
-    pass
-
+c.execute("""
+    CREATE TABLE IF NOT EXISTS follows (
+        follower TEXT,
+        followed TEXT,
+        status TEXT DEFAULT 'accepted'
+    )
+""")
 conn.commit()
 
+
+# Función de IA simulada para tags
+def ai_vibe_checker(caption):
+  if not caption:
+    return "#NoxVibe", "¡Vibra genial!"
+  cap_lower = caption.lower()
+  if "fiesta" in cap_lower or "noche" in cap_lower or "party" in cap_lower:
+    return "#PartyTime", "¡Vibra de fiesta detectada! 🔥"
+  elif "gym" in cap_lower or "entreno" in cap_lower or "sport" in cap_lower:
+    return "#BeastMode", "¡Entrenamiento brutal! 💪"
+  elif "amor" in cap_lower or "love" in cap_lower:
+    return "#PureLove", "¡Qué romanticismo! ❤️"
+  else:
+    return "#NoxVibe", "¡Publicación con buena vibra! ✨"
+
+
+# Función para manejar reacciones
+def handle_reaction(post_id, username, reaction_type):
+  col_map = {
+      "fire": "fires",
+      "thumb": "thumbs",
+      "heart": "hearts"
+  }
+  column = col_map.get(reaction_type)
+  if not column:
+    return
+
+  c.execute(f"SELECT {column} FROM posts WHERE id = ?", (post_id,))
+  res = c.fetchone()
+  current_val = res[0] if res and res[0] is not None else 0
+  new_val = current_val + 1
+
+  c.execute(f"UPDATE posts SET {column} = ? WHERE id = ?", (new_val, post_id))
+  conn.commit()
+  st.rerun()
+
+
+# Estilos CSS generales según tema
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
+if "username" not in st.session_state:
   st.session_state.username = ""
+if "profile_tab" not in st.session_state:
   st.session_state.profile_tab = "Fotos"
-  st.session_state.theme = "Oscuro"
-
-if st.session_state.logged_in and st.session_state.username:
-  c.execute(
-      "SELECT theme FROM users WHERE username = ?", (st.session_state.username,)
-  )
-  res_theme = c.fetchone()
-  if res_theme and res_theme[0]:
-    st.session_state.theme = res_theme[0]
-
-if st.session_state.theme == "Claro":
-  bg_color = "#ffffff"
-  text_color = "#000000"
-  box_bg = "#f0f2f6"
-  sub_text = "#555555"
-elif st.session_state.theme == "Neon / Cyber":
-  bg_color = "#05050a"
-  text_color = "#00ffcc"
-  box_bg = "#121224"
-  sub_text = "#ff007f"
-else:
-  bg_color = "#0e1117"
-  text_color = "#ffffff"
-  box_bg = "#161b22"
-  sub_text = "#8b949e"
 
 st.markdown(
-    f"""
+    """
     <style>
-    [data-testid="stToolbar"] a[href*="github"],
-    header a[href*="github"] {{
-        display: none !important;
-    }}
-    footer {{visibility: hidden !important;}}
-    .stApp {{
-        background-color: {bg_color} !important;
-        color: {text_color} !important;
-    }}
-    div.stButton > button {{
-        background-color: {box_bg} !important;
-        color: {text_color} !important;
-        border: 1px solid {sub_text} !important;
-    }}
-    .profile-avatar-img {{
+    .profile-avatar-img {
         width: 110px;
         height: 110px;
-        object-fit: cover;
         border-radius: 50%;
-        border: 2px solid {sub_text};
-    }}
-    .profile-stats {{
+        object-fit: cover;
+        border: 3px solid #ff4b4b;
+    }
+    .profile-stats {
         display: flex;
-        justify-content: space-around;
-        text-align: center;
-        background: {box_bg};
-        padding: 10px;
-        border-radius: 10px;
+        gap: 20px;
+        align-items: center;
         margin-bottom: 10px;
-    }}
-    .stat-box {{
-        display: inline-block;
-        margin: 0 8px;
-    }}
-    .stat-num {{
-        font-size: 18px;
+    }
+    .stat-box {
+        text-align: center;
+    }
+    .stat-num {
         font-weight: bold;
-        color: {text_color};
-    }}
-    .stat-label {{
-        font-size: 12px;
-        color: {sub_text};
-    }}
-    .video-container {{
-        position: relative;
-        background: {box_bg};
-        border-radius: 15px;
-        padding: 15px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
-    }}
+        font-size: 18px;
+    }
+    .stat-label {
+        font-size: 13px;
+        color: gray;
+    }
+    .video-container {
+        border-radius: 12px;
+        padding: 10px;
+        margin-bottom: 15px;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
     </style>
-    """,
+""",
     unsafe_allow_html=True,
 )
 
-
-def ai_vibe_checker(text):
-  if not text:
-    return "✨ Chill", "Ambiente tranquilo detectado."
-  t = text.lower()
-  if any(w in t for w in ["fiesta", "noche", "baila", "dj", "alcohol", "musica"]):
-    return "🎉 Fiesta", "Energia de fiesta detectada por la IA."
-  elif any(w in t for w in ["amor", "corazon", "te amo", "feliz", "lindo"]):
-    return "❤️ Hype / Amor", "Vibra positiva detectada."
-  elif any(w in t for w in ["triste", "solo", "mal", "duro", "llorar"]):
-    return "🌧️ Melancolico", "Momento de reflexion detectado."
-  else:
-    return "🚀 Inspirador", "Pensamiento innovador detectado."
-
-
-def handle_reaction(p_id, user, r_type):
-  c.execute(
-      "SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND"
-      " reaction_type = ?",
-      (p_id, user, r_type),
-  )
-  if not c.fetchone():
-    c.execute(
-        "INSERT INTO post_reactions (post_id, username, reaction_type) VALUES"
-        " (?, ?, ?)",
-        (p_id, user, r_type),
-    )
-    if r_type == "fire":
-      c.execute("UPDATE posts SET fires = fires + 1 WHERE id = ?", (p_id,))
-    elif r_type == "thumb":
-      c.execute("UPDATE posts SET thumbs = thumbs + 1 WHERE id = ?", (p_id,))
-    elif r_type == "heart":
-      c.execute("UPDATE posts SET hearts = hearts + 1 WHERE id = ?", (p_id,))
-    conn.commit()
-    st.rerun()
-  else:
-    st.toast("Ya habias dado esta reacción", icon="⚠️")
-
-
+# ---------------- BARRA LATERAL (MENU) ----------------
 st.sidebar.title("🧭 Menu NoxVibe")
 menu_option = st.sidebar.radio(
     "Navegacion",
@@ -217,8 +179,7 @@ if not st.session_state.logged_in:
     l_pass = st.text_input("Contrasena", type="password", key="l_pass")
     if st.button("Entrar"):
       c.execute(
-          "SELECT * FROM users WHERE (username = ? OR email = ?) AND password ="
-          " ?",
+          "SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?",
           (l_user, l_user, l_pass),
       )
       if c.fetchone():
@@ -246,9 +207,7 @@ if not st.session_state.logged_in:
       else:
         try:
           c.execute(
-              "INSERT INTO users (username, password, nombre, apellidos, edad,"
-              " email, xp, bio, avatar, account_privacy, coins, theme) VALUES"
-              " (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              "INSERT INTO users (username, password, nombre, apellidos, edad, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               (
                   r_user,
                   r_pass,
@@ -339,8 +298,7 @@ else:
 
   elif menu_option == "👤 Mi Perfil":
     c.execute(
-        "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
-        " FROM users WHERE username = ?",
+        "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad FROM users WHERE username = ?",
         (cur,),
     )
     user_data = c.fetchone()
@@ -366,14 +324,12 @@ else:
 
     try:
       c.execute(
-          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status ="
-          " 'accepted'",
+          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'",
           (cur,),
       )
       total_followers = c.fetchone()[0]
       c.execute(
-          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status ="
-          " 'accepted'",
+          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'",
           (cur,),
       )
       total_following = c.fetchone()[0]
@@ -389,15 +345,12 @@ else:
         with open(avatar, "rb") as img_file:
           encoded_img = base64.b64encode(img_file.read()).decode()
         st.markdown(
-            f'<img src="data:image/jpeg;base64,{encoded_img}"'
-            ' class="profile-avatar-img">',
+            f'<img src="data:image/jpeg;base64,{encoded_img}" class="profile-avatar-img">',
             unsafe_allow_html=True,
         )
       else:
         st.markdown(
-            '<img'
-            ' src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"'
-            ' class="profile-avatar-img">',
+            '<img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" class="profile-avatar-img">',
             unsafe_allow_html=True,
         )
     with col2:
@@ -450,9 +403,7 @@ else:
           now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
 
           c.execute(
-              "INSERT INTO posts (username, caption, file, file_type, likes,"
-              " fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?,"
-              " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+              "INSERT INTO posts (username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
               (
                   cur,
                   cap,
@@ -487,9 +438,7 @@ else:
     if st.session_state.profile_tab == "Fotos":
       st.markdown("### 🖼️ Tus Fotos")
       c.execute(
-          "SELECT id, caption, file, file_type, fires, thumbs, hearts,"
-          " vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type ="
-          " 'image' OR file_type = '') ORDER BY id DESC",
+          "SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND (file_type = 'image' OR file_type = '') ORDER BY id DESC",
           (cur,),
       )
       for post in c.fetchall():
@@ -534,9 +483,7 @@ else:
     else:
       st.markdown("### 🎬 Tus Videos")
       c.execute(
-          "SELECT id, caption, file, file_type, fires, thumbs, hearts,"
-          " vibe_tag, timestamp FROM posts WHERE username = ? AND file_type ="
-          " 'video' ORDER BY id DESC",
+          "SELECT id, caption, file, file_type, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE username = ? AND file_type = 'video' ORDER BY id DESC",
           (cur,),
       )
       for post in c.fetchall():
@@ -579,13 +526,12 @@ else:
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
 
-   elif menu_option == "🔍 Buscar Perfiles":
+  elif menu_option == "🔍 Buscar Perfiles":
     st.title("🔍 Buscar Perfiles")
     search_user = st.text_input("Escribe el nombre de usuario:")
     if search_user:
       c.execute(
-          "SELECT username, bio, avatar, account_privacy FROM users WHERE"
-          " username = ?",
+          "SELECT username, bio, avatar, account_privacy FROM users WHERE username = ?",
           (search_user,),
       )
       target_user = c.fetchone()
@@ -616,8 +562,7 @@ else:
           else:
             if st.button("➕ Añadir de Amiga / Seguir"):
               c.execute(
-                  "INSERT INTO follows (follower, followed, status) VALUES (?,"
-                  " ?, ?)",
+                  "INSERT INTO follows (follower, followed, status) VALUES (?, ?, ?)",
                   (cur, t_username, "accepted"),
               )
               conn.commit()
@@ -662,5 +607,4 @@ else:
       conn.commit()
       st.success("¡Ajustes actualizados correctamente!")
       st.rerun()
-        
-        
+          
