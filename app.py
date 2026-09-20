@@ -172,25 +172,22 @@ if st.session_state.logged_in:
 if not st.session_state.logged_in:
   st.title("Bienvenido a NoxVibe 🚀")
 
-   tab_login, tab_reg = st.tabs(["🔑 Iniciar Sesion", "📝 Registrarse"])
- with tab_login:
-    l_user = st.text_input("Usuario (o correo)", key="l_user")
+   if not st.session_state.logged_in:
+  st.title("Bienvenido a NoxVibe 🚀")
+
+  tab_login, tab_reg = st.tabs(["🔑 Iniciar Sesion", "📝 Registrarse"])
+  with tab_login:
+    l_user = st.text_input("Usuario", key="l_user")
     l_pass = st.text_input("Contrasena", type="password", key="l_pass")
     if st.button("Entrar"):
-      sql_query = (
-          "SELECT * FROM users "
-          "WHERE (username = ? OR email = ?) "
-          "AND password = ?"
-      )
-      c.execute(sql_query, (l_user, l_user, l_pass))
+      sql_cmd = "SELECT * FROM users WHERE username = ? AND password = ?"
+      c.execute(sql_cmd, (l_user, l_pass))
       if c.fetchone():
         st.session_state.logged_in = True
         st.session_state.username = l_user
         st.rerun()
       else:
-        st.error("Usuario o contrasena incorrectos")
-          
-
+        st.error("Usuario o contrasena incorrectos")                 
         
   with tab_reg:
     r_user = st.text_input(
