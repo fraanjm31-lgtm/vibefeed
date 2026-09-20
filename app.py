@@ -233,12 +233,9 @@ else:
     st.title("🔥 NoxVibe Feed")
     st.write("Videos publicos de la comunidad.")
 
-    c.execute(
-        "SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp "
-        "FROM posts WHERE file_type = 'video' ORDER BY id DESC"
-    )
-    videos = c.fetchall()
-
+          c.execute("SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE file_type = 'video' ORDER BY id DESC")
+      videos = c.fetchall()
+      
     if not videos:
       st.info("No hay videos publicos. Sube el primero desde tu perfil.")
     else:
