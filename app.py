@@ -127,9 +127,12 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }}
-    [data-testid="stImage"] img {{
+    /* Redondear únicamente la foto del avatar en Mi Perfil */
+    div[data-testid="column"] img {{
         border-radius: 50% !important;
         object-fit: cover !important;
+        width: 110px !important;
+        height: 110px !important;
     }}
     </style>
     """,
@@ -628,10 +631,4 @@ else:
     )
     current_privacy = (
         u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    tem
+        if u_settings and len
