@@ -423,7 +423,7 @@ c.execute("""
 my_posts = c.fetchall()
 
         
-    # 1. CARGA DE DATOS DEL PERFIL Y ESTADÍSTICAS (PRIMERO)
+# CARGA DE DATOS DEL PERFIL Y ESTADÍSTICAS
 c.execute("""
     SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad 
     FROM users WHERE username = ?
@@ -445,7 +445,8 @@ priv_badge = (
     else "🌐 Cuenta Publica"
 )
 
-c.execute("SELECT COUNT(*) FROM posts WHERE u = ?", (cur,))
+# Corrección de la columna de usuario en posts
+c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
 total_posts = c.fetchone()[0]
 
 try:
@@ -475,21 +476,21 @@ with col1:
 with col2:
     st.markdown(
         f"""
-        <div class="profile-stats">
-            <div class="stat-box">
-                <div class="stat-num">{total_posts}</div>
-                <div class="stat-label">Posts</div>
+        <div style="display: flex; justify-content: space-around; text-align: center;">
+            <div>
+                <span style="font-size: 14px; color: gray;">Posts</span><br>
+                <span style="font-size: 20px; font-weight: bold;">{total_posts}</span>
             </div>
-            <div class="stat-box">
-                <div class="stat-num">{total_followers}</div>
-                <div class="stat-label">Seguidores</div>
+            <div>
+                <span style="font-size: 14px; color: gray;">Seguidores</span><br>
+                <span style="font-size: 20px; font-weight: bold;">{total_followers}</span>
             </div>
-            <div class="stat-box">
-                <div class="stat-num">{total_following}</div>
-                <div class="stat-label">Siguiendo</div>
+            <div>
+                <span style="font-size: 14px; color: gray;">Siguiendo</span><br>
+                <span style="font-size: 20px; font-weight: bold;">{total_following}</span>
             </div>
         </div>
-    """,
+        """,
         unsafe_allow_html=True,
     )
 
@@ -500,7 +501,7 @@ st.markdown("---")
 if st.button("✏️ Publicar Contenido", use_container_width=True):
     st.info("Usa el menú de publicación para subir nuevo contenido.")
 
-# 2. SECCIÓN DE VÍDEOS DEL USUARIO (DESPUÉS)
+# SECCIÓN DE VÍDEOS
 st.markdown("### 🎬 Tus Vídeos")
 c.execute(
     """
@@ -518,16 +519,15 @@ if not my_posts:
 else:
     for post in my_posts:
         p_id, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-        val_fires = p_fires if p_fires is not None else 0
-        val_thumbs = p_thumbs if p_thumbs is not None else 0
-        val_hearts = p_hearts if p_hearts is not None else 0
-
         st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
         if p_cap:
             st.write(p_cap)
         if p_file and isinstance(p_file, str) and os.path.exists(p_file):
             st.video(p_file)
         st.markdown("---")
+        
+
+
         
         
 
