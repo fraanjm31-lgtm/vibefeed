@@ -271,8 +271,8 @@ else:
           st.markdown("---")
             
           
-    elif menu_option == "👤 Mi Perfil":
-      st.title("👤 Mi Perfil")
+     elif menu_option == "👤 Mi Perfil":
+       st.title("👤 Mi Perfil")
       
       c.execute("SELECT * FROM users WHERE username = ?", (cur,))
       user_data = c.fetchone()
