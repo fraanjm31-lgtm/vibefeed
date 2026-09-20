@@ -620,10 +620,10 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 if menu_option == "🔥 Feed de Videos":
-    # tu código del feed
+    st.write("Cargando feed...")
 
 elif menu_option == "👤 Mi Perfil":
-    # tu código del perfil
+    st.write("Cargando perfil...")
 
 elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
@@ -639,6 +639,7 @@ elif menu_option == "💬 Mensajes":
 
 elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
+    
     
     c.execute(
         "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
