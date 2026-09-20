@@ -625,12 +625,12 @@ if menu_option == "🔥 Feed de Videos":
 elif menu_option == "👤 Mi Perfil":
     st.title("👤 Mi Perfil")
     
-    # --- TUS VIDEOS ORIGINALES ---
-    st.subheader("📺 Tus Videos")
+    # --- VIDEOS ---
     c.execute("SELECT id, descripcion, video_path FROM videos WHERE username = ?", (st.session_state.get('username', ''),))
     mis_videos = c.fetchall()
     
     if mis_videos:
+        st.subheader("📺 Tus Videos")
         for v in mis_videos:
             v_id = v[0]
             v_desc = v[1]
@@ -640,21 +640,18 @@ elif menu_option == "👤 Mi Perfil":
             if v_path:
                 st.video(v_path)
             
-            # Botón de eliminar directo para cada video
             if st.button("🗑️ Eliminar", key=f"del_vid_{v_id}"):
                 c.execute("DELETE FROM videos WHERE id = ?", (v_id,))
                 conn.commit()
                 st.rerun()
             st.divider()
-    else:
-        st.info("Aún no has publicado ningún video.")
         
-    # --- TUS FOTOS ORIGINALES ---
-    st.subheader("🖼️ Tus Fotos")
+    # --- FOTOS ---
     c.execute("SELECT id, descripcion, foto_path FROM fotos WHERE username = ?", (st.session_state.get('username', ''),))
     mis_fotos = c.fetchall()
     
     if mis_fotos:
+        st.subheader("🖼️ Tus Fotos")
         for f in mis_fotos:
             f_id = f[0]
             f_desc = f[1]
@@ -664,14 +661,12 @@ elif menu_option == "👤 Mi Perfil":
             if f_path:
                 st.image(f_path)
             
-            # Botón de eliminar directo para cada foto
             if st.button("🗑️ Eliminar", key=f"del_fot_{f_id}"):
                 c.execute("DELETE FROM fotos WHERE id = ?", (f_id,))
                 conn.commit()
                 st.rerun()
             st.divider()
-    else:
-        st.info("Aún no has publicado ninguna foto.")
+            
         
         
     
