@@ -533,8 +533,7 @@ priv_badge = (
         else "🌐 Cuenta Publica"
     )
 
-st.title(f"{nombre_real}")
-st.caption(f"@{cur} · {priv_badge}")
+
 
 c.execute("SELECT COUNT(*) FROM posts WHERE u = ?", (cur,))
 total_posts = c.fetchone()[0]
