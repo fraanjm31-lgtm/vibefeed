@@ -127,32 +127,18 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }}
-     st.markdown("""
-    <style>
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        width: 100%;
-        background: rgb(26,26,26);
-        display: flex;
-        justify-content: space-around;
-        c += "padding: 10px;"
+    /* Redondear EXCLUSIVAMENTE la imagen que está dentro del contenedor del perfil */
+    .profile-avatar img {{
+        border-radius: 50% !important;
+        object-fit: cover !important;
+        width: 110px !important;
+        height: 110px !important;
+    }}
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-        z-index: 99999;
-    }
-    .bottom-nav a {
-    color: rgb(255,255,255);
-    font-size: 20px;
-}
-</style>""", unsafe_allow_html=True)
-
-nav = '<div class="bottom-nav">'
-nav += '<a href="/">🏠</a>'
-nav += '<a href="/search">🔍</a>'
-nav += '<a href="/add">➕</a>'
-nav += '<a href="/profile">👤</a>'
-nav += '</div>'
-st.markdown(nav, unsafe_allow_html=True)
 
 def ai_vibe_checker(text):
   if not text:
@@ -372,8 +358,7 @@ else:
         if account_privacy == "Privado"
         else "🌐 Cuenta Publica"
     )
-    st.title(f"@{cur}")
-      
+    st.title(f"{nombre_completo} (@{cur})")
     st.caption(priv_badge)
 
     c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
@@ -640,36 +625,4 @@ else:
 
     c.execute(
         "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
-    )
-    u_settings = c.fetchone()
-
-    current_db_theme = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    tema_sel = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    priv_sel = st.selectbox(
-        "Privacidad de la Cuenta", ["Publico", "Privado"], index=0
-    )
-
-    if st.button("Guardar Cambios de Ajustes"):
-      c.execute(
-          "UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?",
-          (tema_sel, priv_sel, cur),
-      )
-      conn.commit()
-      st.success("¡Ajustes guardados correctamente!")
-      st.rerun()
-        
   
