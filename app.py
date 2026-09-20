@@ -579,7 +579,7 @@ else:
             handle_reaction(p_id, cur, "heart")
         st.markdown("---")
 
-  elif menu_option == "🔍 Buscar Perfiles":
+   elif menu_option == "🔍 Buscar Perfiles":
     st.title("🔍 Buscar Perfiles")
     search_user = st.text_input("Escribe el nombre de usuario:")
     if search_user:
@@ -626,7 +626,7 @@ else:
       else:
         st.warning("Usuario no encontrado.")
 
-elif menu_option == "⚙️ Ajustes":
+  elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
 
     c.execute(
@@ -662,4 +662,5 @@ elif menu_option == "⚙️ Ajustes":
       conn.commit()
       st.success("¡Ajustes actualizados correctamente!")
       st.rerun()
+        
         
