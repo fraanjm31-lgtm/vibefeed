@@ -97,6 +97,13 @@ st.markdown(
         color: {text_color} !important;
         border: 1px solid {sub_text} !important;
     }}
+    .profile-avatar-img {{
+        width: 110px;
+        height: 110px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 2px solid {sub_text};
+    }}
     .profile-stats {{
         display: flex;
         justify-content: space-around;
@@ -376,12 +383,22 @@ else:
 
     col1, col2 = st.columns([1, 2])
     with col1:
+      import base64
+
       if avatar and isinstance(avatar, str) and os.path.exists(avatar):
-        st.image(avatar, width=110)
+        with open(avatar, "rb") as img_file:
+          encoded_img = base64.b64encode(img_file.read()).decode()
+        st.markdown(
+            f'<img src="data:image/jpeg;base64,{encoded_img}"'
+            ' class="profile-avatar-img">',
+            unsafe_allow_html=True,
+        )
       else:
-        st.image(
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-            width=110,
+        st.markdown(
+            '<img'
+            ' src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150"'
+            ' class="profile-avatar-img">',
+            unsafe_allow_html=True,
         )
     with col2:
       st.markdown(
@@ -613,24 +630,4 @@ else:
     st.title("⚙️ Ajustes de la cuenta")
 
     c.execute(
-        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
-    )
-    u_settings = c.fetchone()
-
-    current_db_theme = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    tema_sel = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    priv_sel = st.s
+        "SELECT theme, account_privacy F
