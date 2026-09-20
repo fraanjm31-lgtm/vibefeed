@@ -134,8 +134,21 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}   
-st.markdown('<style>.bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: #1a1a1a; display: flex; justify-content: space-around; padding: 10px; z-index: 99999; } .bottom-nav a { color: #fff; font-size: 20px; }</style>', unsafe_allow_html=True)
-st.markdown('<div class="bottom-nav"><a href="/">🏠</a><a href="/search">🔍</a><a href="/add">➕</a><a href="/profile">👤</a></div>', unsafe_allow_html=True)
+     c = "<style>"
+     c += ".bottom-nav{position:fixed;bottom:0;width:100%;"
+     c += "background:rgb(26,26,26);display:flex;"
+     c += "justify-content:space-around;padding:10px;z-index:99999}"
+     c += ".bottom-nav a{color:rgb(255,255,255);font-size:20px}"
+     c += "</style>"
+     st.markdown(c, unsafe_allow_html=True)
+
+     st.markdown(c, unsafe_allow_html=True)
+
+     nav = '<div class="bottom-nav">'
+     nav += '<a href="/">🏠</a><a href="/search">🔍</a>'
+     nav += '<a href="/add">➕</a><a href="/profile">👤</a>'
+     nav += '</div>'
+st.markdown(nav, unsafe_allow_html=True)
 
     
 
