@@ -536,25 +536,25 @@ priv_badge = (
 st.title(f"{nombre_real}")
 st.caption(f"@{cur} · {priv_badge}")
 
-c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
+c.execute("SELECT COUNT(*) FROM posts WHERE u = ?", (cur,))
 total_posts = c.fetchone()[0]
 
 try:
     c.execute(
-          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status ="
-          " 'accepted'",
-          (cur,),
-      )
+        "SELECT COUNT(*) FROM follows WHERE u2 = ? AND status = ?",
+        (cur, 'accepted'),
+    )
     total_followers = c.fetchone()[0]
-      c.execute(
-          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status ="
-          " 'accepted'",
-          (cur,),
-      )
-      total_following = c.fetchone()[0]
-    except:
-      total_followers = 0
-      total_following = 0
+    
+    c.execute(
+        "SELECT COUNT(*) FROM follows WHERE u1 = ? AND status = ?",
+        (cur, 'accepted'),
+    )
+    total_following = c.fetchone()[0]
+except:
+    total_followers = 0
+    total_following = 0
+    
 
     col1, col2 = st.columns([1, 2])
     with col1:
