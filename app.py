@@ -619,7 +619,7 @@ else:
               st.rerun()
       else:
         st.warning("Usuario no encontrado.")
-if menu_option == "🔥 Feed de Videos":
+  if menu_option == "🔥 Feed de Videos":
     # tu código del feed
 
 elif menu_option == "👤 Mi Perfil":
