@@ -170,8 +170,7 @@ if st.session_state.logged_in:
     st.rerun()
   if not st.session_state.logged_in:
     st.title("Bienvenido a NoxVibe 🚀")
-
-       tab_login, tab_reg = st.tabs(["🔑 Iniciar Sesion", "📝 Registrarse"])
+    tab_login, tab_reg = st.tabs(["🔑 Iniciar Sesion", "📝 Registrarse"])
   with tab_login:
     l_user = st.text_input("Usuario", key="l_user")
     l_pass = st.text_input("Contrasena", type="password", key="l_pass")
