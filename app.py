@@ -169,9 +169,6 @@ if st.session_state.logged_in:
     st.session_state.username = ""
     st.rerun()
 
-if not st.session_state.logged_in:
-  st.title("Bienvenido a NoxVibe 🚀")
-
    if not st.session_state.logged_in:
   st.title("Bienvenido a NoxVibe 🚀")
 
