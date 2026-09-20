@@ -536,8 +536,8 @@ st.caption(f"@{cur} · {priv_badge}")
 c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
 total_posts = c.fetchone()[0]
 
-    try:
-      c.execute(
+try:
+c.execute(
           "SELECT COUNT(*) FROM follows WHERE followed = ? AND status ="
           " 'accepted'",
           (cur,),
