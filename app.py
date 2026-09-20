@@ -625,26 +625,7 @@ if menu_option == "🔥 Feed de Videos":
 elif menu_option == "👤 Mi Perfil":
     st.title("👤 Mi Perfil")
     
-    # Aseguramos que las tablas de videos y fotos existan automáticamente
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS videos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            descripcion TEXT,
-            video_path TEXT
-        )
-    ''')
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS fotos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            descripcion TEXT,
-            foto_path TEXT
-        )
-    ''')
-    conn.commit()
-    
-    # --- SECCIÓN DE VIDEOS ---
+    # --- TUS VIDEOS ORIGINALES ---
     st.subheader("📺 Tus Videos")
     c.execute("SELECT id, descripcion, video_path FROM videos WHERE username = ?", (st.session_state.get('username', ''),))
     mis_videos = c.fetchall()
@@ -659,16 +640,16 @@ elif menu_option == "👤 Mi Perfil":
             if v_path:
                 st.video(v_path)
             
-            if st.button("🗑️ Eliminar video", key=f"del_vid_{v_id}"):
+            # Botón de eliminar directo para cada video
+            if st.button("🗑️ Eliminar", key=f"del_vid_{v_id}"):
                 c.execute("DELETE FROM videos WHERE id = ?", (v_id,))
                 conn.commit()
-                st.success("¡Video eliminado con éxito!")
                 st.rerun()
             st.divider()
     else:
         st.info("Aún no has publicado ningún video.")
         
-    # --- SECCIÓN DE FOTOS ---
+    # --- TUS FOTOS ORIGINALES ---
     st.subheader("🖼️ Tus Fotos")
     c.execute("SELECT id, descripcion, foto_path FROM fotos WHERE username = ?", (st.session_state.get('username', ''),))
     mis_fotos = c.fetchall()
@@ -683,14 +664,15 @@ elif menu_option == "👤 Mi Perfil":
             if f_path:
                 st.image(f_path)
             
-            if st.button("🗑️ Eliminar foto", key=f"del_fot_{f_id}"):
+            # Botón de eliminar directo para cada foto
+            if st.button("🗑️ Eliminar", key=f"del_fot_{f_id}"):
                 c.execute("DELETE FROM fotos WHERE id = ?", (f_id,))
                 conn.commit()
-                st.success("¡Foto eliminada con éxito!")
                 st.rerun()
             st.divider()
     else:
         st.info("Aún no has publicado ninguna foto.")
+        
         
     
 elif menu_option == "👥 Siguiendo":
