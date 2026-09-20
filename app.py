@@ -127,8 +127,8 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }}
-    /* Redondear únicamente la foto del avatar en Mi Perfil */
-    div[data-testid="column"] img {{
+    /* Redondear EXCLUSIVAMENTE la imagen que está dentro del contenedor del perfil */
+    .profile-avatar img {{
         border-radius: 50% !important;
         object-fit: cover !important;
         width: 110px !important;
@@ -383,6 +383,8 @@ else:
 
     col1, col2 = st.columns([1, 2])
     with col1:
+      # Envolvemos la imagen de perfil en un div con la clase profile-avatar para aislar el CSS
+      st.markdown('<div class="profile-avatar">', unsafe_allow_html=True)
       if avatar and isinstance(avatar, str) and os.path.exists(avatar):
         st.image(avatar, width=110)
       else:
@@ -390,6 +392,8 @@ else:
             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
             width=110,
         )
+      st.markdown("</div>", unsafe_allow_html=True)
+
     with col2:
       st.markdown(
           f"""
@@ -621,35 +625,4 @@ else:
 
     c.execute(
         "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
-    )
-    u_settings = c.fetchone()
-
-    current_db_theme = (
-        u_settings[0]
-        if u_settings and u_settings[0] is not None
-        else "Oscuro"
-    )
-    current_privacy = (
-        u_settings[1]
-        if u_settings and len(u_settings) > 1 and u_settings[1] is not None
-        else "Publico"
-    )
-
-    st.subheader("🎨 Apariencia y Privacidad")
-
-    tema_sel = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    priv_sel = st.selectbox(
-        "Privacidad de la Cuenta", ["Publico", "Privado"], index=0
-    )
-
-    if st.button("Guardar Cambios de Ajustes"):
-      c.execute(
-          "UPDATE users SET theme = ?, account_privacy = ? WHERE username = ?",
-          (tema_sel, priv_sel, cur),
-      )
-      conn.commit()
-      st.success("¡Ajustes guardados correctamente!")
-      st.rerun()
-        
+  
