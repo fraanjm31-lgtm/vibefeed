@@ -420,7 +420,7 @@ else:
     st.write(bio)
     st.markdown("---")
          # --- TUS PUBLICACIONES EN EL PERFIL ---
-        st.subheader("📋 Tus Publicaciones")
+    st.subheader("📋 Tus Publicaciones")
     
     c.execute("SELECT * FROM posts WHERE username = ?", (cur,))
     mis_posts = c.fetchall()
