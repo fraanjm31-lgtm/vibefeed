@@ -625,24 +625,16 @@ if menu_option == "🔥 Feed de Videos":
 elif menu_option == "👤 Mi Perfil":
     st.title("👤 Mi Perfil")
     
-    # Cambia "posts" por el nombre real de tu tabla en la base de datos si es diferente
-    c.execute("SELECT id, caption, file_path FROM posts WHERE username = ?", (st.session_state.get('username', ''),))
+    c.execute("SELECT id, text FROM posts WHERE username = ?", (st.session_state.get('username', ''),))
     mis_posts = c.fetchall()
     
     if mis_posts:
         for post in mis_posts:
             post_id = post[0]
             caption = post[1]
-            file_path = post[2]
             
             st.write(f"**{caption}**")
-            if file_path:
-                try:
-                    st.image(file_path)
-                except Exception:
-                    st.video(file_path)
             
-            # Botón para eliminar esta publicación específica
             if st.button("🗑️ Eliminar publicación", key=f"del_post_{post_id}"):
                 c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
                 conn.commit()
@@ -651,6 +643,7 @@ elif menu_option == "👤 Mi Perfil":
             st.divider()
     else:
         st.info("Aún no has publicado nada.")
+        
         
         
     
