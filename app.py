@@ -418,7 +418,7 @@ st.markdown("### Tus Vídeos")
     
     # Bucle para mostrar los vídeos de este usuario
     # (Asegúrate de usar aquí la lista filtrada solo con los posts de @Javimarquez)
-    for post in videos_usuario:
+ for post in videos_usuario:
         p_id, p_user_post, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
         st.markdown(f"**@{p_user_post}** · {p_time}")
         if p_cap:
