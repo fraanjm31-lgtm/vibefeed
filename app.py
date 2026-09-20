@@ -133,7 +133,8 @@ st.markdown(
         object-fit: cover !important;
         width: 110px !important;
         height: 110px !important;
-    }}    /* Barra de navegación inferior fija estilo app móvil */
+    }}   
+    /* Barra de navegación inferior fija estilo app móvil */
     .bottom-nav {
         position: fixed;
         bottom: 0;
