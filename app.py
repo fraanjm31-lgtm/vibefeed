@@ -404,17 +404,20 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
      
 st.markdown(f"**Tus XP:** 100 | **NoxCoins:** 10 🪙")
-
-st.markdown("¡Hola! Estoy un Creator de Contenido y en especial GTAV Mod Policia")
+st.markdown("¡Hola! Estoy un Creator de Contenido y en especial GAV Mod Policía")
 st.markdown("---")
-   
-    
-    # Botón para publicar contenido nuevo directamente desde el perfil
+
 if st.button("✏️ Publicar Contenido", use_container_width=True):
-        # Aquí puedes poner la lógica o redirección para abrir el modal/sección de subida
-        st.info("Usa el menú de publicación para subir nuevo contenido.")
-        
+    st.info("Usa el menú de publicación para subir nuevo contenido.")
+
 st.markdown("### Tus Vídeos")
+
+for post in videos_usuario:
+    p_id, p_user_post, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+    st.markdown(f"**@{p_user_post}** · {p_time}")
+    if p_cap:
+        st.write(p_cap)
+        
     
     # Bucle para mostrar los vídeos de este usuario
     # (Asegúrate de usar aquí la lista filtrada solo con los posts de @Javimarquez)
