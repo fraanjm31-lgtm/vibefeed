@@ -474,24 +474,14 @@ with col1:
             width=110,
         )
 with col2:
-    st.markdown(
-        f"""
-        <div style="display: flex; justify-content: space-around; text-align: center;">
-            <div>
-                <span style="font-size: 14px; color: gray;">Posts</span><br>
-                <span style="font-size: 20px; font-weight: bold;">{total_posts}</span>
-            </div>
-            <div>
-                <span style="font-size: 14px; color: gray;">Seguidores</span><br>
-                <span style="font-size: 20px; font-weight: bold;">{total_followers}</span>
-            </div>
-            <div>
-                <span style="font-size: 14px; color: gray;">Siguiendo</span><br>
-                <span style="font-size: 20px; font-weight: bold;">{total_following}</span>
-            </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    mcol1, mcol2, mcol3 = st.columns(3)
+    with mcol1:
+        st.metric("Posts", total_posts)
+    with mcol2:
+        st.metric("Seguidores", total_followers)
+    with mcol3:
+        st.metric("Siguiendo", total_following)
+        
     )
     
 
