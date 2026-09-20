@@ -127,13 +127,6 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }}
-    /* Redondear EXCLUSIVAMENTE la imagen que está dentro del contenedor del perfil */
-    .profile-avatar img {{
-        border-radius: 50% !important;
-        object-fit: cover !important;
-        width: 110px !important;
-        height: 110px !important;
-    }}   
      st.markdown("""
     <style>
     .bottom-nav {
