@@ -136,7 +136,8 @@ st.markdown(
         background: rgb(26,26,26);
         display: flex;
         justify-content: space-around;
-        padding: 10px;
+        c += "padding: 10px;"
+
         z-index: 99999;
     }
     .bottom-nav a {
