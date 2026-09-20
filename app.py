@@ -624,7 +624,13 @@ if menu_option == "🔥 Feed de Videos":
 
 elif menu_option == "👤 Mi Perfil":
     st.write("Cargando perfil...")
-
+# Supongamos que 'post_id' es el ID único de la foto o video en tu base de datos
+if st.button("🗑️ Eliminar publicación", key=f"del_post_{post_id}"):
+    c.execute("DELETE FROM posts WHERE id = ?", (post_id,))
+    conn.commit()
+    st.success("¡Publicación eliminada correctamente!")
+    st.rerun()
+    
 elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Aquí verás las publicaciones de las cuentas que sigues.")
