@@ -623,15 +623,18 @@ else:
     # tu código del feed
  
     # tu código del perfil
-if opcion == "Siguiendo":
+elif opcion == "Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Aquí verás las publicaciones de las cuentas que sigues.")
+
 elif opcion == "Explorar Canales":
     st.title("📺 Explorar Canales")
-    st.write("Aquí puedes descubrir nuevos canales.")
-elif opcion == "Mensajes":
+    st.write("Aquí puedes descubrir nuevos canales y contenido.")
+
+elif opcion == "💬 Mensajes":
     st.title("💬 Mensajes")
-    st.write("Aquí verás tus chats.")
+    st.write("Aquí verás tus chats y conversaciones.")
+
 
   elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
