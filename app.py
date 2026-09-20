@@ -493,6 +493,7 @@ with col2:
         """,
         unsafe_allow_html=True,
     )
+    
 
 st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
 st.markdown(f"**Bio:** {bio}")
