@@ -133,7 +133,27 @@ st.markdown(
         object-fit: cover !important;
         width: 110px !important;
         height: 110px !important;
-    }}
+    }}    /* Barra de navegación inferior fija estilo app móvil */
+    .bottom-nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: {box_bg};
+        border-top: 1px solid {sub_text};
+        display: flex;
+        justify-content: space-around;
+        padding: 10px 0;
+        z-index: 99999;
+    }
+    .bottom-nav a, .bottom-nav button {
+        background: none !important;
+        border: none !important;
+        color: {text_color} !important;
+        font-size: 20px !important;
+        cursor: pointer;
+    }
+    
     </style>
     """,
     unsafe_allow_html=True,
