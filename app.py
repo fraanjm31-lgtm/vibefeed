@@ -390,7 +390,8 @@ st.markdown(f"""
 <div style="display: flex; justify-content: space-around; text-align: center; margin-bottom: 15px;">
     <div>
         <span style="font-size: 14px; color: gray;">Posts</span><br>
-        <span style="font-size: 20px; font-weight: bold;">{len(videos_usuario)}</span>
+        <span style="font-size: 20px; font-weight: bold;">0</span>
+        
     </div>
     <div>
         <span style="font-size: 14px; color: gray;">Seguidores</span><br>
