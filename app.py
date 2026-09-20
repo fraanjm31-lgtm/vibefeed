@@ -482,7 +482,7 @@ with col2:
     with mcol3:
         st.metric("Siguiendo", total_following)
         
-    )
+    
     
 
 st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
