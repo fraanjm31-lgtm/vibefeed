@@ -537,7 +537,7 @@ c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
 total_posts = c.fetchone()[0]
 
 try:
-c.execute(
+    c.execute(
           "SELECT COUNT(*) FROM follows WHERE followed = ? AND status ="
           " 'accepted'",
           (cur,),
