@@ -542,7 +542,7 @@ try:
           " 'accepted'",
           (cur,),
       )
-      total_followers = c.fetchone()[0]
+    total_followers = c.fetchone()[0]
       c.execute(
           "SELECT COUNT(*) FROM follows WHERE follower = ? AND status ="
           " 'accepted'",
