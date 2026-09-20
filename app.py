@@ -358,7 +358,8 @@ else:
         if account_privacy == "Privado"
         else "🌐 Cuenta Publica"
     )
-    st.title(f"{nombre_completo} (@{cur})")
+    st.title(f"@{cur}")
+      
     st.caption(priv_badge)
 
     c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
