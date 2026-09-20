@@ -134,7 +134,7 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}   
-        /* Barra de navegación inferior fija estilo app móvil */
+    /* Barra de navegación inferior fija estilo app móvil */
     .bottom-nav {
         position: fixed;
         bottom: 0;
@@ -146,7 +146,7 @@ st.markdown(
         justify-content: space-around;
         padding: 10px 0;
         z-index: 99999;
-    }
+        }
     .bottom-nav a, .bottom-nav button {
         background: none !important;
         border: none !important;
@@ -154,6 +154,12 @@ st.markdown(
         font-size: 20px !important;
         cursor: pointer;
     }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+    
     
 
 
