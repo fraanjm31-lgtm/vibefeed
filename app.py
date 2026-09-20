@@ -452,7 +452,7 @@ for post in videos_usuario:
                 if p_file and isinstance(p_file, str) and os.path.exists(p_file):
                     st.video(p_file)
                 st.markdown("---")
-    else:
+else:
         st.warning("Usuario no encontrado.")
         
         st.markdown("### 🎬 Tus Videos")
