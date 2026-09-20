@@ -524,7 +524,7 @@ coins = user_data[4] if user_data else 100
 nombre_real = (
         f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
     )
-    priv_badge = (
+priv_badge = (
         "🔒 Cuenta Privada"
         if account_privacy == "Privado"
         else "🌐 Cuenta Publica"
