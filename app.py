@@ -228,68 +228,48 @@ if st.session_state.logged_in:
 
 else:
   cur = st.session_state.username
-  if menu_option == "🔥 Feed de Videos":
+      if menu_option == "🔥 Feed de Videos":
       st.title("🔥 NoxVibe Feed")
       st.write("Videos publicos de la comunidad.")
-      c.execute(
-          "SELECT id, username, caption, file, fires, thumbs, hearts,"
-          " vibe_tag, timestamp FROM posts WHERE file_type = 'video' ORDER BY"
-          " id DESC"
-      )
+
+      c.execute("SELECT * FROM posts WHERE file_type = 'video' ORDER BY id DESC")
       videos = c.fetchall()
 
       if not videos:
         st.info("No hay videos publicos. Sube el primero desde tu perfil.")
       else:
         for post in videos:
-          (
-              p_id,
-              p_user,
-              p_cap,
-              p_file,
-              p_fires,
-              p_thumbs,
-              p_hearts,
-              p_tag,
-              p_time,
-          ) = post
+          p_id = post[0]
+          p_user = post[1] if len(post) > 1 else "Anonimo"
+          p_cap = post[2] if len(post) > 2 else ""
+          p_file = post[3] if len(post) > 3 else ""
+          val_fires = post[4] if len(post) > 4 and post[4] is not None else 0
+          val_thumbs = post[5] if len(post) > 5 and post[5] is not None else 0
+          val_hearts = post[6] if len(post) > 6 and post[6] is not None else 0
+          p_tag = post[7] if len(post) > 7 and post[7] is not None else "vibe"
+
+          st.markdown('<div class="video-container">', unsafe_allow_html=True)
+          col_vid, col_act = st.columns([4, 1])
+
+          with col_vid:
+            st.markdown(f"### @{p_user} · `{p_tag}`")
+            if p_cap:
+              st.write(p_cap)
+            if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+              st.video(p_file)
+
+          with col_act:
+            st.markdown("<br><br>", unsafe_allow_html=True)
+            if st.button(f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "fire")
+            if st.button(f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "thumb")
+            if st.button(f"❤️ {val_hearts}", key=f"feed_heart_{p_id}", use_container_width=True):
+              handle_reaction(p_id, cur, "heart")
+
+          st.markdown("</div>", unsafe_allow_html=True)
+          st.markdown("---")
             
-      
-      
-    
-        val_fires = p_fires if p_fires is not None else 0
-        val_thumbs = p_thumbs if p_thumbs is not None else 0
-        val_hearts = p_hearts if p_hearts is not None else 0
-
-        st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
-        col_vid, col_act = st.columns([4, 1])
-
-        with col_vid:
-          st.markdown(f"### @{p_user} · `{p_tag}`")
-          if p_cap:
-            st.write(p_cap)
-          if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-            st.video(p_file)
-
-        with col_act:
-          st.markdown("<br><br>", unsafe_allow_html=True)
-          if st.button(
-              f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True
-          ):
-            handle_reaction(p_id, cur, "fire")
-          if st.button(
-              f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True
-          ):
-            handle_reaction(p_id, cur, "thumb")
-          if st.button(
-              f"❤️ {val_hearts}",
-              key=f"feed_heart_{p_id}",
-              use_container_width=True,
-          ):
-            handle_reaction(p_id, cur, "heart")
-
-        st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("---")
           
   elif menu_option == "👤 Mi Perfil":
     c.execute(
