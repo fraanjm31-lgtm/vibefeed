@@ -416,7 +416,7 @@ st.markdown("### Tus Vídeos")
 
         
         
-    st.markdown("### 🎬 Tus Videos")
+st.markdown("### 🎬 Tus Videos")
         c.execute("""
             SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
             FROM posts 
