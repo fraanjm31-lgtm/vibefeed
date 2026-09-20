@@ -619,21 +619,24 @@ else:
               st.rerun()
       else:
         st.warning("Usuario no encontrado.")
-  if opcion == "Feed de Videos":
+if menu_option == "🔥 Feed de Videos":
     # tu código del feed
- 
+
+elif menu_option == "👤 Mi Perfil":
     # tu código del perfil
-if opcion == "Siguiendo":
+
+elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Aquí verás las publicaciones de las cuentas que sigues.")
 
-elif opcion == "Explorar Canales":
+elif menu_option == "📺 Explorar Canales":
     st.title("📺 Explorar Canales")
     st.write("Aquí puedes descubrir nuevos canales y contenido.")
 
-elif opcion == "💬 Mensajes":
+elif menu_option == "💬 Mensajes":
     st.title("💬 Mensajes")
     st.write("Aquí verás tus chats y conversaciones.")
+    
 
 
   elif menu_option == "⚙️ Ajustes":
