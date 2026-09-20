@@ -515,7 +515,7 @@ c.execute(
         (cur,),
     )
 user_data = c.fetchone()
-    xp = user_data[0] if user_data else 0
+xp = user_data[0] if user_data else 0
     bio = user_data[1] if user_data else ""
     avatar = user_data[2] if user_data else ""
     account_privacy = user_data[3] if user_data else "Publico"
