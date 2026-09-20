@@ -622,7 +622,7 @@ else:
 if menu_option == "🔥 Feed de Videos":
     # tu código del feed
 
-elif menu_option == "👤 Mi Perfil":
+if menu_option == "👤 Mi Perfil":
     # tu código del perfil
 
 elif menu_option == "👥 Siguiendo":
