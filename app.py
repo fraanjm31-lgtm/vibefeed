@@ -229,30 +229,35 @@ if st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  if menu_option == "🔥 Feed de Videos":
-    st.title("🔥 NoxVibe Feed")
-    st.write("Videos publicos de la comunidad.")
-
-      sql_feed = "SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp FROM posts WHERE file_type = 'video' ORDER BY id DESC"
-      c.execute(sql_feed)
+      if menu_option == "🔥 Feed de Videos":
+      st.title("🔥 NoxVibe Feed")
+      st.write("Videos publicos de la comunidad.")
+      c.execute(
+          "SELECT id, username, caption, file, fires, thumbs, hearts,"
+          " vibe_tag, timestamp FROM posts WHERE file_type = 'video' ORDER BY"
+          " id DESC"
+      )
       videos = c.fetchall()
+
+      if not videos:
+        st.info("No hay videos publicos. Sube el primero desde tu perfil.")
+      else:
+        for post in videos:
+          (
+              p_id,
+              p_user,
+              p_cap,
+              p_file,
+              p_fires,
+              p_thumbs,
+              p_hearts,
+              p_tag,
+              p_time,
+          ) = post
+            
       
       
-    if not videos:
-      st.info("No hay videos publicos. Sube el primero desde tu perfil.")
-    else:
-      for post in videos:
-        (
-            p_id,
-            p_user,
-            p_cap,
-            p_file,
-            p_fires,
-            p_thumbs,
-            p_hearts,
-            p_tag,
-            p_time,
-        ) = post
+    
         val_fires = p_fires if p_fires is not None else 0
         val_thumbs = p_thumbs if p_thumbs is not None else 0
         val_hearts = p_hearts if p_hearts is not None else 0
