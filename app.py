@@ -142,7 +142,7 @@ st.markdown(
     }
     .bottom-nav a {
         color: rgb(255,255,255);
-        font-size: 20px;"
+        font-size: 20px;
 
     }
     </style>""", unsafe_allow_html=True)
