@@ -127,6 +127,10 @@ st.markdown(
         margin-bottom: 20px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.5);
     }}
+    [data-testid="stImage"] img {{
+        border-radius: 50% !important;
+        object-fit: cover !important;
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -630,7 +634,4 @@ else:
 
     st.subheader("🎨 Apariencia y Privacidad")
 
-    tema_sel = st.selectbox(
-        "Tema de Colores", ["Oscuro", "Claro", "Neon / Cyber"], index=0
-    )
-    priv_sel = st.s
+    tem
