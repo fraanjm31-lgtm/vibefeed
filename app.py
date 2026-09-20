@@ -629,5 +629,7 @@ else:
   elif menu_option == "⚙️ Ajustes":
     st.title("⚙️ Ajustes de la cuenta")
 
-    c.execute(
-        "SELECT theme, account_privacy F
+       c.execute(
+        "SELECT theme, account_privacy FROM users WHERE username = ?", (cur,)
+       )
+      
