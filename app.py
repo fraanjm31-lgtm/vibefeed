@@ -134,32 +134,29 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}   
-    st.markdown(
-    """
-    <style>
-    .bottom-nav {
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: #1a1a1a;
-        border-top: 1px solid #333333;
-        display: flex;
-        justify-content: space-around;
-        padding: 10px 0;
-        z-index: 99999;
-    }
-    .bottom-nav a, .bottom-nav button {
-        background: none !important;
-        border: none !important;
-        color: #ffffff !important;
-        font-size: 20px !important;
-        cursor: pointer;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True
-)
+     st.markdown("""
+<style>
+.bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background-color: #1a1a1a;
+    border-top: 1px solid #333333;
+    display: flex;
+    justify-content: space-around;
+    padding: 10px 0;
+    z-index: 99999;
+}
+.bottom-nav a, .bottom-nav button {
+    background: none !important;
+    border: none !important;
+    color: #ffffff !important;
+    font-size: 20px !important;
+    cursor: pointer;
+}
+</style>
+""", unsafe_allow_html=True)
 
 
     
