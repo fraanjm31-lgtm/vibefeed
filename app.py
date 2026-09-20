@@ -623,7 +623,7 @@ else:
     # tu código del feed
  
     # tu código del perfil
-elif opcion == "Siguiendo":
+if opcion == "Siguiendo":
     st.title("👥 Siguiendo")
     st.write("Aquí verás las publicaciones de las cuentas que sigues.")
 
