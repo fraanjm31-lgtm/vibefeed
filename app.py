@@ -413,17 +413,15 @@ if st.button("✏️ Publicar Contenido", use_container_width=True):
 
 st.markdown("### Tus Vídeos")
 
+st.markdown("### 🎬 Tus Vídeos")
+c.execute("""
+    SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
+    FROM posts 
+    WHERE username = ? AND file_type = 'video' 
+    ORDER BY id DESC
+""", (cur,))
+my_posts = c.fetchall()
 
-        
-        
-st.markdown("### 🎬 Tus Videos")
-        c.execute("""
-            SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
-            FROM posts 
-            WHERE username = ? AND file_type = 'video' 
-            ORDER BY id DESC
-        """, (cur,))
-        my_posts = c.fetchall()
         
         if not my_posts:
             st.info("Aún no has subido ningún video.")
@@ -442,67 +440,13 @@ st.markdown("### 🎬 Tus Videos")
                 st.markdown("---")
 else:
         st.warning("Usuario no encontrado.")
-        
-        st.markdown("### 🎬 Tus Videos")
-        c.execute("""
-            SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
-            FROM posts 
-            WHERE username = ? AND file_type = 'video' 
-            ORDER BY id DESC
-        """, (cur,))
-        my_posts = c.fetchall()
-        
-        if not my_posts:
-            st.info("Aún no has subido ningún video.")
-        else:
-            for post in my_posts:
-                p_id, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                val_fires = p_fires if p_fires is not None else 0
-                val_thumbs = p_thumbs if p_thumbs is not None else 0
-                val_hearts = p_hearts if p_hearts is not None else 0
-                
-                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
-                if p_cap:
-                    st.write(p_cap)
-                if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-                    st.video(p_file)
-                st.markdown("---")
-    
-        
-        
-        st.markdown("### 🎬 Tus Videos")
-        c.execute("""
-            SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
-            FROM posts 
-            WHERE username = ? AND file_type = 'video' 
-            ORDER BY id DESC
-        """, (cur,))
-        my_posts = c.fetchall()
-        
-        if not my_posts:
-            st.info("Aún no has subido ningún video.")
-        else:
-            for post in my_posts:
-                p_id, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
-                val_fires = p_fires if p_fires is not None else 0
-                val_thumbs = p_thumbs if p_thumbs is not None else 0
-                val_hearts = p_hearts if p_hearts is not None else 0
-                
-                st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
-                if p_cap:
-                    st.write(p_cap)
-                if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-                    st.video(p_file)
-                st.markdown("---")
-        
-            
-  
-c.execute(
-        "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
-        " FROM users WHERE username = ?",
-        (cur,),
-    )
+# 1. CARGA DE DATOS DEL PERFIL Y ESTADÍSTICAS
+c.execute("""
+    SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad 
+    FROM users WHERE username = ?
+""", (cur,))
 user_data = c.fetchone()
+
 xp = user_data[0] if user_data else 0
 bio = user_data[1] if user_data else ""
 avatar = user_data[2] if user_data else ""
@@ -510,15 +454,13 @@ account_privacy = user_data[3] if user_data else "Publico"
 coins = user_data[4] if user_data else 100
 
 nombre_real = (
-        f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
-    )
+    f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
+)
 priv_badge = (
-        "🔒 Cuenta Privada"
-        if account_privacy == "Privado"
-        else "🌐 Cuenta Publica"
-    )
-
-
+    "🔒 Cuenta Privada"
+    if account_privacy == "Privado"
+    else "🌐 Cuenta Publica"
+)
 
 c.execute("SELECT COUNT(*) FROM posts WHERE u = ?", (cur,))
 total_posts = c.fetchone()[0]
@@ -529,7 +471,6 @@ try:
         (cur, 'accepted'),
     )
     total_followers = c.fetchone()[0]
-    
     c.execute(
         "SELECT COUNT(*) FROM follows WHERE u1 = ? AND status = ?",
         (cur, 'accepted'),
@@ -538,41 +479,73 @@ try:
 except:
     total_followers = 0
     total_following = 0
-    
 
-    col1, col2 = st.columns([1, 2])
-    with col1:
-      if avatar and isinstance(avatar, str) and os.path.exists(avatar):
-        st.image(avatar, width=110) 
-      else:
+col1, col2 = st.columns([1, 2])
+with col1:
+    if avatar and isinstance(avatar, str) and os.path.exists(avatar):
+        st.image(avatar, width=110)
+    else:
         st.image(
             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
             width=110,
         )
-    with col2:
-      st.markdown(
-          f"""
-                <div class="profile-stats">
-                    <div class="stat-box">
-                        <div class="stat-num">{total_posts}</div>
-                        <div class="stat-label">Posts</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-num">{total_followers}</div>
-                        <div class="stat-label">Seguidores</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-num">{total_following}</div>
-                        <div class="stat-label">Siguiendo</div>
-                    </div>
-                </div>
-            """,
-          unsafe_allow_html=True,
-      )
-      st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
+with col2:
+    st.markdown(
+        f"""
+        <div class="profile-stats">
+            <div class="stat-box">
+                <div class="stat-num">{total_posts}</div>
+                <div class="stat-label">Posts</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">{total_followers}</div>
+                <div class="stat-label">Seguidores</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num">{total_following}</div>
+                <div class="stat-label">Siguiendo</div>
+            </div>
+        </div>
+    """,
+        unsafe_allow_html=True,
+    )
 
-    st.write(bio)
-    st.markdown("---")
+st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
+st.markdown(f"**Bio:** {bio}")
+st.markdown("---")
+
+if st.button("✏️ Publicar Contenido", use_container_width=True):
+    st.info("Usa el menú de publicación para subir nuevo contenido.")
+
+# 2. SECCIÓN DE VÍDEOS DEL USUARIO
+st.markdown("### 🎬 Tus Vídeos")
+c.execute(
+    """
+    SELECT id, caption, file, fires, thumbs, hearts, vibe_tag, timestamp 
+    FROM posts 
+    WHERE username = ? AND file_type = 'video' 
+    ORDER BY id DESC
+""",
+    (cur,),
+)
+my_posts = c.fetchall()
+
+if not my_posts:
+    st.info("Aún no has subido ningún vídeo.")
+else:
+    for post in my_posts:
+        p_id, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+        val_fires = p_fires if p_fires is not None else 0
+        val_thumbs = p_thumbs if p_thumbs is not None else 0
+        val_hearts = p_hearts if p_hearts is not None else 0
+
+        st.markdown(f"**@{cur}** · `{p_tag}` · {p_time}")
+        if p_cap:
+            st.write(p_cap)
+        if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+            st.video(p_file)
+        st.markdown("---")
+        
 
     with st.expander("✏️ Publicar Contenido", expanded=False):
       with st.form("new_post_form", clear_on_submit=True):
