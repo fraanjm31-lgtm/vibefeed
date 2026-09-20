@@ -625,6 +625,18 @@ if menu_option == "🔥 Feed de Videos":
 elif menu_option == "👤 Mi Perfil":
     st.title("👤 Mi Perfil")
     
+    # Aseguramos que la tabla exista para evitar errores
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS videos (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            descripcion TEXT,
+            video_path TEXT
+        )
+    ''')
+    conn.commit()
+    
+    # Consultamos los videos del usuario actual
     c.execute("SELECT id, descripcion, video_path FROM videos WHERE username = ?", (st.session_state.get('username', ''),))
     mis_posts = c.fetchall()
     
@@ -638,6 +650,7 @@ elif menu_option == "👤 Mi Perfil":
             if file_path:
                 st.video(file_path)
             
+            # Botón para eliminar este video específico
             if st.button("🗑️ Eliminar video", key=f"del_video_{post_id}"):
                 c.execute("DELETE FROM videos WHERE id = ?", (post_id,))
                 conn.commit()
@@ -645,11 +658,7 @@ elif menu_option == "👤 Mi Perfil":
                 st.rerun()
             st.divider()
     else:
-        st.info("Aún no has publicado nada.")
-        
-        
-        
-        
+        st.info("Aún no has publicado ningún video.") 
     
 elif menu_option == "👥 Siguiendo":
     st.title("👥 Siguiendo")
