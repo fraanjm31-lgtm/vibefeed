@@ -229,17 +229,14 @@ if st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  if menu_option == "🔥 Feed de Videos":
+    elif menu_option == "🔥 Feed de Videos":
     st.title("🔥 NoxVibe Feed")
     st.write("Videos publicos de la comunidad.")
 
-    c.execute("""
-            SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
-            FROM posts p 
-            JOIN users u ON p.username = u.username 
-            WHERE p.file_type = 'video' AND u.account_privacy = 'Publico' 
-            ORDER BY p.id DESC
-        """)
+    c.execute(
+        "SELECT id, username, caption, file, fires, thumbs, hearts, vibe_tag, timestamp "
+        "FROM posts WHERE file_type = 'video' ORDER BY id DESC"
+    )
     videos = c.fetchall()
 
     if not videos:
@@ -290,7 +287,7 @@ else:
 
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
-
+          
   elif menu_option == "👤 Mi Perfil":
     c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad FROM users WHERE username = ?",
