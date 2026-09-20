@@ -229,72 +229,73 @@ if st.session_state.logged_in:
 else:
   cur = st.session_state.username
   if menu_option == "🔥 Feed de Videos":
-      st.title("🔥 NoxVibe Feed")
-      st.write("Videos publicos de la comunidad.")
+  st.title("🔥 NoxVibe Feed")
+  st.write("Videos publicos de la comunidad.")
 
-      c.execute("SELECT * FROM posts WHERE file_type = 'video' ORDER BY id DESC")
-      videos = c.fetchall()
+  c.execute("SELECT * FROM posts WHERE file_type = 'video' ORDER BY id DESC")
+  videos = c.fetchall()
 
-      if not videos:
-        st.info("No hay videos publicos. Sube el primero desde tu perfil.")
-      else:
-        for post in videos:
-          p_id = post[0]
-          p_user = post[1] if len(post) > 1 else "Anonimo"
-          p_cap = post[2] if len(post) > 2 else ""
-          p_file = post[3] if len(post) > 3 else ""
-          val_fires = post[4] if len(post) > 4 and post[4] is not None else 0
-          val_thumbs = post[5] if len(post) > 5 and post[5] is not None else 0
-          val_hearts = post[6] if len(post) > 6 and post[6] is not None else 0
-          p_tag = post[7] if len(post) > 7 and post[7] is not None else "vibe"
+  if not videos:
+    st.info("No hay videos publicos. Sube el primero desde tu perfil.")
+  else:
+    for post in videos:
+      p_id = post[0]
+      p_user = post[1] if len(post) > 1 else "Anonimo"
+      p_cap = post[2] if len(post) > 2 else ""
+      p_file = post[3] if len(post) > 3 else ""
+      val_fires = post[4] if len(post) > 4 and post[4] is not None else 0
+      val_thumbs = post[5] if len(post) > 5 and post[5] is not None else 0
+      val_hearts = post[6] if len(post) > 6 and post[6] is not None else 0
+      p_tag = post[7] if len(post) > 7 and post[7] is not None else "vibe"
 
-          st.markdown('<div class="video-container">', unsafe_allow_html=True)
-          col_vid, col_act = st.columns([4, 1])
+      st.markdown('<div class="video-container">', unsafe_allow_html=True)
+      col_vid, col_act = st.columns([4, 1])
 
-          with col_vid:
-            st.markdown(f"### @{p_user} · `{p_tag}`")
-            if p_cap:
-              st.write(p_cap)
-            if p_file and isinstance(p_file, str) and os.path.exists(p_file):
-              st.video(p_file)
+      with col_vid:
+        st.markdown(f"### @{p_user} · `{p_tag}`")
+        if p_cap:
+          st.write(p_cap)
+        if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+          st.video(p_file)
 
-          with col_act:
-            st.markdown("<br><br>", unsafe_allow_html=True)
-            if st.button(f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True):
-              handle_reaction(p_id, cur, "fire")
-            if st.button(f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True):
-              handle_reaction(p_id, cur, "thumb")
-            if st.button(f"❤️ {val_hearts}", key=f"feed_heart_{p_id}", use_container_width=True):
-              handle_reaction(p_id, cur, "heart")
+      with col_act:
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        if st.button(f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True):
+          handle_reaction(p_id, cur, "fire")
+        if st.button(f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True):
+          handle_reaction(p_id, cur, "thumb")
+        if st.button(f"❤️ {val_hearts}", key=f"feed_heart_{p_id}", use_container_width=True):
+          handle_reaction(p_id, cur, "heart")
 
-          st.markdown("</div>", unsafe_allow_html=True)
-          st.markdown("---")
-            
-    elif menu_option == "👤 Mi Perfil":
-      st.title("👤 Mi Perfil")
+      st.markdown("</div>", unsafe_allow_html=True)
+      st.markdown("---")
 
-      c.execute("SELECT * FROM users WHERE username = ?", (cur,))
-      user_data = c.fetchone()
+elif menu_option == "👤 Mi Perfil":
+  st.title("👤 Mi Perfil")
 
-      if user_data:
-        p_xp = user_data[2] if len(user_data) > 2 and user_data[2] is not None else 0
-        p_bio = user_data[3] if len(user_data) > 3 and user_data[3] is not None else "Sin biografia"
-        p_coins = user_data[5] if len(user_data) > 5 and user_data[5] is not None else 100
-        nombre_completo = user_data[1] if len(user_data) > 1 and user_data[1] is not None else cur
-        account_privacy = user_data[4] if len(user_data) > 4 and user_data[4] is not None else "Publico"
+  c.execute("SELECT * FROM users WHERE username = ?", (cur,))
+  user_data = c.fetchone()
 
-        priv_badge = (
-            "🔒 Cuenta Privada"
-            if account_privacy == "Privado"
-            else "🌐 Cuenta Publica"
-        )
+  if user_data:
+    p_xp = user_data[2] if len(user_data) > 2 and user_data[2] is not None else 0
+    p_bio = user_data[3] if len(user_data) > 3 and user_data[3] is not None else "Sin biografia"
+    p_coins = user_data[5] if len(user_data) > 5 and user_data[5] is not None else 100
+    nombre_completo = user_data[1] if len(user_data) > 1 and user_data[1] is not None else cur
+    account_privacy = user_data[4] if len(user_data) > 4 and user_data[4] is not None else "Publico"
 
-        st.title(f"{nombre_completo} (@{cur})")
-        st.caption(priv_badge)
-        st.info(f"NoxCoins: **{p_coins}** | XP: **{p_xp}**")
-        st.write(f"Biografia: {p_bio}")
-      else:
-        st.error("No se encontro el perfil del usuario.")
+    priv_badge = (
+        "🔒 Cuenta Privada"
+        if account_privacy == "Privado"
+        else "🌐 Cuenta Publica"
+    )
+
+    st.title(f"{nombre_completo} (@{cur})")
+    st.caption(priv_badge)
+    st.info(f"NoxCoins: **{p_coins}** | XP: **{p_xp}**")
+    st.write(f"Biografia: {p_bio}")
+  else:
+    st.error("No se encontro el perfil del usuario.")
+      
           
 
     try:
