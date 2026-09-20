@@ -142,11 +142,11 @@ st.markdown(
     }
     .bottom-nav a {
         color: rgb(255,255,255);
-        c += "font-size: 20px;"
+        font-size: 20px;"
 
     }
-    </style>
-""", unsafe_allow_html=True)
+    </style>""", unsafe_allow_html=True)
+    
 
 nav = '<div class="bottom-nav">'
 nav += '<a href="/">🏠</a>'
