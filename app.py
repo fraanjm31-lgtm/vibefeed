@@ -420,10 +420,7 @@ else:
     st.write(bio)
     st.markdown("---")
          # --- TUS PUBLICACIONES EN EL PERFIL ---
-    st.subheader("📋 Tus Publicaciones")
-    
-    c.execute("SELECT id, descripcion, video_path FROM posts WHERE username = ?", (cur,))
-    mis_posts = c.fetchall()
+        st.subheader("📋 Tus Publicaciones")
     
     c.execute("SELECT * FROM posts WHERE username = ?", (cur,))
     mis_posts = c.fetchall()
@@ -431,7 +428,6 @@ else:
     if mis_posts:
         for p in mis_posts:
             p_id = p[0]
-            
             st.write(f"Publicación ID: {p_id}")
             
             if st.button("🗑️ Eliminar", key=f"del_post_{p_id}"):
@@ -439,6 +435,7 @@ else:
                 conn.commit()
                 st.rerun()
             st.divider()
+            
             
             
     with st.expander("✏️ Publicar Contenido", expanded=False):
