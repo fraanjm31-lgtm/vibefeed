@@ -482,6 +482,15 @@ with col1:
             "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
             width=110,
         )
+col1, col2 = st.columns([1, 2])
+with col1:
+    if avatar and isinstance(avatar, str) and os.path.exists(avatar):
+        st.image(avatar, width=110)
+    else:
+        st.image(
+            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
+            width=110,
+        )
 with col2:
     mcol1, mcol2, mcol3 = st.columns(3)
     with mcol1:
@@ -490,9 +499,6 @@ with col2:
         st.metric("Seguidores", total_followers)
     with mcol3:
         st.metric("Siguiendo", total_following)
-        
-    
-    
 
 st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
 st.markdown(f"**Bio:** {bio}")
