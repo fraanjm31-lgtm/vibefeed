@@ -509,7 +509,7 @@ else:
         
             
   
-    c.execute(
+c.execute(
         "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
         " FROM users WHERE username = ?",
         (cur,),
