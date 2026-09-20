@@ -229,11 +229,11 @@ if st.session_state.logged_in:
 else:
   cur = st.session_state.username
   if menu_option == "🔥 Feed de Videos":
-  st.title("🔥 NoxVibe Feed")
-  st.write("Videos publicos de la comunidad.")
+    st.title("🔥 NoxVibe Feed")
+    st.write("Videos publicos de la comunidad.")
 
-  c.execute("SELECT * FROM posts WHERE file_type = 'video' ORDER BY id DESC")
-  videos = c.fetchall()
+    c.execute("SELECT * FROM posts WHERE file_type = 'video' ORDER BY id DESC")
+    videos = c.fetchall()
 
   if not videos:
     st.info("No hay videos publicos. Sube el primero desde tu perfil.")
