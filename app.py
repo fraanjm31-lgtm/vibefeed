@@ -271,19 +271,24 @@ else:
           st.markdown("---")
             
           
-  elif menu_option == "👤 Mi Perfil":
-    c.execute(
-        "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad FROM users WHERE username = ?",
-        (cur,),
-    )
-    user_data = c.fetchone()
-    xp = user_data[0] if user_data else 0
-    bio = user_data[1] if user_data else ""
-    avatar = user_data[2] if user_data else ""
-    account_privacy = user_data[3] if user_data else "Publico"
-    coins = user_data[4] if user_data else 100
-    nombre_completo = (
-        f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
+       elif menu_option == "👤 Mi Perfil":
+      st.title("👤 Mi Perfil")
+      
+      c.execute("SELECT * FROM users WHERE username = ?", (cur,))
+      user_data = c.fetchone()
+      
+      if user_data:
+        # Leemos los campos por índice para evitar errores de columnas faltantes
+        p_xp = user_data[2] if len(user_data) > 2 and user_data[2] is not None else 0
+        p_bio = user_data[3] if len(user_data) > 3 and user_data[3] is not None else "Sin biografia"
+        p_coins = user_data[5] if len(user_data) > 5 and user_data[5] is not None else 100
+        
+        st.success(f"Usuario: @{cur}")
+        st.info(f"NoxCoins: **{p_coins}** | XP: **{p_xp}**")
+        st.write(f"Biografia: {p_bio}")
+      else:
+        st.error("No se encontro el perfil del usuario.")
+          
     )
 
     priv_badge = (
