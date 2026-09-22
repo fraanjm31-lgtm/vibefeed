@@ -228,51 +228,31 @@ if not st.session_state.logged_in:
       else:
         st.error("Usuario o contrasena incorrectos")
 
-  with tab_reg:
-    r_user = st.text_input(
-        "Nombre de Usuario (para iniciar sesion)", key="r_user"
-    )
-    r_nombre = st.text_input("Nombre", key="r_nombre")
-    r_apellidos = st.text_input("Apellidos", key="r_apellidos")
-    r_edad = st.number_input(
-        "Edad", min_value=1, max_value=120, value=18, key="r_edad"
-    )
-    r_email = st.text_input("Correo Electronico", key="r_email")
-    r_pass = st.text_input("Contrasena", type="password", key="r_pass")
-        if st.button("Registrarse y Entrar"):
-            if not r_user or not r_pass:
-                st.warning("Por favor, introduce al menos tu usuario y contraseña.")
-            else:
-                
-                
-      
-        try:
-          c.execute(
-              "INSERT INTO users (username, password, nombre, apellidos, edad,"
-              " email, xp, bio, avatar, account_privacy, coins, theme) VALUES"
-              " (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              (
-                  r_user,
-                  r_pass,
-                  r_nombre,
-                  r_apellidos,
-                  int(r_edad),
-                  r_email,
-                  10,
-                  "Hola! Uso NoxVibe.",
-                  "",
-                  "Publico",
-                  100,
-                  "Oscuro",
-              ),
-          )
-          conn.commit()
-          st.session_state.logged_in = True
-          st.session_state.username = r_user
-          st.success("¡Registro completado con éxito! Entrando...")
-          st.rerun()
-        except Exception as ex:
-          st.error(f"El usuario o correo ya existe, o hubo un error: {ex}")
+          with tab_reg:
+            r_user = st.text_input("Nombre de Usuario (para iniciar sesion)", key="r_user")
+            r_nombre = st.text_input("Nombre", key="r_nombre")
+            r_apellidos = st.text_input("Apellidos", key="r_apellidos")
+            r_edad = st.number_input("Edad", min_value=1, max_value=120, value=18, key="r_edad")
+            r_email = st.text_input("Correo Electronico", key="r_email")
+            r_pass = st.text_input("Contrasena", type="password", key="r_pass")
+            
+            if st.button("Registrarse y Entrar"):
+                if not r_user or not r_pass:
+                    st.warning("Por favor, introduce al menos tu usuario y contraseña.")
+                else:
+                    try:
+                        c.execute(
+                            "INSERT INTO users (username, password, nombre, apellidos, edad, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                            (r_user, r_pass, r_nombre, r_apellidos, int(r_edad), r_email, 10, "¡Hola! Uso VibeVibe.", "", "Publico", 100, "")
+                        )
+                        conn.commit()
+                        st.success("¡Cuenta creada con éxito!")
+                        st.session_state.logged_in = True
+                        st.session_state.username = r_user
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Error al registrar: {e}")
+        
 
 else:
   cur = st.session_state.username
