@@ -337,105 +337,80 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
         st.markdown("---")
 
-  elif menu_option == "👤 Mi Perfil":
-    c.execute(
-        "SELECT xp, bio, avatar, account_privacy, coins, nombre, apellidos, edad"
-        " FROM users WHERE username = ?",
-        (cur,),
-    )
-    user_data = c.fetchone()
-    xp = user_data[0] if user_data else 0
-    bio = user_data[1] if user_data else ""
-    avatar = user_data[2] if user_data else ""
-    account_privacy = user_data[3] if user_data else "Publico"
-    coins = user_data[4] if user_data else 100
-    nombre_completo = (
-        f"{user_data[5]} {user_data[6]}" if user_data and user_data[5] else cur
-    )
+      # --- ESTILO DE PERFIL TIPO CANAL DE CREADOR ---
+    
+    # 1. Cabecera / Banner superior simulado o imagen de fondo si la hay
+    st.markdown("""
+        <div style="background-color: #1f1f1f; padding: 20px; border-radius: 10px; text-align: center; color: white;">
+            <h2>Honrando Placas: Crónicas de LS</h2>
+            <p style="color: #aaa; margin: 0;">@J.mpokemon</p>
+        </div>
+    """, unsafe_allow_html=True)
+    
+    st.write("") # Espaciador
 
-    priv_badge = (
-        "🔒 Cuenta Privada"
-        if account_privacy == "Privado"
-        else "🌐 Cuenta Publica"
-    )
-    st.title(nombre_completo)
-      
-    st.caption(priv_badge)
+    # 2. Métricas y Estadísticas rápidas
+    col_stat1, col_stat2 = st.columns(2)
+    with col_stat1:
+        c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
+        total_suscriptores = c.fetchone()[0]
+        st.markdown(f"**👥 {total_suscriptores}** Suscriptores")
+    with col_stat2:
+        c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
+        total_posts = c.fetchone()[0]
+        st.markdown(f"**📦 {total_posts}** Publicaciones")
 
-    c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
-    total_posts = c.fetchone()[0]
+    # 3. Biografía del canal
+    st.write("¡Bienvenidos a las calles sin ley de Los Santos! Vive conmigo los golpes más locos, persecuciones policiales intensas y todas las misiones.")
+    
+    # 4. Botones de acción rápida estilo "Editar canal / Estadísticas"
+    col_btn1, col_btn2 = st.columns(2)
+    with col_btn1:
+        if st.button("📊 Estadísticas", use_container_width=True):
+            st.info(f"Tus XP acumulados: {xp} | NoxCoins: {coins} 🪙")
+    with col_btn2:
+        if st.button("✏️ Editar canal", use_container_width=True):
+            st.warning("Próximamente podrás editar los ajustes avanzados desde aquí.")
 
-    try:
-      c.execute(
-          "SELECT COUNT(*) FROM follows WHERE followed = ? AND status ="
-          " 'accepted'",
-          (cur,),
-      )
-      total_followers = c.fetchone()[0]
-      c.execute(
-          "SELECT COUNT(*) FROM follows WHERE follower = ? AND status ="
-          " 'accepted'",
-          (cur,),
-      )
-      total_following = c.fetchone()[0]
-        
-    except:
-      total_followers = 0
-      total_following = 0
-
-    col1, col2 = st.columns([1, 2])
-    with col1:
-      # Envolvemos la imagen de perfil en un div con la clase profile-avatar para aislar el CSS
-      st.markdown('<div class="profile-avatar">', unsafe_allow_html=True)
-      if avatar and isinstance(avatar, str) and os.path.exists(avatar):
-        st.image(avatar, width=110)
-      else:
-        st.image(
-            "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150",
-            width=110,
-        )
-      st.markdown("</div>", unsafe_allow_html=True)
-
-    with col2:
-      st.markdown(
-          f"""
-                <div class="profile-stats">
-                    <div class="stat-box">
-                        <div class="stat-num">{total_posts}</div>
-                        <div class="stat-label">Posts</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-num">{total_followers}</div>
-                        <div class="stat-label">Seguidores</div>
-                    </div>
-                    <div class="stat-box">
-                        <div class="stat-num">{total_following}</div>
-                        <div class="stat-label">Siguiendo</div>
-                    </div>
-                </div>
-            """,
-          unsafe_allow_html=True,
-      )
-      st.markdown(f"**Tus XP:** {xp} | **NoxCoins:** {coins} 🪙")
-
-    st.write(bio)
     st.markdown("---")
-         # --- TUS PUBLICACIONES EN EL PERFIL ---
-    st.subheader("📋 Tus Publicaciones")
-    
-    c.execute("SELECT * FROM posts WHERE username = ?", (cur,))
-    mis_posts = c.fetchall()
-    
-    if mis_posts:
-        for p in mis_posts:
-            p_id = p[0]
-            st.write(f"Publicación ID: {p_id}")
+
+    # 5. Pestañas de navegación ("Inicio", "En directo", "Publicaciones")
+    tab_inicio, tab_en_directo, tab_publicaciones = st.tabs(["Inicio", "En directo", "Publicaciones"])
+
+    with tab_inicio:
+        st.write("### Bienvenida a tu canal")
+        st.caption("Todo lo que publiques aparecerá aquí abajo ordenado.")
+
+    with tab_en_directo:
+        st.info("No hay emisiones en directo activas ahora mismo.")
+
+    with tab_publicaciones:
+        st.subheader("📋 Tus Publicaciones y Borrado")
+        
+        # Consulta de las publicaciones del usuario actual
+        c.execute("SELECT * FROM posts WHERE username = ?", (cur,))
+        mis_posts = c.fetchall()
+        
+        if mis_posts:
+            for p in mis_posts:
+                p_id = p[0]
+                st.write(f"Publicación ID: {p_id}")
+                
+                # Botón de eliminar directo y limpio en cada post
+                if st.button("🗑️ Eliminar publicación", key=f"del_post_tab_{p_id}"):
+                    c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
+                    conn.commit()
+                    st.rerun()
+                st.divider()
+        else:
+            # Vista vacía limpia cuando no hay contenido (como en la captura)
+            st.markdown("""
+                <div style="text-align: center; padding: 30px; color: #888;">
+                    <h3>Crea contenido en cualquier dispositivo</h3>
+                    <p>Sube y graba contenido estés donde estés. Todo lo que publiques aparecerá aquí.</p>
+                </div>
+            """, unsafe_allow_html=True)
             
-            if st.button("🗑️ Eliminar", key=f"del_post_{p_id}"):
-                c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
-                conn.commit()
-                st.rerun()
-            st.divider()
             
             
             
