@@ -531,4 +531,8 @@ else:
     st.subheader("⚙️ Opciones de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
     if st.button("Guardar Ajustes de Tema"):
-      c.execute("UPDATE users SET theme = ? WHERE username 
+            c.execute(
+          "UPDATE users SET theme = ? WHERE username COLLATE NOCASE = ?",
+          (nuevo_tema, cur),
+            )
+        
