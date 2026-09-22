@@ -800,35 +800,36 @@ else:
     st.rerun()
 
 # ==========================================
-# MENÚ DE NAVEGACIÓN ABAJO DEL TODO
+# MENÚ DE NAVEGACIÓN (SOLO SI HAS INICIADO SESIÓN)
 # ==========================================
-st.markdown("---")
-
-col_m1, col_m2, col_m3, col_m4, col_m5, col_m6 = st.columns(6)
-with col_m1:
-  if st.button("🏠\nInicio", use_container_width=True):
-    st.session_state.nav_tab = "Inicio"
-    st.rerun()
-with col_m2:
-  if st.button("🎞️\nShorts", use_container_width=True):
-    st.session_state.nav_tab = "Shorts"
-    st.rerun()
-with col_m3:
-  if st.button("➕\nCrear", use_container_width=True):
-    st.session_state.nav_tab = "Crear"
-    st.rerun()
-with col_m4:
-  if st.button("📺\nCanales", use_container_width=True):
-    st.session_state.nav_tab = "Suscripciones"
-    st.rerun()
-with col_m5:
-  if st.button("💬\nChats", use_container_width=True):
-    st.session_state.nav_tab = "Mensajes"
-    st.rerun()
-with col_m6:
-  if st.button("👤\nPerfil", use_container_width=True):
-    st.session_state.nav_tab = "Tu"
-    st.rerun()
+if st.session_state.get("logged_in", False):
+  st.markdown("---")
+  col_m1, col_m2, col_m3, col_m4, col_m5, col_m6 = st.columns(6)
+  with col_m1:
+    if st.button("🏠\nInicio", use_container_width=True):
+      st.session_state.nav_tab = "Inicio"
+      st.rerun()
+  with col_m2:
+    if st.button("🎞️\nShorts", use_container_width=True):
+      st.session_state.nav_tab = "Shorts"
+      st.rerun()
+  with col_m3:
+    if st.button("➕\nCrear", use_container_width=True):
+      st.session_state.nav_tab = "Crear"
+      st.rerun()
+  with col_m4:
+    if st.button("📺\nCanales", use_container_width=True):
+      st.session_state.nav_tab = "Suscripciones"
+      st.rerun()
+  with col_m5:
+    if st.button("💬\nChats", use_container_width=True):
+      st.session_state.nav_tab = "Mensajes"
+      st.rerun()
+  with col_m6:
+    if st.button("👤\nPerfil", use_container_width=True):
+      st.session_state.nav_tab = "Tu"
+      st.rerun()
+        
       
       
       
