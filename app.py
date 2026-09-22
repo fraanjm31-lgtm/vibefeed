@@ -795,32 +795,37 @@ else:
     st.success("¡Tema guardado!")
     st.rerun()
 
-  # ==========================================
-  # MENÚ DE NAVEGACIÓN ABAJO DEL TODO
-  # ==========================================
-  st.markdown("---")
-  st.markdown("### 🧭 Menú de Navegación")
+# ==========================================
+# MENÚ DE NAVEGACIÓN ABAJO DEL TODO
+# ==========================================
+st.markdown("---")
+st.markdown("### 🧭 Menú de Navegación")
 
-  col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
-  with col_m1:
-    if st.button("🏠", use_container_width=True, help="Inicio"):
-      st.session_state.nav_tab = "Inicio"
-      st.rerun()
-  with col_m2:
-    if st.button("🎞️", use_container_width=True, help="Shorts"):
-      st.session_state.nav_tab = "Shorts"
-      st.rerun()
-  with col_m3:
-    if st.button("➕", use_container_width=True, help="Crear"):
-      st.session_state.nav_tab = "Crear"
-      st.rerun()
-  with col_m4:
-    if st.button("📺", use_container_width=True, help="Suscripciones"):
-      st.session_state.nav_tab = "Suscripciones"
-      st.rerun()
-  with col_m5:
-    if st.button("👤", use_container_width=True, help="Mi Perfil"):
-      st.session_state.nav_tab = "Tu"
-      st.rerun()
+col_m1, col_m2, col_m3, col_m4, col_m5, col_m6 = st.columns(6)
+with col_m1:
+  if st.button("🏠", use_container_width=True, help="Inicio"):
+    st.session_state.nav_tab = "Inicio"
+    st.rerun()
+with col_m2:
+  if st.button("🎞️", use_container_width=True, help="Shorts"):
+    st.session_state.nav_tab = "Shorts"
+    st.rerun()
+with col_m3:
+  if st.button("➕", use_container_width=True, help="Crear"):
+    st.session_state.nav_tab = "Crear"
+    st.rerun()
+with col_m4:
+  if st.button("📺", use_container_width=True, help="Suscripciones"):
+    st.session_state.nav_tab = "Suscripciones"
+    st.rerun()
+with col_m5:
+  if st.button("💬", use_container_width=True, help="Mensajes"):
+    st.session_state.nav_tab = "Mensajes"
+    st.rerun()
+with col_m6:
+  if st.button("👤", use_container_width=True, help="Mi Perfil"):
+    st.session_state.nav_tab = "Tu"
+    st.rerun()
+      
       
       
