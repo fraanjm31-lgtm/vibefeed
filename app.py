@@ -53,7 +53,7 @@ conn.commit()
 if "logged_in" not in st.session_state:
   st.session_state.logged_in = False
   st.session_state.username = ""
-  st.session_state.profile_tab = "Fotos"
+  st.session_state.nav_tab = "Inicio"
   st.session_state.theme = "Oscuro"
 
 if st.session_state.logged_in and st.session_state.username:
@@ -112,16 +112,13 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}
-    .create-box {{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        text-align: center;
-        padding: 30px;
+    /* Contenedor simulando la barra inferior estilo YouTube */
+    .nav-bar-container {{
         background: {box_bg};
-        border-radius: 20px;
-        margin: 20px 0;
+        padding: 10px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        border: 1px solid {sub_text};
     }}
     </style>
     """,
@@ -167,20 +164,8 @@ def handle_reaction(p_id, user, r_type):
     st.toast("Ya habias dado esta reacción", icon="⚠️")
 
 
+# Barra lateral para control de sesión y ajustes avanzados
 st.sidebar.title("🧭 Menu NoxVibe")
-menu_option = st.sidebar.radio(
-    "Navegacion",
-    [
-        "🔥 Feed de Videos",
-        "👤 Mi Perfil",
-        "🔍 Buscar Perfiles",
-        "👥 Siguiendo",
-        "📺 Explorar Canales",
-        "💬 Mensajes",
-        "⚙️ Ajustes",
-    ],
-)
-
 if st.session_state.logged_in:
   c.execute(
       "SELECT coins, xp FROM users WHERE username = ?",
@@ -190,7 +175,6 @@ if st.session_state.logged_in:
   user_coins = res_user_info[0] if res_user_info else 100
   user_xp = res_user_info[1] if res_user_info else 0
 
-  st.sidebar.markdown(f"---")
   st.sidebar.success(f"Sesion: @{st.session_state.username}")
   st.sidebar.info(f"🪙 NoxCoins: **{user_coins}**")
   if st.sidebar.button("Cerrar Sesion"):
@@ -247,12 +231,70 @@ if not st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  if menu_option == "🔥 Feed de Videos":
-    st.title("🔥 NoxVibe Feed")
-    st.write("Videos publicos de la comunidad.")
+  # --- BARRA DE NAVEGACIÓN ESTILO YOUTUBE (5 BOTONES) ---
+  st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
+  b_col1, b_col2, b_col3, b_col4, b_col5 = st.columns(5)
+
+  with b_col1:
+    if st.button("🏠 Inicio", use_container_width=True):
+      st.session_state.nav_tab = "Inicio"
+      st.rerun()
+  with b_col2:
+    if st.button("🎞️ Shorts", use_container_width=True):
+      st.session_state.nav_tab = "Shorts"
+      st.rerun()
+  with b_col3:
+    if st.button("➕ Crear", use_container_width=True):
+      st.session_state.nav_tab = "Crear"
+      st.rerun()
+  with b_col4:
+    if st.button("📺 Subs", use_container_width=True):
+      st.session_state.nav_tab = "Suscripciones"
+      st.rerun()
+  with b_col5:
+    if st.button("👤 Tú", use_container_width=True):
+      st.session_state.nav_tab = "Tu"
+      st.rerun()
+  st.markdown('</div>', unsafe_allow_html=True)
+
+  # Control de navegación según la pestaña seleccionada en la barra estilo YouTube
+  current_nav = st.session_state.get("nav_tab", "Inicio")
+
+  if current_nav == "Inicio":
+    st.title("🏠 Feed Principal")
+    st.write("Explora las últimas publicaciones y videos de la comunidad.")
 
     c.execute("""
             SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
+            FROM posts p 
+            JOIN users u ON p.username = u.username 
+            WHERE u.account_privacy = 'Publico' 
+            ORDER BY p.id DESC
+        """)
+    posts = c.fetchall()
+
+    if not posts:
+      st.info("No hay publicaciones todavía.")
+    else:
+      for post in posts:
+        p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+        st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
+        st.markdown(f"### @{p_user} · `{p_tag}`")
+        if p_cap:
+          st.write(p_cap)
+        if p_file and os.path.exists(p_file):
+          if p_file.endswith(('.mp4', '.mov')):
+            st.video(p_file)
+          else:
+            st.image(p_file, width=400)
+        st.markdown("</div>", unsafe_allow_html=True)
+
+  elif current_nav == "Shorts":
+    st.title("🎞️ NoxVibe Shorts")
+    st.write("Videos cortos y verticales de la comunidad.")
+
+    c.execute("""
+            SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag 
             FROM posts p 
             JOIN users u ON p.username = u.username 
             WHERE p.file_type = 'video' AND u.account_privacy = 'Publico' 
@@ -261,62 +303,81 @@ else:
     videos = c.fetchall()
 
     if not videos:
-      st.info("No hay videos publicos. Sube el primero desde tu perfil.")
+      st.info("No hay shorts disponibles en este momento.")
     else:
       for post in videos:
-        (
-            p_id,
-            p_user,
-            p_cap,
-            p_file,
-            p_fires,
-            p_thumbs,
-            p_hearts,
-            p_tag,
-            p_time,
-        ) = post
-        val_fires = p_fires if p_fires is not None else 0
-        val_thumbs = p_thumbs if p_thumbs is not None else 0
-        val_hearts = p_hearts if p_hearts is not None else 0
+        p_id, p_user, p_cap, p_file, val_fires, val_thumbs, val_hearts, p_tag = post
+        val_fires = val_fires or 0
+        val_thumbs = val_thumbs or 0
+        val_hearts = val_hearts or 0
 
         st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
         col_vid, col_act = st.columns([4, 1])
-
         with col_vid:
           st.markdown(f"### @{p_user} · `{p_tag}`")
           if p_cap:
             st.write(p_cap)
-          if p_file and isinstance(p_file, str) and os.path.exists(p_file):
+          if p_file and os.path.exists(p_file):
             st.video(p_file)
-
         with col_act:
           st.markdown("<br><br>", unsafe_allow_html=True)
-          if st.button(
-              f"🔥 {val_fires}", key=f"feed_fire_{p_id}", use_container_width=True
-          ):
+          if st.button(f"🔥 {val_fires}", key=f"s_fire_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "fire")
-          if st.button(
-              f"👍 {val_thumbs}", key=f"feed_like_{p_id}", use_container_width=True
-          ):
+          if st.button(f"👍 {val_thumbs}", key=f"s_thumb_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "thumb")
-          if st.button(
-              f"❤️ {val_hearts}",
-              key=f"feed_heart_{p_id}",
-              use_container_width=True,
-          ):
+          if st.button(f"❤️ {val_hearts}", key=f"s_heart_{p_id}", use_container_width=True):
             handle_reaction(p_id, cur, "heart")
-
         st.markdown("</div>", unsafe_allow_html=True)
-        st.markdown("---")
 
-  elif menu_option == "👤 Mi Perfil":
+  elif current_nav == "Crear":
+    st.title("➕ Crear Publicación o Short")
+    st.write("Sube y graba contenido estés donde estés[span_0](start_span)[span_0](end_span). Todo lo que publiques aparecerá aquí[span_1](start_span)[span_1](end_span).")
+
+    with st.form("new_post_form_nav", clear_on_submit=True):
+      cap = st.text_input("¿Qué estás pensando?")
+      uploaded_file = st.file_uploader("Sube foto o video", type=["jpg", "png", "mp4", "mov"])
+      submitted = st.form_submit_button("Publicar Contenido 🚀", use_container_width=True)
+
+      if submitted:
+        path_to_save = ""
+        f_type = ""
+        if uploaded_file is not None:
+          os.makedirs("uploads", exist_ok=True)
+          path_to_save = os.path.join("uploads", uploaded_file.name)
+          with open(path_to_save, "wb") as f:
+            f.write(uploaded_file.getbuffer())
+          f_type = "video" if uploaded_file.type.startswith("video") else "image"
+
+        auto_tag, ai_msg = ai_vibe_checker(cap)
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+        c.execute(
+            "INSERT INTO posts (username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (cur, cap, path_to_save, f_type, 0, 0, 0, 0, auto_tag, now_str, "Publico"),
+        )
+        c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,))
+        conn.commit()
+        st.success(f"¡Publicado con éxito! {ai_msg}")
+
+  elif current_nav == "Suscripciones":
+    st.title("📺 Suscripciones y Amigos")
+    c.execute("SELECT followed FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
+    seguidos = c.fetchall()
+    if not seguidos:
+      st.info("No sigues a ningún canal todavía.")
+    else:
+      for s in seguidos:
+        st.write(f"👤 Canal de @{s[0]}")
+
+  elif current_nav == "Tu":
+    st.title("👤 Tu Perfil")
     c.execute("SELECT avatar, nombre, apellidos, bio FROM users WHERE username = ?", (cur,))
     user_data = c.fetchone()
     avatar_path = user_data[0] if (user_data and user_data[0]) else ""
     nombre_completo = f"{user_data[1] or ''} {user_data[2] or ''}".strip()
     if not nombre_completo:
         nombre_completo = "Javi Márquez"
-    bio_texto = user_data[3] if (user_data and user_data[3]) else "¡Bienvenidos a las calles sin ley de Los Santos! Vive conmigo los golpes más locos, persecuciones policiales intensas y todas las misiones."
+    bio_texto = user_data[3] if (user_data and user_data[3]) else "¡Bienvenidos a mi perfil en NoxVibe!"
 
     col_av_img, col_av_txt = st.columns([1, 2])
     
@@ -343,7 +404,7 @@ else:
             st.session_state.edit_avatar_open = not st.session_state.edit_avatar_open
 
         if st.session_state.edit_avatar_open:
-            new_avatar = st.file_uploader("Sube tu foto o logo", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
+            new_avatar = st.file_uploader("Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
             if new_avatar is not None:
                 os.makedirs("uploads", exist_ok=True)
                 av_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
@@ -352,210 +413,18 @@ else:
                 c.execute("UPDATE users SET avatar = ? WHERE username = ?", (av_path, cur))
                 conn.commit()
                 st.session_state.edit_avatar_open = False
-                st.success("¡Foto de perfil actualizada!")
+                st.success("¡Foto actualizada!")
                 st.rerun()
 
     st.write("")
-
-    col_stat1, col_stat2 = st.columns(2)
-    with col_stat1:
-        c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
-        total_suscriptores = c.fetchone()[0]
-        st.markdown(f"**👥 {total_suscriptores}** Suscriptores")
-    with col_stat2:
-        c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
-        total_posts = c.fetchone()[0]
-        st.markdown(f"**📦 {total_posts}** Publicaciones")
-
     st.write(bio_texto)
-    
-    col_btn1, col_btn2 = st.columns(2)
-    with col_btn1:
-        if st.button("📊 Estadísticas", use_container_width=True):
-            st.info(f"Tus XP acumulados: {user_xp} | NoxCoins: {user_coins} 🪙")
-    with col_btn2:
-        if st.button("✏️ Editar canal", use_container_width=True):
-            st.warning("Próximamente podrás editar los ajustes avanzados desde aquí.")
-
     st.markdown("---")
-
-    tab_inicio, tab_en_directo, tab_publicaciones = st.tabs(["Inicio", "En directo", "Publicaciones"])
-
-    with tab_inicio:
-        st.markdown("""
-            <div class="create-box">
-                <h3 style="margin-bottom: 5px;">Crea contenido en cualquier dispositivo</h3>
-                <p style="color: #888; font-size: 14px; margin-top: 0;">Sube y graba contenido estés donde estés. Todo lo que publiques aparecerá aquí.</p>
-            </div>
-        """, unsafe_allow_html=True)
-
-        col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
-        with col_c2:
-            show_creator = st.button("➕ Crear Publicación", use_container_width=True)
-
-        if show_creator or st.session_state.get("open_create_form", False):
-            st.session_state.open_create_form = True
-            with st.form("new_post_form", clear_on_submit=True):
-              cap = st.text_input("¿Qué estás pensando?")
-              uploaded_file = st.file_uploader(
-                  "Sube foto o video", type=["jpg", "png", "mp4", "mov"]
-              )
-
-              cols_f1, cols_f2 = st.columns(2)
-              with cols_f1:
-                  submitted = st.form_submit_button("Publicar 🚀", use_container_width=True)
-              with cols_f2:
-                  cancelled = st.form_submit_button("Cancelar ❌", use_container_width=True)
-
-              if cancelled:
-                  st.session_state.open_create_form = False
-                  st.rerun()
-
-              if submitted:
-                path_to_save = ""
-                f_type = ""
-                if uploaded_file is not None:
-                  os.makedirs("uploads", exist_ok=True)
-                  path_to_save = os.path.join("uploads", uploaded_file.name)
-                  with open(path_to_save, "wb") as f:
-                    f.write(uploaded_file.getbuffer())
-                  f_type = (
-                      "video"
-                      if uploaded_file.type.startswith("video")
-                      else "image"
-                  )
-
-                auto_tag, ai_msg = ai_vibe_checker(cap)
-                now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-                c.execute(
-                    "INSERT INTO posts (username, caption, file, file_type, likes,"
-                    " fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?,"
-                    " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                    (
-                        cur,
-                        cap,
-                        path_to_save,
-                        f_type,
-                        0,
-                        0,
-                        0,
-                        0,
-                        auto_tag,
-                        now_str,
-                        "Publico",
-                    ),
-                )
-                c.execute(
-                    "UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,)
-                )
-                conn.commit()
-                st.session_state.open_create_form = False
-                st.success(f"¡Publicado con éxito! {ai_msg}")
-                st.rerun()
-
-    with tab_en_directo:
-        st.info("No hay emisiones en directo activas ahora mismo.")
-
-    with tab_publicaciones:
-        st.subheader("📋 Tus Publicaciones y Borrado")
-        
-        c.execute("SELECT * FROM posts WHERE username = ?", (cur,))
-        mis_posts = c.fetchall()
-        
-        if mis_posts:
-            for p in mis_posts:
-                p_id = p[0]
-                st.write(f"Publicación ID: {p_id}")
-                if p[2]:
-                    st.write(p[2])
-                if p[3] and os.path.exists(p[3]):
-                    if p[4] == 'video':
-                        st.video(p[3])
-                    else:
-                        st.image(p[3], width=300)
-                
-                if st.button("🗑️ Eliminar publicación", key=f"del_post_tab_{p_id}"):
-                    c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
-                    conn.commit()
-                    st.rerun()
-                st.divider()
-        else:
-            st.info("Aún no tienes publicaciones creadas.")
-
-  elif menu_option == "🔍 Buscar Perfiles":
-    st.title("🔍 Buscar Perfiles")
-    search_user = st.text_input("Escribe el nombre de usuario:")
-    if search_user:
-      c.execute(
-          "SELECT username, bio, avatar, account_privacy FROM users WHERE"
-          " username = ?",
-          (search_user,),
-      )
-      target_user = c.fetchone()
-      if target_user:
-        t_username, t_bio, t_avatar, t_privacy = target_user
-        st.success(f"Usuario encontrado: @{t_username}")
-        st.write(f"**Biografía:** {t_bio}")
-
-        if t_username == cur:
-          st.info("Este es tu propio perfil.")
-        else:
-          c.execute(
-              "SELECT status FROM follows WHERE follower = ? AND followed = ?",
-              (cur, t_username),
-          )
-          relacion = c.fetchone()
-
-          if relacion:
-            st.info(f"Estado de amistad: {relacion[0]}")
-            if st.button("❌ Dejar de seguir"):
-              c.execute(
-                  "DELETE FROM follows WHERE follower = ? AND followed = ?",
-                  (cur, t_username),
-              )
-              conn.commit()
-              st.success("Has dejado de seguir a este usuario.")
-              st.rerun()
-          else:
-            if st.button("➕ Añadir de Amiga / Seguir"):
-              c.execute(
-                  "INSERT INTO follows (follower, followed, status) VALUES (?, ?, 'accepted')",
-                  (cur, t_username),
-              )
-              conn.commit()
-              st.success("¡Ahora sigues a este usuario!")
-              st.rerun()
-      else:
-        st.warning("Usuario no encontrado.")
-
-  elif menu_option == "👥 Siguiendo":
-    st.title("👥 Tus Amigos y Seguidos")
-    c.execute(
-        "SELECT followed FROM follows WHERE follower = ? AND status = 'accepted'",
-        (cur,),
-    )
-    seguidos = c.fetchall()
-    if not seguidos:
-      st.info("No sigues a nadie todavía.")
-    else:
-      for s in seguidos:
-        st.write(f"👤 @{s[0]}")
-
-  elif menu_option == "📺 Explorar Canales":
-    st.title("📺 Explorar Canales")
-    st.info("Próximamente más canales disponibles.")
-
-  elif menu_option == "💬 Mensajes":
-    st.title("💬 Mensajes Privados")
-    st.info("Próximamente disponible.")
-
-  elif menu_option == "⚙️ Ajustes":
-    st.title("⚙️ Ajustes de Cuenta")
+    
+    st.subheader("⚙️ Opciones de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
-    if st.button("Guardar Ajustes"):
+    if st.button("Guardar Ajustes de Tema"):
       c.execute("UPDATE users SET theme = ? WHERE username = ?", (nuevo_tema, cur))
       conn.commit()
-      st.success("¡Ajustes guardados con éxito!")
+      st.success("¡Tema guardado!")
       st.rerun()
         
