@@ -803,33 +803,33 @@ else:
 # MENÚ DE NAVEGACIÓN ABAJO DEL TODO
 # ==========================================
 st.markdown("---")
-st.markdown("### 🧭 Menú de Navegación")
 
 col_m1, col_m2, col_m3, col_m4, col_m5, col_m6 = st.columns(6)
 with col_m1:
-  if st.button("🏠", use_container_width=True, help="Inicio"):
+  if st.button("🏠\nInicio", use_container_width=True):
     st.session_state.nav_tab = "Inicio"
     st.rerun()
 with col_m2:
-  if st.button("🎞️", use_container_width=True, help="Shorts"):
+  if st.button("🎞️\nShorts", use_container_width=True):
     st.session_state.nav_tab = "Shorts"
     st.rerun()
 with col_m3:
-  if st.button("➕", use_container_width=True, help="Crear"):
+  if st.button("➕\nCrear", use_container_width=True):
     st.session_state.nav_tab = "Crear"
     st.rerun()
 with col_m4:
-  if st.button("📺", use_container_width=True, help="Suscripciones"):
+  if st.button("📺\nCanales", use_container_width=True):
     st.session_state.nav_tab = "Suscripciones"
     st.rerun()
 with col_m5:
-  if st.button("💬", use_container_width=True, help="Mensajes"):
+  if st.button("💬\nChats", use_container_width=True):
     st.session_state.nav_tab = "Mensajes"
     st.rerun()
 with col_m6:
-  if st.button("👤", use_container_width=True, help="Mi Perfil"):
+  if st.button("👤\nPerfil", use_container_width=True):
     st.session_state.nav_tab = "Tu"
     st.rerun()
+      
       
       
       
