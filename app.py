@@ -184,7 +184,6 @@ def handle_reaction(p_id, user, r_type):
     st.toast("Ya habias dado esta reacción", icon="⚠️")
 
 
-# Barra lateral para control de sesión
 st.sidebar.title("🧭 Menu NoxVibe")
 if st.session_state.logged_in:
   c.execute(
@@ -223,13 +222,17 @@ if not st.session_state.logged_in:
         st.error("Usuario o contrasena incorrectos")
 
   with tab_reg:
-    r_user = st.text_input("Nombre de Usuario (para iniciar sesion)", key="r_user")
+    r_user = st.text_input(
+        "Nombre de Usuario (para iniciar sesion)", key="r_user"
+    )
     r_nombre = st.text_input("Nombre", key="r_nombre")
     r_apellidos = st.text_input("Apellidos", key="r_apellidos")
-    r_edad = st.number_input("Edad", min_value=1, max_value=120, value=18, key="r_edad")
+    r_edad = st.number_input(
+        "Edad", min_value=1, max_value=120, value=18, key="r_edad"
+    )
     r_email = st.text_input("Correo Electronico", key="r_email")
     r_pass = st.text_input("Contrasena", type="password", key="r_pass")
-    
+
     if st.button("Registrarse y Entrar"):
       if not r_user or not r_pass:
         st.warning("Por favor, introduce al menos tu usuario y contraseña.")
@@ -237,7 +240,20 @@ if not st.session_state.logged_in:
         try:
           c.execute(
               "INSERT INTO users (username, password, nombre, apellidos, edad, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              (r_user, r_pass, r_nombre, r_apellidos, int(r_edad), r_email, 10, "¡Hola! Uso NoxVibe.", "", "Publico", 100, "Oscuro")
+              (
+                  r_user,
+                  r_pass,
+                  r_nombre,
+                  r_apellidos,
+                  int(r_edad),
+                  r_email,
+                  10,
+                  "¡Hola! Uso NoxVibe.",
+                  "",
+                  "Publico",
+                  100,
+                  "Oscuro",
+              ),
           )
           conn.commit()
           st.success("¡Cuenta creada con éxito!")
@@ -253,18 +269,27 @@ else:
   c.execute("SELECT COUNT(*) FROM posts WHERE username COLLATE NOCASE = ?", (cur,))
   num_posts = c.fetchone()[0]
 
-  c.execute("SELECT COUNT(*) FROM follows WHERE followed COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
+  c.execute(
+      "SELECT COUNT(*) FROM follows WHERE followed COLLATE NOCASE = ? AND status = 'accepted'",
+      (cur,),
+  )
   num_followers = c.fetchone()[0]
 
-  c.execute("SELECT COUNT(*) FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
+  c.execute(
+      "SELECT COUNT(*) FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'",
+      (cur,),
+  )
   num_following = c.fetchone()[0]
 
-  c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username COLLATE NOCASE = ?", (cur,))
+  c.execute(
+      "SELECT avatar, nombre, apellidos, coins FROM users WHERE username COLLATE NOCASE = ?",
+      (cur,),
+  )
   u_info = c.fetchone()
   u_av = u_info[0] if (u_info and u_info[0]) else ""
   u_name = f"{u_info[1] or ''} {u_info[2] or ''}".strip() if u_info else ""
   if not u_name:
-      u_name = "Javi Márquez"
+    u_name = "Javi Márquez"
   u_coins = u_info[3] if u_info else 100
 
   col_top_img, col_top_txt = st.columns([1, 3])
@@ -275,7 +300,8 @@ else:
       st.markdown("👤")
   with col_top_txt:
     st.markdown(f"**{u_name}**  \n`@{cur}` | 🪙 **{u_coins} Coins**")
-    st.markdown(f"""
+    st.markdown(
+        f"""
         <div class="stats-container">
             <div class="stat-box-item">
                 <span class="stat-num">{num_posts}</span>
@@ -290,8 +316,10 @@ else:
                 <span class="stat-label">seguidos</span>
             </div>
         </div>
-    """, unsafe_allow_html=True)
-  
+    """,
+        unsafe_allow_html=True,
+    )
+
   st.markdown("---")
 
   current_nav = st.session_state.get("nav_tab", "Inicio")
@@ -313,17 +341,27 @@ else:
       st.info("No hay publicaciones todavía.")
     else:
       for post in posts:
-        p_id, p_user, p_cap, p_file, p_fires, p_thumbs, p_hearts, p_tag, p_time = post
+        (
+            p_id,
+            p_user,
+            p_cap,
+            p_file,
+            p_fires,
+            p_thumbs,
+            p_hearts,
+            p_tag,
+            p_time,
+        ) = post
         st.markdown(f'<div class="video-container">', unsafe_allow_html=True)
         st.markdown(f"### @{p_user} · `{p_tag}`")
         if p_cap:
           st.write(p_cap)
         if p_file and os.path.exists(p_file):
-          if p_file.endswith(('.mp4', '.mov')):
+          if p_file.endswith((".mp4", ".mov")):
             st.video(p_file)
           else:
             st.image(p_file, width=400)
-            
+
         if p_user.lower() == cur.lower():
           if st.button("🗑️ Eliminar publicación", key=f"del_post_{p_id}"):
             if p_file and os.path.exists(p_file):
@@ -356,7 +394,16 @@ else:
       st.info("No hay shorts disponibles en este momento.")
     else:
       for post in videos:
-        p_id, p_user, p_cap, p_file, val_fires, val_thumbs, val_hearts, p_tag = post
+        (
+            p_id,
+            p_user,
+            p_cap,
+            p_file,
+            val_fires,
+            val_thumbs,
+            val_hearts,
+            p_tag,
+        ) = post
         val_fires = val_fires or 0
         val_thumbs = val_thumbs or 0
         val_hearts = val_hearts or 0
@@ -369,7 +416,7 @@ else:
             st.write(p_cap)
           if p_file and os.path.exists(p_file):
             st.video(p_file)
-            
+
           if p_user.lower() == cur.lower():
             if st.button("🗑️ Eliminar short", key=f"del_short_{p_id}"):
               if p_file and os.path.exists(p_file):
@@ -385,11 +432,21 @@ else:
 
         with col_act:
           st.markdown("<br><br>", unsafe_allow_html=True)
-          if st.button(f"🔥 {val_fires}", key=f"s_fire_{p_id}", use_container_width=True):
+          if st.button(
+              f"🔥 {val_fires}", key=f"s_fire_{p_id}", use_container_width=True
+          ):
             handle_reaction(p_id, cur, "fire")
-          if st.button(f"👍 {val_thumbs}", key=f"s_thumb_{p_id}", use_container_width=True):
+          if st.button(
+              f"👍 {val_thumbs}",
+              key=f"s_thumb_{p_id}",
+              use_container_width=True,
+          ):
             handle_reaction(p_id, cur, "thumb")
-          if st.button(f"❤️ {val_hearts}", key=f"s_heart_{p_id}", use_container_width=True):
+          if st.button(
+              f"❤️ {val_hearts}",
+              key=f"s_heart_{p_id}",
+              use_container_width=True,
+          ):
             handle_reaction(p_id, cur, "heart")
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -411,19 +468,27 @@ else:
     with c_btn4:
       if st.button("Publicar", use_container_width=True):
         st.session_state.create_action = "Publicar"
-    st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
 
     accion_actual = st.session_state.get("create_action", "Publicar")
     st.info(f"Modo seleccionado: **{accion_actual}**")
 
     with st.form("new_post_form_nav", clear_on_submit=True):
       cap = st.text_input(f"Escribe algo para tu {accion_actual.lower()}...")
-      uploaded_file = st.file_uploader("Sube tu archivo multimedia", type=["jpg", "png", "mp4", "mov"])
-      submitted = st.form_submit_button(f"Confirmar y {accion_actual} 🚀", use_container_width=True)
+      uploaded_file = st.file_uploader(
+          "Sube tu archivo multimedia", type=["jpg", "png", "mp4", "mov"]
+      )
+      submitted = st.form_submit_button(
+          f"Confirmar y {accion_actual} 🚀", use_container_width=True
+      )
 
       if submitted:
         path_to_save = ""
-        f_type = "video" if accion_actual in ["Vídeo", "Short", "Directo"] else "image"
+        f_type = (
+            "video"
+            if accion_actual in ["Vídeo", "Short", "Directo"]
+            else "image"
+        )
         if uploaded_file is not None:
           os.makedirs("uploads", exist_ok=True)
           path_to_save = os.path.join("uploads", uploaded_file.name)
@@ -435,21 +500,38 @@ else:
 
         c.execute(
             "INSERT INTO posts (username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            (cur, cap, path_to_save, f_type, 0, 0, 0, 0, auto_tag, now_str, "Publico"),
+            (
+                cur,
+                cap,
+                path_to_save,
+                f_type,
+                0,
+                0,
+                0,
+                0,
+                auto_tag,
+                now_str,
+                "Publico",
+            ),
         )
-        c.execute("UPDATE users SET xp = xp + 15 WHERE username COLLATE NOCASE = ?", (cur,))
+        c.execute(
+            "UPDATE users SET xp = xp + 15 WHERE username COLLATE NOCASE = ?",
+            (cur,),
+        )
         conn.commit()
         st.success(f"¡{accion_actual} creado con éxito! {ai_msg}")
 
   elif current_nav == "Suscripciones":
     st.title("📺 Suscripciones y Amigos")
-    
-    # Buscador de usuarios para agregar
+
     st.subheader("🔍 Buscar Nuevos Amigos")
     busqueda_usuario = st.text_input("Escribe el nombre de usuario...")
-    
+
     if busqueda_usuario:
-      c.execute("SELECT username, nombre, avatar FROM users WHERE username LIKE ? AND username COLLATE NOCASE != ?", (f"%{busqueda_usuario}%", cur))
+      c.execute(
+          "SELECT username, nombre, avatar FROM users WHERE username LIKE ? AND username COLLATE NOCASE != ?",
+          (f"%{busqueda_usuario}%", cur),
+      )
       resultados = c.fetchall()
       if resultados:
         for r_user, r_nombre, r_av in resultados:
@@ -457,12 +539,17 @@ else:
           with col_u1:
             st.write(f"**@{r_user}** ({r_nombre or 'Sin nombre'})")
           with col_u2:
-            # Comprobar si ya le sigue
-            c.execute("SELECT status FROM follows WHERE follower COLLATE NOCASE = ? AND followed COLLATE NOCASE = ?", (cur, r_user))
+            c.execute(
+                "SELECT status FROM follows WHERE follower COLLATE NOCASE = ? AND followed COLLATE NOCASE = ?",
+                (cur, r_user),
+            )
             estado_follow = c.fetchone()
             if not estado_follow:
               if st.button("Seguir ➕", key=f"follow_{r_user}"):
-                c.execute("INSERT INTO follows (follower, followed, status) VALUES (?, ?, 'accepted')", (cur, r_user))
+                c.execute(
+                    "INSERT INTO follows (follower, followed, status) VALUES (?, ?, 'accepted')",
+                    (cur, r_user),
+                )
                 conn.commit()
                 st.success(f"¡Ahora sigues a @{r_user}!")
                 st.rerun()
@@ -473,7 +560,10 @@ else:
 
     st.markdown("---")
     st.subheader("👥 Canales que sigues")
-    c.execute("SELECT followed FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
+    c.execute(
+        "SELECT followed FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'",
+        (cur,),
+    )
     seguidos = c.fetchall()
     if not seguidos:
       st.info("No sigues a ningún canal todavía.")
@@ -483,126 +573,45 @@ else:
 
   elif current_nav == "Tu":
     st.title("👤 Tu Perfil Completo")
-    c.execute("SELECT avatar, nombre, apellidos, bio FROM users WHERE username COLLATE NOCASE = ?", (cur,))
+    c.execute(
+        "SELECT avatar, nombre, apellidos, bio FROM users WHERE username COLLATE NOCASE = ?",
+        (cur,),
+    )
     user_data = c.fetchone()
     avatar_path = user_data[0] if (user_data and user_data[0]) else ""
     nombre_completo = f"{user_data[1] or ''} {user_data[2] or ''}".strip()
     if not nombre_completo:
-        nombre_completo = "Javi Márquez"
-    bio_texto = user_data[3] if (user_data and user_data[3]) else "¡Bienvenidos a mi perfil en NoxVibe!"
+      nombre_completo = "Javi Márquez"
+    bio_texto = (
+        user_data[3]
+        if (user_data and user_data[3])
+        else "¡Bienvenidos a mi perfil en NoxVibe!"
+    )
 
     col_av_img, col_av_txt = st.columns([1, 2])
-    
+
     with col_av_img:
-        st.markdown('<div class="profile-avatar">', unsafe_allow_html=True)
-        if avatar_path and os.path.exists(avatar_path):
-            st.image(avatar_path, width=110)
-        else:
-            st.markdown("""
+      st.markdown('<div class="profile-avatar">', unsafe_allow_html=True)
+      if avatar_path and os.path.exists(avatar_path):
+        st.image(avatar_path, width=110)
+      else:
+        st.markdown(
+            """
                 <div style="width: 110px; height: 110px; background-color: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #fff; margin: 0 auto;">
                     👤
                 </div>
-            """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
+            """,
+            unsafe_allow_html=True,
+        )
+      st.markdown("</div>", unsafe_allow_html=True)
 
     with col_av_txt:
-        st.markdown(f"### {nombre_completo}")
-        st.markdown(f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>", unsafe_allow_html=True)
-        
-        st.markdown(f"""
-            <div class="stats-container">
-                <div class="stat-box-item">
-                    <span class="stat-num">{num_posts}</span>
-                    <span class="stat-label">publicaciones</span>
-                </div>
-                <div class="stat-box-item">
-                    <span class="stat-num">{num_followers}</span>
-                    <span class="stat-label">seguidores</span>
-                </div>
-                <div class="stat-box-item">
-                    <span class="stat-num">{num_following}</span>
-                    <span class="stat-label">seguidos</span>
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-        
-        if "edit_avatar_open" not in st.session_state:
-            st.session_state.edit_avatar_open = False
+      st.markdown(f"### {nombre_completo}")
+      st.markdown(
+          f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>",
+          unsafe_allow_html=True,
+      )
 
-        if st.button("✏️ Cambiar foto de perfil"):
-            st.session_state.edit_avatar_open = not st.session_state.edit_avatar_open
-
-          # ==========================================
-# 1. ACTUALIZAR FOTO Y OPCIONES DE CUENTA
-# ==========================================
-if st.session_state.get("edit_avatar_open", False):
-  new_avatar = st.file_uploader(
-      "Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real"
-  )
-  if new_avatar is not None:
-    os.makedirs("uploads", exist_ok=True)
-    av_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
-    with open(av_path, "wb") as f:
-      f.write(new_avatar.getbuffer())
-    c.execute(
-        "UPDATE users SET avatar = ? WHERE username COLLATE NOCASE = ?",
-        (av_path, cur),
-    )
-    conn.commit()
-    st.session_state.edit_avatar_open = False
-    st.success("¡Foto actualizada!")
-    st.rerun()
-
-st.write("")
-st.write(bio_texto)
-st.markdown("---")
-
-st.subheader("⚙️ Opciones de Cuenta")
-nuevo_tema = st.selectbox(
-    "Tema visual",
-    ["Oscuro", "Claro", "Neon / Cyber"],
-    index=(
-        0
-        if st.session_state.get("theme", "Oscuro") == "Oscuro"
-        else (1 if st.session_state.get("theme") == "Claro" else 2)
-    ),
-)
-if st.button("Guardar Ajustes de Tema"):
-  c.execute(
-      "UPDATE users SET theme = ? WHERE username COLLATE NOCASE = ?",
-      (nuevo_tema, cur),
-  )
-  conn.commit()
-  st.success("¡Tema guardado!")
-  st.rerun()
-
-
-# ==========================================
-# 2. MENÚ DE NAVEGACIÓN ABAJO DEL TODO
-# ==========================================
-st.markdown("---")
-st.markdown("### 🧭 Menú de Navegación")
-
-col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
-with col_m1:
-  if st.button("🏠", use_container_width=True, help="Inicio"):
-    st.session_state.nav_tab = "Inicio"
-    st.rerun()
-with col_m2:
-  if st.button("🎞️", use_container_width=True, help="Shorts"):
-    st.session_state.nav_tab = "Shorts"
-    st.rerun()
-with col_m3:
-  if st.button("➕", use_container_width=True, help="Crear"):
-    st.session_state.nav_tab = "Crear"
-    st.rerun()
-with col_m4:
-  if st.button("📺", use_container_width=True, help="Suscripciones"):
-    st.session_state.nav_tab = "Suscripciones"
-    st.rerun()
-with col_m5:
-  if st.button("👤", use_container_width=True, help="Mi Perfil"):
-    st.session_state.nav_tab = "Tu"
-    st.rerun()
+      st.markdown(
+          f"""
       
-        
