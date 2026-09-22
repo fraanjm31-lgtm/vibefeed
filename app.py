@@ -534,18 +534,73 @@ else:
 
         if st.session_state.edit_avatar_open:
             new_avatar = st.file_uploader("Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
-            i
-# --- AUTORELLENO PARA QUE NO SE BORRE TU PERFIL EN STREAMLIT CLOUD ---
-try:
-  c.execute(
-      "INSERT OR IGNORE INTO users (username, password, nombre, apellidos, edad, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      ("Javimarquez", "1234", "Javi", "Márquez", 20, "javi@noxvibe.com", 50, "¡Hola! Mi perfil en NoxVibe.", "", "Publico", 100, "Oscuro")
-  )
-  c.execute(
-      "INSERT OR IGNORE INTO posts (id, username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      (1, "Javimarquez", "¡Bienvenidos a mi nueva app NoxVibe! 🚀", "", "image", 0, 5, 2, 3, "🚀 Inspirador", "2026-03-30 12:00", "Publico")
-  )
-  conn.commit()
-except:
-  pass
-    
+                 if st.session_state.edit_avatar_open:
+          new_avatar = st.file_uploader(
+              "Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real"
+          )
+          if new_avatar is not None:
+            os.makedirs("uploads", exist_ok=True)
+            av_path = os.path.join(
+                "uploads", f"avatar_{cur}_{new_avatar.name}"
+            )
+            with open(av_path, "wb") as f:
+              f.write(new_avatar.getbuffer())
+            c.execute(
+                "UPDATE users SET avatar = ? WHERE username COLLATE NOCASE = ?",
+                (av_path, cur),
+            )
+            conn.commit()
+            st.session_state.edit_avatar_open = False
+            st.success("¡Foto actualizada!")
+            st.rerun()
+
+    st.write("")
+    st.write(bio_texto)
+    st.markdown("---")
+
+    st.subheader("⚙️ Opciones de Cuenta")
+    nuevo_tema = st.selectbox(
+        "Tema visual",
+        ["Oscuro", "Claro", "Neon / Cyber"],
+        index=(
+            0
+            if st.session_state.theme == "Oscuro"
+            else (1 if st.session_state.theme == "Claro" else 2)
+        ),
+    )
+    if st.button("Guardar Ajustes de Tema"):
+      c.execute(
+          "UPDATE users SET theme = ? WHERE username COLLATE NOCASE = ?",
+          (nuevo_tema, cur),
+      )
+      conn.commit()
+      st.success("¡Tema guardado!")
+      st.rerun()
+# ==========================================
+# 3. MENÚ DE NAVEGACIÓN ABAJO DEL TODO
+# ==========================================
+st.markdown("---")
+st.markdown("### 🧭 Menú de Navegación")
+
+col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
+with col_m1:
+  if st.button("🏠", use_container_width=True, help="Inicio"):
+    st.session_state.nav_tab = "Inicio"
+    st.rerun()
+with col_m2:
+  if st.button("🎞️", use_container_width=True, help="Shorts"):
+    st.session_state.nav_tab = "Shorts"
+    st.rerun()
+with col_m3:
+  if st.button("➕", use_container_width=True, help="Crear"):
+    st.session_state.nav_tab = "Crear"
+    st.rerun()
+with col_m4:
+  if st.button("📺", use_container_width=True, help="Suscripciones"):
+    st.session_state.nav_tab = "Suscripciones"
+    st.rerun()
+with col_m5:
+  if st.button("👤", use_container_width=True, help="Mi Perfil"):
+    st.session_state.nav_tab = "Tu"
+    st.rerun()
+      
