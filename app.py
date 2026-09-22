@@ -287,6 +287,21 @@ else:
             st.video(p_file)
           else:
             st.image(p_file, width=400)
+            
+        # Botón para eliminar (solo si la publicación es tuya)
+        if p_user == cur:
+          if st.button("🗑️ Eliminar publicación", key=f"del_post_{p_id}"):
+            if p_file and os.path.exists(p_file):
+              try:
+                os.remove(p_file)
+              except:
+                pass
+            c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
+            c.execute("DELETE FROM post_reactions WHERE post_id = ?", (p_id,))
+            conn.commit()
+            st.success("¡Publicación eliminada con éxito!")
+            st.rerun()
+
         st.markdown("</div>", unsafe_allow_html=True)
 
   elif current_nav == "Shorts":
@@ -319,6 +334,20 @@ else:
             st.write(p_cap)
           if p_file and os.path.exists(p_file):
             st.video(p_file)
+            
+          if p_user == cur:
+            if st.button("🗑️ Eliminar short", key=f"del_short_{p_id}"):
+              if p_file and os.path.exists(p_file):
+                try:
+                  os.remove(p_file)
+                except:
+                  pass
+              c.execute("DELETE FROM posts WHERE id = ?", (p_id,))
+              c.execute("DELETE FROM post_reactions WHERE post_id = ?", (p_id,))
+              conn.commit()
+              st.success("¡Short eliminado con éxito!")
+              st.rerun()
+
         with col_act:
           st.markdown("<br><br>", unsafe_allow_html=True)
           if st.button(f"🔥 {val_fires}", key=f"s_fire_{p_id}", use_container_width=True):
@@ -333,7 +362,6 @@ else:
     st.title("➕ Crear Contenido")
     st.write("Elige qué tipo de formato deseas subir o retransmitir:")
 
-    # Menú flotante estilo YouTube con los botones exactos
     st.markdown('<div class="creation-popup">', unsafe_allow_html=True)
     c_btn1, c_btn2, c_btn3, c_btn4 = st.columns(4)
     with c_btn1:
@@ -350,7 +378,6 @@ else:
         st.session_state.create_action = "Publicar"
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # Dependiendo de la opción elegida, se despliega el formulario correspondiente
     accion_actual = st.session_state.get("create_action", "Publicar")
     st.info(f"Modo seleccionado: **{accion_actual}**")
 
