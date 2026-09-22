@@ -614,4 +614,111 @@ else:
 
       st.markdown(
           f"""
+            <div class="stats-container">
+                <div class="stat-box-item">
+                    <span class="stat-num">{num_posts}</span>
+                    <span class="stat-label">publicaciones</span>
+                </div>
+                <div class="stat-box-item">
+                    <span class="stat-num">{num_followers}</span>
+                    <span class="stat-label">seguidores</span>
+                </div>
+                <div class="stat-box-item">
+                    <span class="stat-num">{num_following}</span>
+                    <span class="stat-label">seguidos</span>
+                </div>
+            </div>
+        """,
+          unsafe_allow_html=True,
+      )
+
+      if "edit_avatar_open" not in st.session_state:
+        st.session_state.edit_avatar_open = False
+
+      if st.button("✏️ Cambiar foto de perfil"):
+        st.session_state.edit_avatar_open = (
+            not st.session_state.edit_avatar_open
+        )
+
+      if st.session_state.edit_avatar_open:
+        new_avatar = st.file_uploader(
+            "Sube tu foto",
+            type=["jpg", "png", "jpeg"],
+            key="upload_avatar_real",
+        )
+        if new_avatar is not None:
+          os.makedirs("uploads", exist_ok=True)
+          av_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
+          with open(av_path, "wb") as f:
+            f.write(new_avatar.getbuffer())
+          c.execute(
+              "UPDATE users SET avatar = ? WHERE username COLLATE NOCASE = ?",
+              (av_path, cur),
+          )
+          conn.commit()
+          st.session_state.edit_avatar_open = False
+          st.success("¡Foto actualizada!")
+          st.rerun()
+
+  c.execute(
+      "SELECT bio FROM users WHERE username COLLATE NOCASE = ?", (cur,)
+  )
+  res_bio = c.fetchone()
+  bio_texto = (
+      res_bio[0]
+      if (res_bio and res_bio[0])
+      else "¡Bienvenidos a mi perfil en NoxVibe!"
+  )
+
+  st.write("")
+  st.write(bio_texto)
+  st.markdown("---")
+
+  st.subheader("⚙️ Opciones de Cuenta")
+  nuevo_tema = st.selectbox(
+      "Tema visual",
+      ["Oscuro", "Claro", "Neon / Cyber"],
+      index=(
+          0
+          if st.session_state.get("theme", "Oscuro") == "Oscuro"
+          else (1 if st.session_state.get("theme") == "Claro" else 2)
+      ),
+  )
+  if st.button("Guardar Ajustes de Tema"):
+    c.execute(
+        "UPDATE users SET theme = ? WHERE username COLLATE NOCASE = ?",
+        (nuevo_tema, cur),
+    )
+    conn.commit()
+    st.success("¡Tema guardado!")
+    st.rerun()
+
+  # ==========================================
+  # MENÚ DE NAVEGACIÓN ABAJO DEL TODO
+  # ==========================================
+  st.markdown("---")
+  st.markdown("### 🧭 Menú de Navegación")
+
+  col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
+  with col_m1:
+    if st.button("🏠", use_container_width=True, help="Inicio"):
+      st.session_state.nav_tab = "Inicio"
+      st.rerun()
+  with col_m2:
+    if st.button("🎞️", use_container_width=True, help="Shorts"):
+      st.session_state.nav_tab = "Shorts"
+      st.rerun()
+  with col_m3:
+    if st.button("➕", use_container_width=True, help="Crear"):
+      st.session_state.nav_tab = "Crear"
+      st.rerun()
+  with col_m4:
+    if st.button("📺", use_container_width=True, help="Suscripciones"):
+      st.session_state.nav_tab = "Suscripciones"
+      st.rerun()
+  with col_m5:
+    if st.button("👤", use_container_width=True, help="Mi Perfil"):
+      st.session_state.nav_tab = "Tu"
+      st.rerun()
+      
       
