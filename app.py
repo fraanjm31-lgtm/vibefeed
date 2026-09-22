@@ -239,11 +239,13 @@ if not st.session_state.logged_in:
     )
     r_email = st.text_input("Correo Electronico", key="r_email")
     r_pass = st.text_input("Contrasena", type="password", key="r_pass")
-
-    if st.button("Registrarse y Entrar"):
-      if not r_user or not r_nombre or not r_email or not r_pass:
-        st.warning("Por favor, rellena todos los campos obligatorios.")
-      else:
+ 
+      if st.button("Registrarse y Entrar"):
+        if not r_user or not r_pass:
+          st.warning("Por favor, introduce al menos tu usuario y contraseña.")
+        else:
+                
+      
         try:
           c.execute(
               "INSERT INTO users (username, password, nombre, apellidos, edad,"
