@@ -570,7 +570,109 @@ else:
     else:
       for s in seguidos:
         st.write(f"👤 Canal de @{s[0]}")
+  elif current_nav == "Mensajes":
+    st.title("💬 Mensajería Privada")
+    st.write("Busca a un usuario de NoxVibe y chatea con él en tiempo real.")
 
+    # Buscador de usuarios para chatear
+    busq_chat = st.text_input(
+        "🔍 Buscar usuario para enviar mensaje...", key="input_busq_chat"
+    )
+
+    amigo_seleccionado = None
+
+    if busq_chat:
+      c.execute(
+          "SELECT username, nombre FROM users WHERE username LIKE ? AND username COLLATE NOCASE != ?",
+          (f"%{busq_chat}%", cur),
+      )
+      encontrados = c.fetchall()
+      if encontrados:
+        for u_user, u_nom in encontrados:
+          if st.button(f"Chatear con @{u_user} ({u_nom or ''})"):
+            st.session_state.chat_with = u_user
+            st.rerun()
+      else:
+        st.info("No se encontró ningún usuario con ese nombre.")
+
+    # Si hay un chat activo seleccionado
+    if "chat_with" not in st.session_state:
+      st.session_state.chat_with = ""
+
+    # Mostrar lista rápida de gente con la que ya has hablado
+    c.execute(
+        """
+            SELECT DISTINCT CASE WHEN sender = ? THEN receiver ELSE sender END 
+            FROM messages WHERE sender = ? OR receiver = ?
+        """,
+        (cur, cur, cur),
+    )
+    chats_previos = c.fetchall()
+
+    if chats_previos and not st.session_state.chat_with:
+      st.markdown("### Tus conversaciones recientes:")
+      for cp in chats_previos:
+        if st.button(f"💬 Chat con @{cp[0]}"):
+          st.session_state.chat_with = cp[0]
+          st.rerun()
+
+    if st.session_state.chat_with:
+      chat_target = st.session_state.chat_with
+      st.markdown("---")
+      col_ch_t1, col_ch_t2 = st.columns([3, 1])
+      with col_ch_t1:
+        st.subheader(f"Chat con @{chat_target}")
+      with col_ch_t2:
+        if st.button("❌ Cerrar chat"):
+          st.session_state.chat_with = ""
+          st.rerun()
+
+      # Mostrar mensajes de la base de datos
+      c.execute(
+          """
+                SELECT sender, message, timestamp FROM messages 
+                WHERE (sender = ? AND receiver = ?) OR (sender = ? AND receiver = ?) 
+                ORDER BY id ASC
+            """,
+          (cur, chat_target, chat_target, cur),
+      )
+      mensajes = c.fetchall()
+
+      chat_container = st.container()
+      with chat_container:
+        if not mensajes:
+          st.info(
+              f"No hay mensajes aún con @{chat_target}. ¡Escribe el primero!"
+          )
+        else:
+          for m_sender, m_text, m_time in mensajes:
+            if m_sender.lower() == cur.lower():
+              st.markdown(
+                  f"<div style='text-align: right; background-color: #1f6feb; color: white; padding: 8px 12px; border-radius: 10px; margin: 5px 0; margin-left: 20%;'><b>Tú:</b> {m_text}<br><span style='font-size: 10px; opacity: 0.7;'>{m_time}</span></div>",
+                  unsafe_allow_html=True,
+              )
+            else:
+              st.markdown(
+                  f"<div style='text-align: left; background-color: #30363d; color: white; padding: 8px 12px; border-radius: 10px; margin: 5px 0; margin-right: 20%;'><b>@{m_sender}:</b> {m_text}<br><span style='font-size: 10px; opacity: 0.7;'>{m_time}</span></div>",
+                  unsafe_allow_html=True,
+              )
+
+      # Caja para enviar nuevo mensaje
+      with st.form("form_enviar_mensaje", clear_on_submit=True):
+        nuevo_texto_msg = st.text_input("Escribe tu mensaje...")
+        enviar_msg_btn = st.form_submit_button(
+            "Enviar mensaje 📨", use_container_width=True
+        )
+
+        if enviar_msg_btn and nuevo_texto_msg.strip():
+          t_actual = datetime.now().strftime("%H:%M")
+          c.execute(
+              "INSERT INTO messages (sender, receiver, message, timestamp) VALUES (?, ?, ?, ?)",
+              (cur, chat_target, nuevo_texto_msg.strip(), t_actual),
+          )
+          conn.commit()
+          st.rerun()
+            
   elif current_nav == "Tu":
     st.title("👤 Tu Perfil Completo")
     c.execute(
