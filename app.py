@@ -112,7 +112,6 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}
-    /* Estilo personalizado para el botón central de Crear tipo píldora */
     .create-box {{
         display: flex;
         flex-direction: column;
@@ -235,7 +234,7 @@ if not st.session_state.logged_in:
         try:
           c.execute(
               "INSERT INTO users (username, password, nombre, apellidos, edad, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-              (r_user, r_pass, r_nombre, r_apellidos, int(r_edad), r_email, 10, "¡Hola! Uso VibeVibe.", "", "Publico", 100, "")
+              (r_user, r_pass, r_nombre, r_apellidos, int(r_edad), r_email, 10, "¡Hola! Uso NoxVibe.", "", "Publico", 100, "Oscuro")
           )
           conn.commit()
           st.success("¡Cuenta creada con éxito!")
@@ -383,7 +382,6 @@ else:
     tab_inicio, tab_en_directo, tab_publicaciones = st.tabs(["Inicio", "En directo", "Publicaciones"])
 
     with tab_inicio:
-        # Estilo inspirado en la captura que has enviado (botón central elegante "Crear")
         st.markdown("""
             <div class="create-box">
                 <h3 style="margin-bottom: 5px;">Crea contenido en cualquier dispositivo</h3>
@@ -391,7 +389,6 @@ else:
             </div>
         """, unsafe_allow_html=True)
 
-        # Botón central grande con diseño de pastilla / principal
         col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
         with col_c2:
             show_creator = st.button("➕ Crear Publicación", use_container_width=True)
@@ -557,4 +554,8 @@ else:
     st.title("⚙️ Ajustes de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
     if st.button("Guardar Ajustes"):
-      c.execute("UPDATE users SET th
+      c.execute("UPDATE users SET theme = ? WHERE username = ?", (nuevo_tema, cur))
+      conn.commit()
+      st.success("¡Ajustes guardados con éxito!")
+      st.rerun()
+        
