@@ -127,18 +127,18 @@ st.markdown(
     .stats-box {{
         display: flex;
         gap: 20px;
-        margin-top: 10px;
-        margin-bottom: 10px;
+        margin-top: 5px;
+        margin-bottom: 5px;
     }}
     .stat-item {{
         text-align: left;
     }}
     .stat-num {{
         font-weight: bold;
-        font-size: 18px;
+        font-size: 16px;
     }}
     .stat-label {{
-        font-size: 14px;
+        font-size: 13px;
         color: {sub_text};
     }}
     </style>
@@ -253,12 +253,26 @@ else:
   cur = st.session_state.username
 
   # ==========================================
-  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO
+  # 0. CONSULTAS DE CONTADORES GLOBALES
+  # ==========================================
+  c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
+  num_posts = c.fetchone()[0]
+
+  c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
+  num_followers = c.fetchone()[0]
+
+  c.execute("SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
+  num_following = c.fetchone()[0]
+
+  # ==========================================
+  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO (CON CONTADORES)
   # ==========================================
   c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username = ?", (cur,))
   u_info = c.fetchone()
   u_av = u_info[0] if (u_info and u_info[0]) else ""
   u_name = f"{u_info[1] or ''} {u_info[2] or ''}".strip() if u_info else ""
+  if not u_name:
+      u_name = "Javi Márquez"
   u_coins = u_info[3] if u_info else 100
 
   col_top_img, col_top_txt = st.columns([1, 3])
@@ -268,7 +282,23 @@ else:
     else:
       st.markdown("👤")
   with col_top_txt:
-    st.markdown(f"**{u_name if u_name else cur}**  \n`@{cur}` | 🪙 **{u_coins} Coins**")
+    st.markdown(f"**{u_name}**  \n`@{cur}` | 🪙 **{u_coins} Coins**")
+    st.markdown(f"""
+        <div class="stats-box">
+            <div class="stat-item">
+                <div class="stat-num">{num_posts}</div>
+                <div class="stat-label">publicaciones</div>
+            </div>
+            <div class="stat-item" style="margin-left: 15px;">
+                <div class="stat-num">{num_followers}</div>
+                <div class="stat-label">seguidores</div>
+            </div>
+            <div class="stat-item" style="margin-left: 15px;">
+                <div class="stat-num">{num_following}</div>
+                <div class="stat-label">seguidos</div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
   
   st.markdown("---")
 
@@ -442,16 +472,6 @@ else:
         nombre_completo = "Javi Márquez"
     bio_texto = user_data[3] if (user_data and user_data[3]) else "¡Bienvenidos a mi perfil en NoxVibe!"
 
-    # Consultas para los contadores reales
-    c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
-    num_posts = c.fetchone()[0]
-
-    c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
-    num_followers = c.fetchone()[0]
-
-    c.execute("SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
-    num_following = c.fetchone()[0]
-
     col_av_img, col_av_txt = st.columns([1, 2])
     
     with col_av_img:
@@ -470,7 +490,6 @@ else:
         st.markdown(f"### {nombre_completo}")
         st.markdown(f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>", unsafe_allow_html=True)
         
-        # Bloque de Contadores (Publicaciones, Seguidores, Seguidos)
         st.markdown(f"""
             <div class="stats-box">
                 <div class="stat-item">
@@ -520,24 +539,4 @@ else:
       st.rerun()
 
   # ==========================================
-  # 3. MENÚ DE NAVEGACIÓN ABAJO DEL TODO
-  # ==========================================
-  st.markdown("---")
-  st.markdown("### 🧭 Menú de Navegación")
-  
-  if st.button("🏠 Inicio", use_container_width=True):
-    st.session_state.nav_tab = "Inicio"
-    st.rerun()
-  if st.button("🎞️ Shorts", use_container_width=True):
-    st.session_state.nav_tab = "Shorts"
-    st.rerun()
-  if st.button("➕ Crear", use_container_width=True):
-    st.session_state.nav_tab = "Crear"
-    st.rerun()
-  if st.button("📺 Suscripciones", use_container_width=True):
-    st.session_state.nav_tab = "Suscripciones"
-    st.rerun()
-  if st.button("👤 Mi Perfil", use_container_width=True):
-    st.session_state.nav_tab = "Tu"
-    st.rerun()
-      
+  # 3. MENÚ DE NAVEGAC
