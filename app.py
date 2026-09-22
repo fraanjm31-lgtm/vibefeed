@@ -91,6 +91,7 @@ st.markdown(
     .stApp {{
         background-color: {bg_color} !important;
         color: {text_color} !important;
+        margin-bottom: 70px; /* Espacio para que el contenido no quede oculto detrás de la barra fija */
     }}
     div.stButton > button {{
         background-color: {box_bg} !important;
@@ -112,13 +113,20 @@ st.markdown(
         width: 110px !important;
         height: 110px !important;
     }}
-    /* Contenedor simulando la barra inferior estilo YouTube */
-    .nav-bar-container {{
-        background: {box_bg};
-        padding: 10px;
-        border-radius: 15px;
-        margin-bottom: 20px;
-        border: 1px solid {sub_text};
+    
+    /* BARRA INFERIOR FIJA ESTILO YOUTUBE */
+    .fixed-bottom-nav {{
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background-color: {box_bg};
+        border-top: 1px solid {sub_text};
+        padding: 8px 10px;
+        z-index: 99999;
+        display: flex;
+        justify-content: space-around;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
     }}
     </style>
     """,
@@ -164,7 +172,7 @@ def handle_reaction(p_id, user, r_type):
     st.toast("Ya habias dado esta reacción", icon="⚠️")
 
 
-# Barra lateral para control de sesión y ajustes avanzados
+# Barra lateral para control de sesión
 st.sidebar.title("🧭 Menu NoxVibe")
 if st.session_state.logged_in:
   c.execute(
@@ -231,8 +239,8 @@ if not st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  # --- BARRA DE NAVEGACIÓN ESTILO YOUTUBE (5 BOTONES) ---
-  st.markdown('<div class="nav-bar-container">', unsafe_allow_html=True)
+  # --- BARRA INFERIOR FIJA ESTILO YOUTUBE ---
+  st.markdown('<div class="fixed-bottom-nav">', unsafe_allow_html=True)
   b_col1, b_col2, b_col3, b_col4, b_col5 = st.columns(5)
 
   with b_col1:
@@ -244,7 +252,7 @@ else:
       st.session_state.nav_tab = "Shorts"
       st.rerun()
   with b_col3:
-    if st.button("➕ Crear", use_container_width=True):
+    if st.button("➕", use_container_width=True):
       st.session_state.nav_tab = "Crear"
       st.rerun()
   with b_col4:
@@ -257,7 +265,6 @@ else:
       st.rerun()
   st.markdown('</div>', unsafe_allow_html=True)
 
-  # Control de navegación según la pestaña seleccionada en la barra estilo YouTube
   current_nav = st.session_state.get("nav_tab", "Inicio")
 
   if current_nav == "Inicio":
@@ -331,7 +338,7 @@ else:
 
   elif current_nav == "Crear":
     st.title("➕ Crear Publicación o Short")
-    st.write("Sube y graba contenido estés donde estés[span_0](start_span)[span_0](end_span). Todo lo que publiques aparecerá aquí[span_1](start_span)[span_1](end_span).")
+    st.write("Sube y graba contenido estés donde estés. Todo lo que publiques aparecerá aquí.")
 
     with st.form("new_post_form_nav", clear_on_submit=True):
       cap = st.text_input("¿Qué estás pensando?")
