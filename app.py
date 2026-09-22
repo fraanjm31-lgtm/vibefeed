@@ -224,7 +224,7 @@ else:
   cur = st.session_state.username
 
   # ==========================================
-  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO
+  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO (SIN 'FREE')
   # ==========================================
   c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username = ?", (cur,))
   u_info = c.fetchone()
