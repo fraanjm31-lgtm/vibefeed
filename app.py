@@ -474,7 +474,8 @@ else:
         st.session_state.create_action = "Publicar"
     st.markdown("</div>", unsafe_allow_html=True)
 
-    accion_actual = st.session_state.get("create_action", "Publicar")
+    accion_actual = st.session_state.get("create_action") or "Publicar"
+      
     st.info(f"Modo seleccionado: **{accion_actual}**")
 
     with st.form("new_post_form_nav", clear_on_submit=True):
