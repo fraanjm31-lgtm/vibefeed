@@ -532,7 +532,26 @@ else:
   # ==========================================
   st.markdown("---")
   st.markdown("### 🧭 Menú de Navegación")
-  
-  if st.button("🏠 Inicio", use_container_width=True):
-    st.session_state.nav_tab = "Inicio"
-    st.rer
+
+  col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
+  with col_m1:
+    if st.button("🏠", use_container_width=True, help="Inicio"):
+      st.session_state.nav_tab = "Inicio"
+      st.rerun()
+  with col_m2:
+    if st.button("🎞️", use_container_width=True, help="Shorts"):
+      st.session_state.nav_tab = "Shorts"
+      st.rerun()
+  with col_m3:
+    if st.button("➕", use_container_width=True, help="Crear"):
+      st.session_state.nav_tab = "Crear"
+      st.rerun()
+  with col_m4:
+    if st.button("📺", use_container_width=True, help="Suscripciones"):
+      st.session_state.nav_tab = "Suscripciones"
+      st.rerun()
+  with col_m5:
+    if st.button("👤", use_container_width=True, help="Mi Perfil"):
+      st.session_state.nav_tab = "Tu"
+      st.rerun()
+        
