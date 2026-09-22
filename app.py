@@ -250,9 +250,6 @@ if not st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  # ==========================================
-  # 0. CONSULTAS DE CONTADORES REALES
-  # ==========================================
   c.execute("SELECT COUNT(*) FROM posts WHERE username COLLATE NOCASE = ?", (cur,))
   num_posts = c.fetchone()[0]
 
@@ -262,9 +259,6 @@ else:
   c.execute("SELECT COUNT(*) FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
   num_following = c.fetchone()[0]
 
-  # ==========================================
-  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO (CON CONTADORES)
-  # ==========================================
   c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username COLLATE NOCASE = ?", (cur,))
   u_info = c.fetchone()
   u_av = u_info[0] if (u_info and u_info[0]) else ""
@@ -300,9 +294,6 @@ else:
   
   st.markdown("---")
 
-  # ==========================================
-  # 2. CONTENIDO DE LA PESTAÑA ACTIVA
-  # ==========================================
   current_nav = st.session_state.get("nav_tab", "Inicio")
 
   if current_nav == "Inicio":
@@ -531,8 +522,17 @@ else:
     st.subheader("⚙️ Opciones de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
     if st.button("Guardar Ajustes de Tema"):
-            c.execute(
-          "UPDATE users SET theme = ? WHERE username COLLATE NOCASE = ?",
-          (nuevo_tema, cur),
-            )
-        
+      c.execute("UPDATE users SET theme = ? WHERE username COLLATE NOCASE = ?", (nuevo_tema, cur))
+      conn.commit()
+      st.success("¡Tema guardado!")
+      st.rerun()
+
+  # ==========================================
+  # 3. MENÚ DE NAVEGACIÓN ABAJO DEL TODO
+  # ==========================================
+  st.markdown("---")
+  st.markdown("### 🧭 Menú de Navegación")
+  
+  if st.button("🏠 Inicio", use_container_width=True):
+    st.session_state.nav_tab = "Inicio"
+    st.rer
