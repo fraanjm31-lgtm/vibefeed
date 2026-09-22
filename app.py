@@ -532,13 +532,11 @@ else:
         if st.button("✏️ Cambiar foto de perfil"):
             st.session_state.edit_avatar_open = not st.session_state.edit_avatar_open
 
-        if st.session_state.edit_avatar_open:
-          new_avatar = st.file_uploader("Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
-        if st.session_state.edit_avatar_open:
+                if st.session_state.edit_avatar_open:
           new_avatar = st.file_uploader(
               "Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real"
           )
-         if new_avatar is not None:
+          if new_avatar is not None:
             os.makedirs("uploads", exist_ok=True)
             av_path = os.path.join(
                 "uploads", f"avatar_{cur}_{new_avatar.name}"
@@ -576,31 +574,4 @@ else:
       conn.commit()
       st.success("¡Tema guardado!")
       st.rerun()
-# ==========================================
-# 3. MENÚ DE NAVEGACIÓN ABAJO DEL TODO
-# ==========================================
-st.markdown("---")
-st.markdown("### 🧭 Menú de Navegación")
-
-col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
-with col_m1:
-  if st.button("🏠", use_container_width=True, help="Inicio"):
-    st.session_state.nav_tab = "Inicio"
-    st.rerun()
-with col_m2:
-  if st.button("🎞️", use_container_width=True, help="Shorts"):
-    st.session_state.nav_tab = "Shorts"
-    st.rerun()
-with col_m3:
-  if st.button("➕", use_container_width=True, help="Crear"):
-    st.session_state.nav_tab = "Crear"
-    st.rerun()
-with col_m4:
-  if st.button("📺", use_container_width=True, help="Suscripciones"):
-    st.session_state.nav_tab = "Suscripciones"
-    st.rerun()
-with col_m5:
-  if st.button("👤", use_container_width=True, help="Mi Perfil"):
-    st.session_state.nav_tab = "Tu"
-    st.rerun()
-      
+        
