@@ -164,14 +164,12 @@ def ai_vibe_checker(text):
 
 def handle_reaction(p_id, user, r_type):
   c.execute(
-      "SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND"
-      " reaction_type = ?",
+      "SELECT * FROM post_reactions WHERE post_id = ? AND username = ? AND reaction_type = ?",
       (p_id, user, r_type),
   )
   if not c.fetchone():
     c.execute(
-        "INSERT INTO post_reactions (post_id, username, reaction_type) VALUES"
-        " (?, ?, ?)",
+        "INSERT INTO post_reactions (post_id, username, reaction_type) VALUES (?, ?, ?)",
         (p_id, user, r_type),
     )
     if r_type == "fire":
@@ -214,8 +212,7 @@ if not st.session_state.logged_in:
     l_pass = st.text_input("Contrasena", type="password", key="l_pass")
     if st.button("Entrar"):
       c.execute(
-          "SELECT * FROM users WHERE (username = ? OR email = ?) AND password ="
-          " ?",
+          "SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?",
           (l_user, l_user, l_pass),
       )
       if c.fetchone():
@@ -534,4 +531,4 @@ else:
     st.subheader("⚙️ Opciones de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
     if st.button("Guardar Ajustes de Tema"):
-      c.execute("UPDATE us
+      c.execute("UPDATE users SET theme = ? WHERE username 
