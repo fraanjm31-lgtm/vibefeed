@@ -124,14 +124,15 @@ st.markdown(
         margin-bottom: 20px;
         text-align: center;
     }}
-    .stats-box {{
+    .stats-container {{
         display: flex;
-        gap: 20px;
-        margin-top: 5px;
-        margin-bottom: 5px;
+        gap: 25px;
+        margin-top: 8px;
+        margin-bottom: 8px;
     }}
-    .stat-item {{
-        text-align: left;
+    .stat-box-item {{
+        display: flex;
+        flex-direction: column;
     }}
     .stat-num {{
         font-weight: bold;
@@ -253,21 +254,21 @@ else:
   cur = st.session_state.username
 
   # ==========================================
-  # 0. CONSULTAS DE CONTADORES GLOBALES
+  # 0. CONSULTAS DE CONTADORES REALES (CON COLLATE NOCASE POR SEGURIDAD)
   # ==========================================
-  c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
+  c.execute("SELECT COUNT(*) FROM posts WHERE username COLLATE NOCASE = ?", (cur,))
   num_posts = c.fetchone()[0]
 
-  c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
+  c.execute("SELECT COUNT(*) FROM follows WHERE followed COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
   num_followers = c.fetchone()[0]
 
-  c.execute("SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
+  c.execute("SELECT COUNT(*) FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
   num_following = c.fetchone()[0]
 
   # ==========================================
   # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO (CON CONTADORES)
   # ==========================================
-  c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username = ?", (cur,))
+  c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username COLLATE NOCASE = ?", (cur,))
   u_info = c.fetchone()
   u_av = u_info[0] if (u_info and u_info[0]) else ""
   u_name = f"{u_info[1] or ''} {u_info[2] or ''}".strip() if u_info else ""
@@ -284,18 +285,18 @@ else:
   with col_top_txt:
     st.markdown(f"**{u_name}**  \n`@{cur}` | 🪙 **{u_coins} Coins**")
     st.markdown(f"""
-        <div class="stats-box">
-            <div class="stat-item">
-                <div class="stat-num">{num_posts}</div>
-                <div class="stat-label">publicaciones</div>
+        <div class="stats-container">
+            <div class="stat-box-item">
+                <span class="stat-num">{num_posts}</span>
+                <span class="stat-label">publicaciones</span>
             </div>
-            <div class="stat-item" style="margin-left: 15px;">
-                <div class="stat-num">{num_followers}</div>
-                <div class="stat-label">seguidores</div>
+            <div class="stat-box-item">
+                <span class="stat-num">{num_followers}</span>
+                <span class="stat-label">seguidores</span>
             </div>
-            <div class="stat-item" style="margin-left: 15px;">
-                <div class="stat-num">{num_following}</div>
-                <div class="stat-label">seguidos</div>
+            <div class="stat-box-item">
+                <span class="stat-num">{num_following}</span>
+                <span class="stat-label">seguidos</span>
             </div>
         </div>
     """, unsafe_allow_html=True)
@@ -314,7 +315,7 @@ else:
     c.execute("""
             SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag, p.timestamp 
             FROM posts p 
-            JOIN users u ON p.username = u.username 
+            JOIN users u ON p.username COLLATE NOCASE = u.username COLLATE NOCASE 
             WHERE u.account_privacy = 'Publico' 
             ORDER BY p.id DESC
         """)
@@ -335,7 +336,7 @@ else:
           else:
             st.image(p_file, width=400)
             
-        if p_user == cur:
+        if p_user.lower() == cur.lower():
           if st.button("🗑️ Eliminar publicación", key=f"del_post_{p_id}"):
             if p_file and os.path.exists(p_file):
               try:
@@ -357,7 +358,7 @@ else:
     c.execute("""
             SELECT p.id, p.username, p.caption, p.file, p.fires, p.thumbs, p.hearts, p.vibe_tag 
             FROM posts p 
-            JOIN users u ON p.username = u.username 
+            JOIN users u ON p.username COLLATE NOCASE = u.username COLLATE NOCASE 
             WHERE p.file_type = 'video' AND u.account_privacy = 'Publico' 
             ORDER BY p.id DESC
         """)
@@ -381,7 +382,7 @@ else:
           if p_file and os.path.exists(p_file):
             st.video(p_file)
             
-          if p_user == cur:
+          if p_user.lower() == cur.lower():
             if st.button("🗑️ Eliminar short", key=f"del_short_{p_id}"):
               if p_file and os.path.exists(p_file):
                 try:
@@ -448,13 +449,13 @@ else:
             "INSERT INTO posts (username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             (cur, cap, path_to_save, f_type, 0, 0, 0, 0, auto_tag, now_str, "Publico"),
         )
-        c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,))
+        c.execute("UPDATE users SET xp = xp + 15 WHERE username COLLATE NOCASE = ?", (cur,))
         conn.commit()
         st.success(f"¡{accion_actual} creado con éxito! {ai_msg}")
 
   elif current_nav == "Suscripciones":
     st.title("📺 Suscripciones y Amigos")
-    c.execute("SELECT followed FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
+    c.execute("SELECT followed FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
     seguidos = c.fetchall()
     if not seguidos:
       st.info("No sigues a ningún canal todavía.")
@@ -464,7 +465,7 @@ else:
 
   elif current_nav == "Tu":
     st.title("👤 Tu Perfil Completo")
-    c.execute("SELECT avatar, nombre, apellidos, bio FROM users WHERE username = ?", (cur,))
+    c.execute("SELECT avatar, nombre, apellidos, bio FROM users WHERE username COLLATE NOCASE = ?", (cur,))
     user_data = c.fetchone()
     avatar_path = user_data[0] if (user_data and user_data[0]) else ""
     nombre_completo = f"{user_data[1] or ''} {user_data[2] or ''}".strip()
@@ -491,18 +492,18 @@ else:
         st.markdown(f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>", unsafe_allow_html=True)
         
         st.markdown(f"""
-            <div class="stats-box">
-                <div class="stat-item">
-                    <div class="stat-num">{num_posts}</div>
-                    <div class="stat-label">publicaciones</div>
+            <div class="stats-container">
+                <div class="stat-box-item">
+                    <span class="stat-num">{num_posts}</span>
+                    <span class="stat-label">publicaciones</span>
                 </div>
-                <div class="stat-item" style="margin-left: 20px;">
-                    <div class="stat-num">{num_followers}</div>
-                    <div class="stat-label">seguidores</div>
+                <div class="stat-box-item">
+                    <span class="stat-num">{num_followers}</span>
+                    <span class="stat-label">seguidores</span>
                 </div>
-                <div class="stat-item" style="margin-left: 20px;">
-                    <div class="stat-num">{num_following}</div>
-                    <div class="stat-label">seguidos</div>
+                <div class="stat-box-item">
+                    <span class="stat-num">{num_following}</span>
+                    <span class="stat-label">seguidos</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -520,7 +521,7 @@ else:
                 av_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
                 with open(av_path, "wb") as f:
                     f.write(new_avatar.getbuffer())
-                c.execute("UPDATE users SET avatar = ? WHERE username = ?", (av_path, cur))
+                c.execute("UPDATE users SET avatar = ? WHERE username COLLATE NOCASE = ?", (av_path, cur))
                 conn.commit()
                 st.session_state.edit_avatar_open = False
                 st.success("¡Foto actualizada!")
@@ -532,11 +533,4 @@ else:
     
     st.subheader("⚙️ Opciones de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
-    if st.button("Guardar Ajustes de Tema"):
-      c.execute("UPDATE users SET theme = ? WHERE username = ?", (nuevo_tema, cur))
-      conn.commit()
-      st.success("¡Tema guardado!")
-      st.rerun()
-
-  # ==========================================
-  # 3. MENÚ DE NAVEGAC
+    if st.button("Guardar Ajustes de
