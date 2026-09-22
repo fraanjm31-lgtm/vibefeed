@@ -254,7 +254,7 @@ else:
   cur = st.session_state.username
 
   # ==========================================
-  # 0. CONSULTAS DE CONTADORES REALES (CON COLLATE NOCASE POR SEGURIDAD)
+  # 0. CONSULTAS DE CONTADORES REALES
   # ==========================================
   c.execute("SELECT COUNT(*) FROM posts WHERE username COLLATE NOCASE = ?", (cur,))
   num_posts = c.fetchone()[0]
@@ -533,4 +533,5 @@ else:
     
     st.subheader("⚙️ Opciones de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
-    if st.button("Guardar Ajustes de
+    if st.button("Guardar Ajustes de Tema"):
+      c.execute("UPDATE us
