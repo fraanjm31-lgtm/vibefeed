@@ -20,6 +20,9 @@ c.execute(
 c.execute(
     """CREATE TABLE IF NOT EXISTS post_reactions (post_id INTEGER, username TEXT, reaction_type TEXT)"""
 )
+c.execute(
+    """CREATE_TABLE IF NOT EXISTS messages (id INTEGER PRIMARY KEY AUTOINCREMENT, sender TEXT, receiver TEXT, message TEXT, timestamp TEXT)"""
+)
 
 columnas_usuarios = [
     ("nombre", "TEXT"),
