@@ -443,6 +443,36 @@ else:
 
   elif current_nav == "Suscripciones":
     st.title("📺 Suscripciones y Amigos")
+    
+    # Buscador de usuarios para agregar
+    st.subheader("🔍 Buscar Nuevos Amigos")
+    busqueda_usuario = st.text_input("Escribe el nombre de usuario...")
+    
+    if busqueda_usuario:
+      c.execute("SELECT username, nombre, avatar FROM users WHERE username LIKE ? AND username COLLATE NOCASE != ?", (f"%{busqueda_usuario}%", cur))
+      resultados = c.fetchall()
+      if resultados:
+        for r_user, r_nombre, r_av in resultados:
+          col_u1, col_u2 = st.columns([3, 1])
+          with col_u1:
+            st.write(f"**@{r_user}** ({r_nombre or 'Sin nombre'})")
+          with col_u2:
+            # Comprobar si ya le sigue
+            c.execute("SELECT status FROM follows WHERE follower COLLATE NOCASE = ? AND followed COLLATE NOCASE = ?", (cur, r_user))
+            estado_follow = c.fetchone()
+            if not estado_follow:
+              if st.button("Seguir ➕", key=f"follow_{r_user}"):
+                c.execute("INSERT INTO follows (follower, followed, status) VALUES (?, ?, 'accepted')", (cur, r_user))
+                conn.commit()
+                st.success(f"¡Ahora sigues a @{r_user}!")
+                st.rerun()
+            else:
+              st.write("✅ Siguiendo")
+      else:
+        st.info("No se ha encontrado a ningún usuario con ese nombre.")
+
+    st.markdown("---")
+    st.subheader("👥 Canales que sigues")
     c.execute("SELECT followed FROM follows WHERE follower COLLATE NOCASE = ? AND status = 'accepted'", (cur,))
     seguidos = c.fetchall()
     if not seguidos:
@@ -504,54 +534,4 @@ else:
 
         if st.session_state.edit_avatar_open:
             new_avatar = st.file_uploader("Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
-            if new_avatar is not None:
-                os.makedirs("uploads", exist_ok=True)
-                av_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
-                with open(av_path, "wb") as f:
-                    f.write(new_avatar.getbuffer())
-                c.execute("UPDATE users SET avatar = ? WHERE username COLLATE NOCASE = ?", (av_path, cur))
-                conn.commit()
-                st.session_state.edit_avatar_open = False
-                st.success("¡Foto actualizada!")
-                st.rerun()
-
-    st.write("")
-    st.write(bio_texto)
-    st.markdown("---")
-    
-    st.subheader("⚙️ Opciones de Cuenta")
-    nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
-    if st.button("Guardar Ajustes de Tema"):
-      c.execute("UPDATE users SET theme = ? WHERE username COLLATE NOCASE = ?", (nuevo_tema, cur))
-      conn.commit()
-      st.success("¡Tema guardado!")
-      st.rerun()
-
-  # ==========================================
-  # 3. MENÚ DE NAVEGACIÓN ABAJO DEL TODO
-  # ==========================================
-  st.markdown("---")
-  st.markdown("### 🧭 Menú de Navegación")
-
-  col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
-  with col_m1:
-    if st.button("🏠", use_container_width=True, help="Inicio"):
-      st.session_state.nav_tab = "Inicio"
-      st.rerun()
-  with col_m2:
-    if st.button("🎞️", use_container_width=True, help="Shorts"):
-      st.session_state.nav_tab = "Shorts"
-      st.rerun()
-  with col_m3:
-    if st.button("➕", use_container_width=True, help="Crear"):
-      st.session_state.nav_tab = "Crear"
-      st.rerun()
-  with col_m4:
-    if st.button("📺", use_container_width=True, help="Suscripciones"):
-      st.session_state.nav_tab = "Suscripciones"
-      st.rerun()
-  with col_m5:
-    if st.button("👤", use_container_width=True, help="Mi Perfil"):
-      st.session_state.nav_tab = "Tu"
-      st.rerun()
-        
+            i
