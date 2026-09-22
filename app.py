@@ -96,28 +96,7 @@ st.markdown(
         background-color: {box_bg} !important;
         color: {text_color} !important;
         border: 1px solid {sub_text} !important;
-    }}
-    .profile-stats {{
-        display: flex;
-        justify-content: space-around;
-        text-align: center;
-        background: {box_bg};
-        padding: 10px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-    }}
-    .stat-box {{
-        display: inline-block;
-        margin: 0 8px;
-    }}
-    .stat-num {{
-        font-size: 18px;
-        font-weight: bold;
-        color: {text_color};
-    }}
-    .stat-label {{
-        font-size: 12px;
-        color: {sub_text};
+        border-radius: 8px;
     }}
     .video-container {{
         position: relative;
@@ -132,6 +111,18 @@ st.markdown(
         object-fit: cover !important;
         width: 110px !important;
         height: 110px !important;
+    }}
+    /* Estilo personalizado para el botón central de Crear tipo píldora */
+    .create-box {{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 30px;
+        background: {box_bg};
+        border-radius: 20px;
+        margin: 20px 0;
     }}
     </style>
     """,
@@ -346,7 +337,6 @@ else:
         st.markdown(f"### {nombre_completo}")
         st.markdown(f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>", unsafe_allow_html=True)
         
-        # Botón de lápiz interactivo para desplegar el subidor de foto de perfil
         if "edit_avatar_open" not in st.session_state:
             st.session_state.edit_avatar_open = False
 
@@ -393,57 +383,79 @@ else:
     tab_inicio, tab_en_directo, tab_publicaciones = st.tabs(["Inicio", "En directo", "Publicaciones"])
 
     with tab_inicio:
-        st.write("### Bienvenida a tu canal")
-        st.caption("Todo lo que publiques aparecerá aquí abajo ordenado.")
-        
-        with st.expander("✏️ Publicar Contenido", expanded=False):
-          with st.form("new_post_form", clear_on_submit=True):
-            cap = st.text_input("Que estas pensando?")
-            uploaded_file = st.file_uploader(
-                "Sube foto o video", type=["jpg", "png", "mp4", "mov"]
-            )
+        # Estilo inspirado en la captura que has enviado (botón central elegante "Crear")
+        st.markdown("""
+            <div class="create-box">
+                <h3 style="margin-bottom: 5px;">Crea contenido en cualquier dispositivo</h3>
+                <p style="color: #888; font-size: 14px; margin-top: 0;">Sube y graba contenido estés donde estés. Todo lo que publiques aparecerá aquí.</p>
+            </div>
+        """, unsafe_allow_html=True)
 
-            if st.form_submit_button("Publicar 🚀"):
-              path_to_save = ""
-              f_type = ""
-              if uploaded_file is not None:
-                os.makedirs("uploads", exist_ok=True)
-                path_to_save = os.path.join("uploads", uploaded_file.name)
-                with open(path_to_save, "wb") as f:
-                  f.write(uploaded_file.getbuffer())
-                f_type = (
-                    "video"
-                    if uploaded_file.type.startswith("video")
-                    else "image"
+        # Botón central grande con diseño de pastilla / principal
+        col_c1, col_c2, col_c3 = st.columns([1, 2, 1])
+        with col_c2:
+            show_creator = st.button("➕ Crear Publicación", use_container_width=True)
+
+        if show_creator or st.session_state.get("open_create_form", False):
+            st.session_state.open_create_form = True
+            with st.form("new_post_form", clear_on_submit=True):
+              cap = st.text_input("¿Qué estás pensando?")
+              uploaded_file = st.file_uploader(
+                  "Sube foto o video", type=["jpg", "png", "mp4", "mov"]
+              )
+
+              cols_f1, cols_f2 = st.columns(2)
+              with cols_f1:
+                  submitted = st.form_submit_button("Publicar 🚀", use_container_width=True)
+              with cols_f2:
+                  cancelled = st.form_submit_button("Cancelar ❌", use_container_width=True)
+
+              if cancelled:
+                  st.session_state.open_create_form = False
+                  st.rerun()
+
+              if submitted:
+                path_to_save = ""
+                f_type = ""
+                if uploaded_file is not None:
+                  os.makedirs("uploads", exist_ok=True)
+                  path_to_save = os.path.join("uploads", uploaded_file.name)
+                  with open(path_to_save, "wb") as f:
+                    f.write(uploaded_file.getbuffer())
+                  f_type = (
+                      "video"
+                      if uploaded_file.type.startswith("video")
+                      else "image"
+                  )
+
+                auto_tag, ai_msg = ai_vibe_checker(cap)
+                now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
+
+                c.execute(
+                    "INSERT INTO posts (username, caption, file, file_type, likes,"
+                    " fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?,"
+                    " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        cur,
+                        cap,
+                        path_to_save,
+                        f_type,
+                        0,
+                        0,
+                        0,
+                        0,
+                        auto_tag,
+                        now_str,
+                        "Publico",
+                    ),
                 )
-
-              auto_tag, ai_msg = ai_vibe_checker(cap)
-              now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
-
-              c.execute(
-                  "INSERT INTO posts (username, caption, file, file_type, likes,"
-                  " fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?,"
-                  " ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                  (
-                      cur,
-                      cap,
-                      path_to_save,
-                      f_type,
-                      0,
-                      0,
-                      0,
-                      0,
-                      auto_tag,
-                      now_str,
-                      "Publico",
-                  ),
-              )
-              c.execute(
-                  "UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,)
-              )
-              conn.commit()
-              st.success(f"Publicado! {ai_msg}")
-              st.rerun()
+                c.execute(
+                    "UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,)
+                )
+                conn.commit()
+                st.session_state.open_create_form = False
+                st.success(f"¡Publicado con éxito! {ai_msg}")
+                st.rerun()
 
     with tab_en_directo:
         st.info("No hay emisiones en directo activas ahora mismo.")
@@ -472,12 +484,7 @@ else:
                     st.rerun()
                 st.divider()
         else:
-            st.markdown("""
-                <div style="text-align: center; padding: 30px; color: #888;">
-                    <h3>Crea contenido en cualquier dispositivo</h3>
-                    <p>Sube y graba contenido estés donde estés. Todo lo que publiques aparecerá aquí.</p>
-                </div>
-            """, unsafe_allow_html=True)
+            st.info("Aún no tienes publicaciones creadas.")
 
   elif menu_option == "🔍 Buscar Perfiles":
     st.title("🔍 Buscar Perfiles")
@@ -550,8 +557,4 @@ else:
     st.title("⚙️ Ajustes de Cuenta")
     nuevo_tema = st.selectbox("Tema visual", ["Oscuro", "Claro", "Neon / Cyber"], index=0 if st.session_state.theme == "Oscuro" else (1 if st.session_state.theme == "Claro" else 2))
     if st.button("Guardar Ajustes"):
-      c.execute("UPDATE users SET theme = ? WHERE username = ?", (nuevo_tema, cur))
-      conn.commit()
-      st.success("¡Ajustes guardados con éxito!")
-      st.rerun()
-          
+      c.execute("UPDATE users SET th
