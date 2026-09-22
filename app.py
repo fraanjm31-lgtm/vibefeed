@@ -55,6 +55,10 @@ if "logged_in" not in st.session_state:
   st.session_state.username = ""
   st.session_state.nav_tab = "Inicio"
   st.session_state.theme = "Oscuro"
+if "create_menu_open" not in st.session_state:
+  st.session_state.create_menu_open = False
+if "create_action" not in st.session_state:
+  st.session_state.create_action = None
 
 if st.session_state.logged_in and st.session_state.username:
   c.execute(
@@ -111,6 +115,14 @@ st.markdown(
         object-fit: cover !important;
         width: 110px !important;
         height: 110px !important;
+    }}
+    .creation-popup {{
+        background-color: {box_bg};
+        border: 1px solid {sub_text};
+        padding: 15px;
+        border-radius: 20px;
+        margin-bottom: 20px;
+        text-align: center;
     }}
     </style>
     """,
@@ -224,7 +236,7 @@ else:
   cur = st.session_state.username
 
   # ==========================================
-  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO (SIN 'FREE')
+  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO
   # ==========================================
   c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username = ?", (cur,))
   u_info = c.fetchone()
@@ -318,23 +330,43 @@ else:
         st.markdown("</div>", unsafe_allow_html=True)
 
   elif current_nav == "Crear":
-    st.title("➕ Crear Publicación o Short")
-    st.write("Sube y graba contenido estés donde estés. Todo lo que publiques aparecerá aquí.")
+    st.title("➕ Crear Contenido")
+    st.write("Elige qué tipo de formato deseas subir o retransmitir:")
+
+    # Menú flotante estilo YouTube con los botones exactos
+    st.markdown('<div class="creation-popup">', unsafe_allow_html=True)
+    c_btn1, c_btn2, c_btn3, c_btn4 = st.columns(4)
+    with c_btn1:
+      if st.button("Vídeo", use_container_width=True):
+        st.session_state.create_action = "Vídeo"
+    with c_btn2:
+      if st.button("Short", use_container_width=True):
+        st.session_state.create_action = "Short"
+    with c_btn3:
+      if st.button("Directo", use_container_width=True):
+        st.session_state.create_action = "Directo"
+    with c_btn4:
+      if st.button("Publicar", use_container_width=True):
+        st.session_state.create_action = "Publicar"
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # Dependiendo de la opción elegida, se despliega el formulario correspondiente
+    accion_actual = st.session_state.get("create_action", "Publicar")
+    st.info(f"Modo seleccionado: **{accion_actual}**")
 
     with st.form("new_post_form_nav", clear_on_submit=True):
-      cap = st.text_input("¿Qué estás pensando?")
-      uploaded_file = st.file_uploader("Sube foto o video", type=["jpg", "png", "mp4", "mov"])
-      submitted = st.form_submit_button("Publicar Contenido 🚀", use_container_width=True)
+      cap = st.text_input(f"Escribe algo para tu {accion_actual.lower()}...")
+      uploaded_file = st.file_uploader("Sube tu archivo multimedia", type=["jpg", "png", "mp4", "mov"])
+      submitted = st.form_submit_button(f"Confirmar y {accion_actual} 🚀", use_container_width=True)
 
       if submitted:
         path_to_save = ""
-        f_type = ""
+        f_type = "video" if accion_actual in ["Vídeo", "Short", "Directo"] else "image"
         if uploaded_file is not None:
           os.makedirs("uploads", exist_ok=True)
           path_to_save = os.path.join("uploads", uploaded_file.name)
           with open(path_to_save, "wb") as f:
             f.write(uploaded_file.getbuffer())
-          f_type = "video" if uploaded_file.type.startswith("video") else "image"
 
         auto_tag, ai_msg = ai_vibe_checker(cap)
         now_str = datetime.now().strftime("%Y-%m-%d %H:%M")
@@ -345,7 +377,7 @@ else:
         )
         c.execute("UPDATE users SET xp = xp + 15 WHERE username = ?", (cur,))
         conn.commit()
-        st.success(f"¡Publicado con éxito! {ai_msg}")
+        st.success(f"¡{accion_actual} creado con éxito! {ai_msg}")
 
   elif current_nav == "Suscripciones":
     st.title("📺 Suscripciones y Amigos")
@@ -428,7 +460,7 @@ else:
   if st.button("🎞️ Shorts", use_container_width=True):
     st.session_state.nav_tab = "Shorts"
     st.rerun()
-  if st.button("➕ Crear Publicación", use_container_width=True):
+  if st.button("➕ Crear", use_container_width=True):
     st.session_state.nav_tab = "Crear"
     st.rerun()
   if st.button("📺 Suscripciones", use_container_width=True):
