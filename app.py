@@ -346,7 +346,14 @@ else:
         st.markdown(f"### {nombre_completo}")
         st.markdown(f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>", unsafe_allow_html=True)
         
-        with st.expander("🖼️ Cambiar mi foto / logo"):
+        # Botón de lápiz interactivo para desplegar el subidor de foto de perfil
+        if "edit_avatar_open" not in st.session_state:
+            st.session_state.edit_avatar_open = False
+
+        if st.button("✏️ Cambiar foto de perfil"):
+            st.session_state.edit_avatar_open = not st.session_state.edit_avatar_open
+
+        if st.session_state.edit_avatar_open:
             new_avatar = st.file_uploader("Sube tu foto o logo", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
             if new_avatar is not None:
                 os.makedirs("uploads", exist_ok=True)
@@ -355,6 +362,7 @@ else:
                     f.write(new_avatar.getbuffer())
                 c.execute("UPDATE users SET avatar = ? WHERE username = ?", (av_path, cur))
                 conn.commit()
+                st.session_state.edit_avatar_open = False
                 st.success("¡Foto de perfil actualizada!")
                 st.rerun()
 
@@ -546,4 +554,4 @@ else:
       conn.commit()
       st.success("¡Ajustes guardados con éxito!")
       st.rerun()
-        
+          
