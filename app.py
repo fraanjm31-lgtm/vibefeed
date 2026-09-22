@@ -228,7 +228,7 @@ if not st.session_state.logged_in:
       else:
         st.error("Usuario o contrasena incorrectos")
 
-          with tab_reg:
+     with tab_reg:
             r_user = st.text_input("Nombre de Usuario (para iniciar sesion)", key="r_user")
             r_nombre = st.text_input("Nombre", key="r_nombre")
             r_apellidos = st.text_input("Apellidos", key="r_apellidos")
