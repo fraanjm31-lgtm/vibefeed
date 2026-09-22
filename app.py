@@ -124,6 +124,23 @@ st.markdown(
         margin-bottom: 20px;
         text-align: center;
     }}
+    .stats-box {{
+        display: flex;
+        gap: 20px;
+        margin-top: 10px;
+        margin-bottom: 10px;
+    }}
+    .stat-item {{
+        text-align: left;
+    }}
+    .stat-num {{
+        font-weight: bold;
+        font-size: 18px;
+    }}
+    .stat-label {{
+        font-size: 14px;
+        color: {sub_text};
+    }}
     </style>
     """,
     unsafe_allow_html=True,
@@ -288,7 +305,6 @@ else:
           else:
             st.image(p_file, width=400)
             
-        # Botón para eliminar (solo si la publicación es tuya)
         if p_user == cur:
           if st.button("🗑️ Eliminar publicación", key=f"del_post_{p_id}"):
             if p_file and os.path.exists(p_file):
@@ -426,6 +442,16 @@ else:
         nombre_completo = "Javi Márquez"
     bio_texto = user_data[3] if (user_data and user_data[3]) else "¡Bienvenidos a mi perfil en NoxVibe!"
 
+    # Consultas para los contadores reales
+    c.execute("SELECT COUNT(*) FROM posts WHERE username = ?", (cur,))
+    num_posts = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM follows WHERE followed = ? AND status = 'accepted'", (cur,))
+    num_followers = c.fetchone()[0]
+
+    c.execute("SELECT COUNT(*) FROM follows WHERE follower = ? AND status = 'accepted'", (cur,))
+    num_following = c.fetchone()[0]
+
     col_av_img, col_av_txt = st.columns([1, 2])
     
     with col_av_img:
@@ -443,6 +469,24 @@ else:
     with col_av_txt:
         st.markdown(f"### {nombre_completo}")
         st.markdown(f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>", unsafe_allow_html=True)
+        
+        # Bloque de Contadores (Publicaciones, Seguidores, Seguidos)
+        st.markdown(f"""
+            <div class="stats-box">
+                <div class="stat-item">
+                    <div class="stat-num">{num_posts}</div>
+                    <div class="stat-label">publicaciones</div>
+                </div>
+                <div class="stat-item" style="margin-left: 20px;">
+                    <div class="stat-num">{num_followers}</div>
+                    <div class="stat-label">seguidores</div>
+                </div>
+                <div class="stat-item" style="margin-left: 20px;">
+                    <div class="stat-num">{num_following}</div>
+                    <div class="stat-label">seguidos</div>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
         
         if "edit_avatar_open" not in st.session_state:
             st.session_state.edit_avatar_open = False
