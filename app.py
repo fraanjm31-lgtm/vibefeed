@@ -91,15 +91,12 @@ st.markdown(
     .stApp {{
         background-color: {bg_color} !important;
         color: {text_color} !important;
-        margin-bottom: 80px;
     }}
     div.stButton > button {{
         background-color: {box_bg} !important;
         color: {text_color} !important;
         border: 1px solid {sub_text} !important;
         border-radius: 8px;
-        font-size: 13px !important;
-        padding: 4px 6px !important;
     }}
     .video-container {{
         position: relative;
@@ -114,32 +111,6 @@ st.markdown(
         object-fit: cover !important;
         width: 110px !important;
         height: 110px !important;
-    }}
-    
-    /* FORZAR BARRA INFERIOR FIJA EN HORIZONTAL */
-    .fixed-bottom-nav {{
-        position: fixed !important;
-        bottom: 0 !important;
-        left: 0 !important;
-        width: 100% !important;
-        background-color: {box_bg} !important;
-        border-top: 1px solid {sub_text} !important;
-        padding: 6px 4px !important;
-        z-index: 99999 !important;
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.4);
-    }}
-    /* Forzar que las 5 columnas de Streamlit no se apilen verticalmente en móviles */
-    .fixed-bottom-nav [data-testid="column"] {{
-        width: 20% !important;
-        flex: 1 1 20% !important;
-        min-width: unset !important;
-        padding: 0 2px !important;
-    }}
-    .fixed-bottom-nav [data-testid="horizontal-stack"], .fixed-bottom-nav [data-testid="stHorizontalBlock"] {{
-        display: flex !important;
-        flex-direction: row !important;
-        align-items: center !important;
-        justify-content: space-between !important;
     }}
     </style>
     """,
@@ -252,32 +223,29 @@ if not st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  # --- BARRA INFERIOR FIJA EN HORIZONTAL ---
-  st.markdown('<div class="fixed-bottom-nav">', unsafe_allow_html=True)
-  b_col1, b_col2, b_col3, b_col4, b_col5 = st.columns(5)
+  # ==========================================
+  # 1. TU PERFIL / ENCABEZADO ARRIBA DEL TODO
+  # ==========================================
+  c.execute("SELECT avatar, nombre, apellidos, coins FROM users WHERE username = ?", (cur,))
+  u_info = c.fetchone()
+  u_av = u_info[0] if (u_info and u_info[0]) else ""
+  u_name = f"{u_info[1] or ''} {u_info[2] or ''}".strip() if u_info else ""
+  u_coins = u_info[3] if u_info else 100
 
-  with b_col1:
-    if st.button("🏠 Inicio", use_container_width=True):
-      st.session_state.nav_tab = "Inicio"
-      st.rerun()
-  with b_col2:
-    if st.button("🎞️ Shorts", use_container_width=True):
-      st.session_state.nav_tab = "Shorts"
-      st.rerun()
-  with b_col3:
-    if st.button("➕", use_container_width=True):
-      st.session_state.nav_tab = "Crear"
-      st.rerun()
-  with b_col4:
-    if st.button("📺 Subs", use_container_width=True):
-      st.session_state.nav_tab = "Suscripciones"
-      st.rerun()
-  with b_col5:
-    if st.button("👤 Tú", use_container_width=True):
-      st.session_state.nav_tab = "Tu"
-      st.rerun()
-  st.markdown('</div>', unsafe_allow_html=True)
+  col_top_img, col_top_txt = st.columns([1, 3])
+  with col_top_img:
+    if u_av and os.path.exists(u_av):
+      st.image(u_av, width=60)
+    else:
+      st.markdown("👤")
+  with col_top_txt:
+    st.markdown(f"**{u_name if u_name else cur}**  \n`@{cur}` | 🪙 **{u_coins} Coins**")
+  
+  st.markdown("---")
 
+  # ==========================================
+  # 2. CONTENIDO DE LA PESTAÑA ACTIVA
+  # ==========================================
   current_nav = st.session_state.get("nav_tab", "Inicio")
 
   if current_nav == "Inicio":
@@ -390,7 +358,7 @@ else:
         st.write(f"👤 Canal de @{s[0]}")
 
   elif current_nav == "Tu":
-    st.title("👤 Tu Perfil")
+    st.title("👤 Tu Perfil Completo")
     c.execute("SELECT avatar, nombre, apellidos, bio FROM users WHERE username = ?", (cur,))
     user_data = c.fetchone()
     avatar_path = user_data[0] if (user_data and user_data[0]) else ""
@@ -447,4 +415,26 @@ else:
       conn.commit()
       st.success("¡Tema guardado!")
       st.rerun()
-        
+
+  # ==========================================
+  # 3. MENÚ DE NAVEGACIÓN ABAJO DEL TODO
+  # ==========================================
+  st.markdown("---")
+  st.markdown("### 🧭 Menú de Navegación")
+  
+  if st.button("🏠 Inicio", use_container_width=True):
+    st.session_state.nav_tab = "Inicio"
+    st.rerun()
+  if st.button("🎞️ Shorts", use_container_width=True):
+    st.session_state.nav_tab = "Shorts"
+    st.rerun()
+  if st.button("➕ Crear Publicación", use_container_width=True):
+    st.session_state.nav_tab = "Crear"
+    st.rerun()
+  if st.button("📺 Suscripciones", use_container_width=True):
+    st.session_state.nav_tab = "Suscripciones"
+    st.rerun()
+  if st.button("👤 Mi Perfil", use_container_width=True):
+    st.session_state.nav_tab = "Tu"
+    st.rerun()
+      
