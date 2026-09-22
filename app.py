@@ -535,3 +535,17 @@ else:
         if st.session_state.edit_avatar_open:
             new_avatar = st.file_uploader("Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
             i
+# --- AUTORELLENO PARA QUE NO SE BORRE TU PERFIL EN STREAMLIT CLOUD ---
+try:
+  c.execute(
+      "INSERT OR IGNORE INTO users (username, password, nombre, apellidos, edad, email, xp, bio, avatar, account_privacy, coins, theme) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      ("Javimarquez", "1234", "Javi", "Márquez", 20, "javi@noxvibe.com", 50, "¡Hola! Mi perfil en NoxVibe.", "", "Publico", 100, "Oscuro")
+  )
+  c.execute(
+      "INSERT OR IGNORE INTO posts (id, username, caption, file, file_type, likes, fires, thumbs, hearts, vibe_tag, timestamp, privacy) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      (1, "Javimarquez", "¡Bienvenidos a mi nueva app NoxVibe! 🚀", "", "image", 0, 5, 2, 3, "🚀 Inspirador", "2026-03-30 12:00", "Publico")
+  )
+  conn.commit()
+except:
+  pass
+    
