@@ -91,13 +91,15 @@ st.markdown(
     .stApp {{
         background-color: {bg_color} !important;
         color: {text_color} !important;
-        margin-bottom: 70px; /* Espacio para que el contenido no quede oculto detrás de la barra fija */
+        margin-bottom: 80px;
     }}
     div.stButton > button {{
         background-color: {box_bg} !important;
         color: {text_color} !important;
         border: 1px solid {sub_text} !important;
         border-radius: 8px;
+        font-size: 13px !important;
+        padding: 4px 6px !important;
     }}
     .video-container {{
         position: relative;
@@ -114,19 +116,30 @@ st.markdown(
         height: 110px !important;
     }}
     
-    /* BARRA INFERIOR FIJA ESTILO YOUTUBE */
+    /* FORZAR BARRA INFERIOR FIJA EN HORIZONTAL */
     .fixed-bottom-nav {{
-        position: fixed;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background-color: {box_bg};
-        border-top: 1px solid {sub_text};
-        padding: 8px 10px;
-        z-index: 99999;
-        display: flex;
-        justify-content: space-around;
-        box-shadow: 0 -4px 10px rgba(0,0,0,0.3);
+        position: fixed !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        width: 100% !important;
+        background-color: {box_bg} !important;
+        border-top: 1px solid {sub_text} !important;
+        padding: 6px 4px !important;
+        z-index: 99999 !important;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.4);
+    }}
+    /* Forzar que las 5 columnas de Streamlit no se apilen verticalmente en móviles */
+    .fixed-bottom-nav [data-testid="column"] {{
+        width: 20% !important;
+        flex: 1 1 20% !important;
+        min-width: unset !important;
+        padding: 0 2px !important;
+    }}
+    .fixed-bottom-nav [data-testid="horizontal-stack"], .fixed-bottom-nav [data-testid="stHorizontalBlock"] {{
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
     }}
     </style>
     """,
@@ -239,7 +252,7 @@ if not st.session_state.logged_in:
 else:
   cur = st.session_state.username
 
-  # --- BARRA INFERIOR FIJA ESTILO YOUTUBE ---
+  # --- BARRA INFERIOR FIJA EN HORIZONTAL ---
   st.markdown('<div class="fixed-bottom-nav">', unsafe_allow_html=True)
   b_col1, b_col2, b_col3, b_col4, b_col5 = st.columns(5)
 
