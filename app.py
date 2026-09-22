@@ -534,11 +534,11 @@ else:
 
         if st.session_state.edit_avatar_open:
           new_avatar = st.file_uploader("Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
-                 if st.session_state.edit_avatar_open:
+        if st.session_state.edit_avatar_open:
           new_avatar = st.file_uploader(
               "Sube tu foto", type=["jpg", "png", "jpeg"], key="upload_avatar_real"
           )
-          if new_avatar is not None:
+         if new_avatar is not None:
             os.makedirs("uploads", exist_ok=True)
             av_path = os.path.join(
                 "uploads", f"avatar_{cur}_{new_avatar.name}"
