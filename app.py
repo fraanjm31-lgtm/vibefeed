@@ -320,13 +320,44 @@ else:
         st.markdown("---")
 
   elif menu_option == "👤 Mi Perfil":
-    st.markdown("""
-        <div style="background-color: #1f1f1f; padding: 20px; border-radius: 10px; text-align: center; color: white;">
-            <h2>Honrando Placas: Crónicas de LS</h2>
-            <p style="color: #aaa; margin: 0;">@J.mpokemon</p>
-        </div>
-    """, unsafe_allow_html=True)
+    c.execute("SELECT avatar, nombre, apellidos, bio FROM users WHERE username = ?", (cur,))
+    user_data = c.fetchone()
+    avatar_path = user_data[0] if (user_data and user_data[0]) else ""
+    nombre_completo = f"{user_data[1] or ''} {user_data[2] or ''}".strip()
+    if not nombre_completo:
+        nombre_completo = "Javi Márquez"
+    bio_texto = user_data[3] if (user_data and user_data[3]) else "¡Bienvenidos a las calles sin ley de Los Santos! Vive conmigo los golpes más locos, persecuciones policiales intensas y todas las misiones."
+
+    col_av_img, col_av_txt = st.columns([1, 2])
     
+    with col_av_img:
+        st.markdown('<div class="profile-avatar">', unsafe_allow_html=True)
+        if avatar_path and os.path.exists(avatar_path):
+            st.image(avatar_path, width=110)
+        else:
+            st.markdown("""
+                <div style="width: 110px; height: 110px; background-color: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #fff; margin: 0 auto;">
+                    👤
+                </div>
+            """, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    with col_av_txt:
+        st.markdown(f"### {nombre_completo}")
+        st.markdown(f"<p style='color: #aaa; margin-top: -10px;'>@{cur}</p>", unsafe_allow_html=True)
+        
+        with st.expander("🖼️ Cambiar mi foto / logo"):
+            new_avatar = st.file_uploader("Sube tu foto o logo", type=["jpg", "png", "jpeg"], key="upload_avatar_real")
+            if new_avatar is not None:
+                os.makedirs("uploads", exist_ok=True)
+                av_path = os.path.join("uploads", f"avatar_{cur}_{new_avatar.name}")
+                with open(av_path, "wb") as f:
+                    f.write(new_avatar.getbuffer())
+                c.execute("UPDATE users SET avatar = ? WHERE username = ?", (av_path, cur))
+                conn.commit()
+                st.success("¡Foto de perfil actualizada!")
+                st.rerun()
+
     st.write("")
 
     col_stat1, col_stat2 = st.columns(2)
@@ -339,7 +370,7 @@ else:
         total_posts = c.fetchone()[0]
         st.markdown(f"**📦 {total_posts}** Publicaciones")
 
-    st.write("¡Bienvenidos a las calles sin ley de Los Santos! Vive conmigo los golpes más locos, persecuciones policiales intensas y todas las misiones.")
+    st.write(bio_texto)
     
     col_btn1, col_btn2 = st.columns(2)
     with col_btn1:
